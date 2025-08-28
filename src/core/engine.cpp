@@ -13,7 +13,18 @@ namespace core
     return engine;
   }
 
-  VkResult Engine::init()
+  bool Engine::init()
+  {
+    if (initVulkan() != VK_SUCCESS)
+      return false;
+  }
+
+  void Engine::run()
+  {
+    // FIXME
+  }
+
+  VkResult Engine::initVulkan()
   {
     VkResult result = VK_SUCCESS;
     VkApplicationInfo appInfo = {};
@@ -81,10 +92,5 @@ namespace core
     }
 
     return result;
-  }
-
-  void Engine::run()
-  {
-    // FIXME
-  }
+  };
 } // namespace core

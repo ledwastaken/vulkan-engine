@@ -6,7 +6,7 @@ int main()
 {
   core::Engine& engine = core::Engine::get();
 
-  if (engine.init() != VK_SUCCESS)
+  if (!engine.init())
     return 1;
 
   engine.run();

@@ -17,10 +17,12 @@ namespace core
   public:
     static Engine& get();
 
-    VkResult init();
+    bool init();
     void run();
 
   private:
+    VkResult initVulkan();
+
     VkInstance m_instance;
     std::vector<VkPhysicalDevice> m_physicalDevices;
     VkDevice m_logicalDevice;
