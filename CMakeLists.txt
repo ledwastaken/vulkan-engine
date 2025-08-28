@@ -5,7 +5,13 @@ find_package(Vulkan REQUIRED)
 find_package(SDL3 REQUIRED)
 
 add_executable(main
+  src/core/engine.cpp
+
   src/main.cpp
+)
+
+target_include_directories(main PRIVATE
+  src/
 )
 
 target_link_libraries(main PUBLIC
