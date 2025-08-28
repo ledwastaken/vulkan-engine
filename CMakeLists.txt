@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21.2)
 project(vulkan-engine)
 
 find_package(Vulkan REQUIRED)
-find_package(SDL2 REQUIRED)
+find_package(SDL3 REQUIRED)
 
 add_executable(main
   src/main.cpp
@@ -10,7 +10,7 @@ add_executable(main
 
 target_link_libraries(main PUBLIC
   Vulkan::Vulkan
-  SDL2::SDL2
+  SDL3::SDL3
 )
 
 target_compile_options(main PRIVATE
@@ -19,10 +19,10 @@ target_compile_options(main PRIVATE
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_options(main PRIVATE
-    -g -fsanitize=leak
+    -g -fsanitize=address
   )
 
   target_link_options(main PRIVATE
-    -fsanitize=leak
+    -fsanitize=address
   )
 endif()

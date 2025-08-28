@@ -16,7 +16,7 @@
             [
               cmake
               pkg-config
-              SDL2
+              sdl3
               vulkan-headers
               vulkan-loader
               vulkan-validation-layers
