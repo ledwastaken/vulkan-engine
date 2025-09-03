@@ -1,10 +1,12 @@
 #include <iostream>
 
-#include "core/engine.hpp"
+#include "core/engine.h"
+
+using namespace core;
 
 int main()
 {
-  core::Engine& engine = core::Engine::get();
+  Engine& engine = Engine::get();
 
   if (!engine.init())
     return 1;

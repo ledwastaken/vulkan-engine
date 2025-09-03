@@ -1,6 +1,4 @@
-#include "core/engine.hpp"
-
-#include <iostream>
+#include "engine.h"
 
 namespace core
 {
@@ -93,4 +91,9 @@ namespace core
 
     return result;
   };
+
+  bool Engine::initSDL()
+  {
+    // FIXME
+  }
 } // namespace core

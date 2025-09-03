@@ -22,6 +22,7 @@ namespace core
 
   private:
     VkResult initVulkan();
+    bool initSDL();
 
     VkInstance m_instance;
     std::vector<VkPhysicalDevice> m_physicalDevices;
