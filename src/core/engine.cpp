@@ -1,29 +1,31 @@
 #include "engine.h"
 
+#include <iostream>
+
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
+
 namespace core
 {
-  Engine::~Engine() { vkDestroyInstance(m_instance, nullptr); }
-
-  Engine& Engine::get()
+  Engine& Engine::singleton()
   {
     static Engine engine;
 
     return engine;
   }
 
-  bool Engine::init()
+  void Engine::init()
   {
-    if (initVulkan() != VK_SUCCESS)
-      return false;
-  }
+    if (!SDL_Init(SDL_INIT_VIDEO))
+      throw std::runtime_error(SDL_GetError());
 
-  void Engine::run()
-  {
-    // FIXME
-  }
+    m_window = SDL_CreateWindow("Vulkan", 800, 600, SDL_WINDOW_VULKAN);
+    if (!m_window)
+      throw std::runtime_error(SDL_GetError());
 
-  VkResult Engine::initVulkan()
-  {
+    uint32_t extensionCount = 0;
+    auto extensionNames = SDL_Vulkan_GetInstanceExtensions(&extensionCount);
+
     VkResult result = VK_SUCCESS;
     VkApplicationInfo appInfo = {};
     VkInstanceCreateInfo instanceCreateInfo = {};
@@ -37,63 +39,77 @@ namespace core
     // Create the instance.
     instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instanceCreateInfo.pApplicationInfo = &appInfo;
+    instanceCreateInfo.enabledExtensionCount = extensionCount;
+    instanceCreateInfo.ppEnabledExtensionNames = extensionNames;
 
     result = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
 
-    if (result == VK_SUCCESS)
-    {
-      // First figure out how many devices are in the system.
-      uint32_t physicalDeviceCount = 0;
-      vkEnumeratePhysicalDevices(m_instance, &physicalDeviceCount, nullptr);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create vulkan instance");
 
-      // Size the device array appropriately and get the physical
-      // device handles.
-      m_physicalDevices.resize(physicalDeviceCount);
-      vkEnumeratePhysicalDevices(m_instance, &physicalDeviceCount,
-                                 &m_physicalDevices[0]);
+    // First figure out how many devices are in the system.
+    uint32_t physicalDeviceCount = 0;
+    vkEnumeratePhysicalDevices(m_instance, &physicalDeviceCount, nullptr);
 
-      VkPhysicalDeviceFeatures supportedFeatures;
-      VkPhysicalDeviceFeatures requiredFeatures = {};
+    if (physicalDeviceCount == 0)
+      throw std::runtime_error("No physical device available");
 
-      vkGetPhysicalDeviceFeatures(m_physicalDevices[0], &supportedFeatures);
+    // Size the device array appropriately and get the physical device handles.
+    m_physicalDevices.resize(physicalDeviceCount);
+    vkEnumeratePhysicalDevices(m_instance, &physicalDeviceCount,
+                               &m_physicalDevices[0]);
 
-      requiredFeatures.multiDrawIndirect = supportedFeatures.multiDrawIndirect;
-      requiredFeatures.tessellationShader = VK_TRUE;
-      requiredFeatures.geometryShader = VK_TRUE;
+    VkPhysicalDeviceFeatures supportedFeatures;
+    VkPhysicalDeviceFeatures requiredFeatures = {};
 
-      // clang-format off
-      const VkDeviceQueueCreateInfo deviceQueueCreateInfo = {
-        VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, // sType
-        nullptr,                                    // pNext
-        0,                                          // flags
-        0,                                          // queueFamilyIndex
-        1,                                          // queueCount
-        nullptr                                     // pQueuePriorities
-      };
+    vkGetPhysicalDeviceFeatures(m_physicalDevices[0], &supportedFeatures);
 
-      const VkDeviceCreateInfo deviceCreateInfo = {
-        VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, // sType
-        nullptr,                              // pNext
-        0,                                    // flags
-        1,                                    // queueCreateInfoCount
-        &deviceQueueCreateInfo,               // pQueueCreateInfos
-        0,                                    // enabledLayerCount
-        nullptr,                              // ppEnabledLayerNames
-        0,                                    // enabledExtensionCount
-        nullptr,                              // ppEnabledExtensionNames
-        &requiredFeatures                     // pEnabledFeatures
-      };
-      // clang-format on
+    requiredFeatures.multiDrawIndirect = supportedFeatures.multiDrawIndirect;
+    requiredFeatures.tessellationShader = VK_TRUE;
+    requiredFeatures.geometryShader = VK_TRUE;
 
-      result = vkCreateDevice(m_physicalDevices[0], &deviceCreateInfo, nullptr,
-                              &m_logicalDevice);
-    }
+    // clang-format off
+    const VkDeviceQueueCreateInfo deviceQueueCreateInfo = {
+      VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, // sType
+      nullptr,                                    // pNext
+      0,                                          // flags
+      0,                                          // queueFamilyIndex
+      1,                                          // queueCount
+      nullptr                                     // pQueuePriorities
+    };
 
-    return result;
-  };
+    const VkDeviceCreateInfo deviceCreateInfo = {
+      VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, // sType
+      nullptr,                              // pNext
+      0,                                    // flags
+      1,                                    // queueCreateInfoCount
+      &deviceQueueCreateInfo,               // pQueueCreateInfos
+      0,                                    // enabledLayerCount
+      nullptr,                              // ppEnabledLayerNames
+      0,                                    // enabledExtensionCount
+      nullptr,                              // ppEnabledExtensionNames
+      &requiredFeatures                     // pEnabledFeatures
+    };
+    // clang-format on
 
-  bool Engine::initSDL()
-  {
+    result = vkCreateDevice(m_physicalDevices[0], &deviceCreateInfo, nullptr,
+                            &m_logicalDevice);
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create logical device");
+
+    if (!SDL_Vulkan_CreateSurface(m_window, m_instance, nullptr, &m_surface))
+      throw std::runtime_error("Failed to create vulkan surface");
+
     // FIXME
+  }
+
+  void Engine::quit()
+  {
+    vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+    vkDestroyInstance(m_instance, nullptr);
+
+    SDL_DestroyWindow(m_window);
+    SDL_Quit();
   }
 } // namespace core

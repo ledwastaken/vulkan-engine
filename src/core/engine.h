@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <vulkan/vulkan.h>
+#include <SDL3/SDL.h>
 
 namespace core
 {
@@ -12,20 +13,19 @@ namespace core
     Engine& operator=(const Engine&) = delete;
 
     Engine() = default;
-    ~Engine();
 
   public:
-    static Engine& get();
+    static Engine& singleton();
 
-    bool init();
-    void run();
+    void init();
+    void quit();
 
   private:
-    VkResult initVulkan();
-    bool initSDL();
-
     VkInstance m_instance;
     std::vector<VkPhysicalDevice> m_physicalDevices;
     VkDevice m_logicalDevice;
+    VkSurfaceKHR m_surface;
+
+    SDL_Window* m_window;
   };
 } // namespace core

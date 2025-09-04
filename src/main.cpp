@@ -6,14 +6,18 @@ using namespace core;
 
 int main()
 {
-  Engine& engine = Engine::get();
+  Engine& engine = Engine::singleton();
 
-  if (!engine.init())
+  try
+  {
+    engine.init();
+    engine.quit();    
+
+    return 0;
+  }
+  catch(const std::exception& e)
+  {
+    std::cerr << "Error: " << e.what() << '\n';
     return 1;
-
-  engine.run();
-
-  std::cout << "Hello World!\n";
-
-  return 0;
+  }
 }
