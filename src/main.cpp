@@ -11,11 +11,11 @@ int main()
   try
   {
     engine.init();
-    engine.quit();    
-
+    engine.loop();
+    engine.quit();
     return 0;
   }
-  catch(const std::exception& e)
+  catch (const std::exception& e)
   {
     std::cerr << "Error: " << e.what() << '\n';
     return 1;

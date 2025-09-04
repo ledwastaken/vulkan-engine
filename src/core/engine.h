@@ -18,6 +18,7 @@ namespace core
     static Engine& singleton();
 
     void init();
+    void loop();
     void quit();
 
   private:
