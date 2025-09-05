@@ -45,7 +45,7 @@ namespace core
     result = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
 
     if (result != VK_SUCCESS)
-      throw std::runtime_error("Failed to create vulkan instance");
+      throw std::runtime_error(std::string("Failed to create vulkan instance"));
 
     // First figure out how many devices are in the system.
     uint32_t physicalDeviceCount = 0;
@@ -78,6 +78,10 @@ namespace core
       nullptr                                     // pQueuePriorities
     };
 
+    const char* const swapChainExtension[] = {
+      "VK_KHR_swapchain",
+    };
+
     const VkDeviceCreateInfo deviceCreateInfo = {
       VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, // sType
       nullptr,                              // pNext
@@ -86,8 +90,8 @@ namespace core
       &deviceQueueCreateInfo,               // pQueueCreateInfos
       0,                                    // enabledLayerCount
       nullptr,                              // ppEnabledLayerNames
-      0,                                    // enabledExtensionCount
-      nullptr,                              // ppEnabledExtensionNames
+      1,                                    // enabledExtensionCount
+      swapChainExtension,                   // ppEnabledExtensionNames
       &requiredFeatures                     // pEnabledFeatures
     };
     // clang-format on
@@ -100,6 +104,125 @@ namespace core
 
     if (!SDL_Vulkan_CreateSurface(m_window, m_instance, nullptr, &m_surface))
       throw std::runtime_error("Failed to create vulkan surface");
+
+    // clang-format off
+    const VkSwapchainCreateInfoKHR swapchainCreateInfo = {
+      VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR, // sType
+      nullptr,                                     // pNext
+      0,                                           // flags
+      m_surface,                                   // surface
+      2,                                           // minImageCount
+      VK_FORMAT_R8G8B8A8_UNORM,                    // imageFormat
+      VK_COLORSPACE_SRGB_NONLINEAR_KHR,            // imageColorSpace
+      { 1920, 1080 },                              // imageExtent
+      1,                                           // imageArrayLayers
+      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,         // imageUsage
+      VK_SHARING_MODE_EXCLUSIVE,                   // imageSharingMode
+      0,                                           // queueFamilyIndexCount
+      nullptr,                                     // pQueueFamilyIndices
+      VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR,        // preTransform
+      VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,           // compositeAlpha
+      VK_PRESENT_MODE_FIFO_KHR,                    // presentMode
+      VK_TRUE,                                     // clipped
+      m_swapchain                                  // oldSwapchain
+    };
+    // clang-format on
+
+    result = vkCreateSwapchainKHR(m_logicalDevice, &swapchainCreateInfo,
+                                  nullptr, &m_swapchain);
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create swapchain");
+
+    // Next, we query the swap chain for the number of images it actually
+    // contains.
+    uint32_t swapChainImageCount = 0;
+    result = vkGetSwapchainImagesKHR(m_logicalDevice, m_swapchain,
+                                     &swapChainImageCount, nullptr);
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to retrieve swapchain images count");
+
+    // Now we resize our image array and retrieve the image handles from the
+    // swap chain.
+    m_swapchainImages.resize(swapChainImageCount);
+    result =
+        vkGetSwapchainImagesKHR(m_logicalDevice, m_swapchain,
+                                &swapChainImageCount, m_swapchainImages.data());
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to retrieve swapchain images");
+
+    // clang-format off
+
+    // This is our color attachment. It's an R8G8B8A8_UNORM single sample image.
+    // We want to clear it at the start of the renderpass and save the contents
+    // when we're done. It starts in UNDEFINED layout, which is a key to
+    // Vulkan that it's allowed to throw the old content away, and we want to
+    // leave it in COLOR_ATTACHMENT_OPTIMAL state when we're done.
+    static const VkAttachmentDescription attachments[] =
+    {
+      {
+        0,                                       // flags
+        VK_FORMAT_R8G8B8A8_UNORM,                // format
+        VK_SAMPLE_COUNT_1_BIT,                   // samples
+        VK_ATTACHMENT_LOAD_OP_CLEAR,             // loadOp
+        VK_ATTACHMENT_STORE_OP_STORE,            // storeOp
+        VK_ATTACHMENT_LOAD_OP_DONT_CARE,         // stencilLoadOp
+        VK_ATTACHMENT_STORE_OP_DONT_CARE,        // stencilStoreOp
+        VK_IMAGE_LAYOUT_UNDEFINED,               // initialLayout
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL // finalLayout
+      }
+    };
+
+    // This is the single reference to our single attachment.
+    static const VkAttachmentReference attachmentReferences[] =
+    {
+      {
+        0,                                       // attachment
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL // layout
+      }
+    };
+
+    // There is one subpass in this renderpass, with only a reference to the
+    // single output attachment.
+    static const VkSubpassDescription subpasses[] =
+    {
+      {
+        0,                               // flags
+        VK_PIPELINE_BIND_POINT_GRAPHICS, // pipelineBindPoint
+        0,                               // inputAttachmentCount
+        nullptr,                         // pInputAttachments
+        1,                               // colorAttachmentCount
+        &attachmentReferences[0],        // pColorAttachments
+        nullptr,                         // pResolveAttachments
+        nullptr,                         // pDepthStencilAttachment
+        0,                               // preserveAttachmentCount
+        nullptr                          // pPreserveAttachments
+      }
+    };
+
+    // Finally, this is the information that Vulkan needs to create the
+    // renderpass object.
+    static VkRenderPassCreateInfo renderpassCreateInfo =
+    {
+      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, // sType
+      nullptr,                                   // pNext
+      0,                                         // flags
+      1,                                         // attachmentCount
+      attachments,                               // pAttachments
+      1,                                         // subpassCount
+      subpasses,                                 // pSubpasses
+      0,                                         // dependencyCount
+      nullptr                                    // pDependencies
+    };
+    // clang-format on
+
+    result = vkCreateRenderPass(m_logicalDevice, &renderpassCreateInfo, nullptr,
+                                &m_renderpass);
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create renderpass");
   }
 
   void Engine::loop()
@@ -118,6 +241,9 @@ namespace core
 
   void Engine::quit()
   {
+    vkDestroySwapchainKHR(m_logicalDevice, m_swapchain, nullptr);
+    vkDestroyRenderPass(m_logicalDevice, m_renderpass, nullptr);
+
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     vkDestroyInstance(m_instance, nullptr);
 

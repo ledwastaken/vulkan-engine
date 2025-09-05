@@ -26,6 +26,9 @@ namespace core
     std::vector<VkPhysicalDevice> m_physicalDevices;
     VkDevice m_logicalDevice;
     VkSurfaceKHR m_surface;
+    VkSwapchainKHR m_swapchain;
+    std::vector<VkImage> m_swapchainImages;
+    VkRenderPass m_renderpass;
 
     SDL_Window* m_window;
   };
