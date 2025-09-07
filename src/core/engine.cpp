@@ -311,7 +311,14 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create semaphore");
 
-    
+    VkFenceCreateInfo fenceInfo{};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    result =
+        vkCreateFence(m_logicalDevice, &fenceInfo, nullptr, &m_inFlightFence);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create fence");
   }
 
   void Engine::loop()
@@ -364,6 +371,8 @@ namespace core
 
   void Engine::quit()
   {
+    vkDestroyFence(m_logicalDevice, m_inFlightFence, nullptr);
+
     vkDestroySemaphore(m_logicalDevice, m_renderFinishedSemaphore, nullptr);
     vkDestroySemaphore(m_logicalDevice, m_imageAvailableSemaphore, nullptr);
 

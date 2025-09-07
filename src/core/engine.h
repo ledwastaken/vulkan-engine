@@ -35,6 +35,7 @@ namespace core
     std::vector<VkCommandBuffer> m_commandBuffers;
     VkSemaphore m_imageAvailableSemaphore;
     VkSemaphore m_renderFinishedSemaphore;
+    VkFence m_inFlightFence;
 
     SDL_Window* m_window;
   };
