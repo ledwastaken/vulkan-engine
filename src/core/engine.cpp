@@ -297,6 +297,21 @@ namespace core
                                       m_commandBuffers.data());
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to allocate command buffer");
+
+    VkSemaphoreCreateInfo semaphoreInfo{};
+    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    result = vkCreateSemaphore(m_logicalDevice, &semaphoreInfo, nullptr,
+                               &m_imageAvailableSemaphore);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create semaphore");
+
+    result = vkCreateSemaphore(m_logicalDevice, &semaphoreInfo, nullptr,
+                               &m_renderFinishedSemaphore);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create semaphore");
+
+    
   }
 
   void Engine::loop()
@@ -349,6 +364,9 @@ namespace core
 
   void Engine::quit()
   {
+    vkDestroySemaphore(m_logicalDevice, m_renderFinishedSemaphore, nullptr);
+    vkDestroySemaphore(m_logicalDevice, m_imageAvailableSemaphore, nullptr);
+
     vkFreeCommandBuffers(m_logicalDevice, m_commandPool,
                          m_commandBuffers.size(), m_commandBuffers.data());
 

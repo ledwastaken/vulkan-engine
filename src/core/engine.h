@@ -33,6 +33,8 @@ namespace core
     std::vector<VkFramebuffer> m_framebuffers;
     VkCommandPool m_commandPool;
     std::vector<VkCommandBuffer> m_commandBuffers;
+    VkSemaphore m_imageAvailableSemaphore;
+    VkSemaphore m_renderFinishedSemaphore;
 
     SDL_Window* m_window;
   };
