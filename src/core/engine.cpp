@@ -275,6 +275,29 @@ namespace core
         throw std::runtime_error("Failed to create framebuffer");
     }
 
+    VkCommandPoolCreateInfo poolInfo = {};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.queueFamilyIndex = 0;
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+    result = vkCreateCommandPool(m_logicalDevice, &poolInfo, nullptr,
+                                 &m_commandPool);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create command pool");
+
+    m_commandBuffers.resize(swapChainImageCount);
+
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = m_commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = m_commandBuffers.size();
+
+    result = vkAllocateCommandBuffers(m_logicalDevice, &allocInfo,
+                                      m_commandBuffers.data());
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to allocate command buffer");
+
     VkClearValue clearColor = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
 
     for (size_t i = 0; i < m_commandBuffers.size(); i++)
@@ -306,29 +329,6 @@ namespace core
       if (result != VK_SUCCESS)
         throw std::runtime_error("failed to record command buffer!");
     }
-
-    VkCommandPoolCreateInfo poolInfo = {};
-    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.queueFamilyIndex = 0;
-    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
-    result = vkCreateCommandPool(m_logicalDevice, &poolInfo, nullptr,
-                                 &m_commandPool);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("Failed to create command pool");
-
-    m_commandBuffers.resize(swapChainImageCount);
-
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = m_commandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = m_commandBuffers.size();
-
-    result = vkAllocateCommandBuffers(m_logicalDevice, &allocInfo,
-                                      m_commandBuffers.data());
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("Failed to allocate command buffer");
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -396,10 +396,10 @@ namespace core
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        VkQueue graphicsQueue;
-        vkGetDeviceQueue(m_logicalDevice, 0, 0, &graphicsQueue);
+        VkQueue queue;
+        vkGetDeviceQueue(m_logicalDevice, 0, 0, &queue);
 
-        result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, m_inFlightFence);
+        result = vkQueueSubmit(queue, 1, &submitInfo, m_inFlightFence);
         if (result != VK_SUCCESS)
           throw std::runtime_error("Failed to submit draw command buffer");
 
@@ -415,7 +415,7 @@ namespace core
         presentInfo.pImageIndices = &imageIndex;
         presentInfo.pResults = nullptr; // optional
 
-        vkQueuePresentKHR(graphicsQueue, &presentInfo);
+        vkQueuePresentKHR(queue, &presentInfo);
       }
     }
   }
