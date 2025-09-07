@@ -250,6 +250,30 @@ namespace core
 
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create renderpass");
+
+    m_framebuffers.resize(swapChainImageCount);
+
+    for (size_t i = 0; i < swapChainImageCount; i++)
+    {
+      VkImageView attachments[] = { m_swapchainImageViews[i] };
+
+      VkFramebufferCreateInfo framebufferCreateInfo = {};
+      framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+      framebufferCreateInfo.pNext = nullptr;
+      framebufferCreateInfo.flags = 0;
+      framebufferCreateInfo.renderPass = m_renderpass;
+      framebufferCreateInfo.attachmentCount = 1;
+      framebufferCreateInfo.pAttachments = attachments;
+      framebufferCreateInfo.width = 1920;
+      framebufferCreateInfo.height = 1080;
+      framebufferCreateInfo.layers = 1;
+
+      result = vkCreateFramebuffer(m_logicalDevice, &framebufferCreateInfo,
+                                   nullptr, &m_framebuffers[i]);
+
+      if (result != VK_SUCCESS)
+        throw std::runtime_error("Failed to create framebuffer");
+    }
   }
 
   void Engine::loop()
@@ -268,8 +292,14 @@ namespace core
 
   void Engine::quit()
   {
-    vkDestroySwapchainKHR(m_logicalDevice, m_swapchain, nullptr);
+    for (size_t i = 0; i < m_framebuffers.size(); i++)
+      vkDestroyFramebuffer(m_logicalDevice, m_framebuffers[i], nullptr);
+
+    for (size_t i = 0; i < m_swapchainImageViews.size(); i++)
+      vkDestroyImageView(m_logicalDevice, m_swapchainImageViews[i], nullptr);
+
     vkDestroyRenderPass(m_logicalDevice, m_renderpass, nullptr);
+    vkDestroySwapchainKHR(m_logicalDevice, m_swapchain, nullptr);
 
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     vkDestroyInstance(m_instance, nullptr);
