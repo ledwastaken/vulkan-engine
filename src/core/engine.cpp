@@ -301,6 +301,8 @@ namespace core
 
   void Engine::loop()
   {
+    VkClearValue clearColor = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
+
     bool running = true;
     while (running)
     {
@@ -309,6 +311,38 @@ namespace core
       {
         if (event.type == SDL_EVENT_QUIT)
           running = false;
+
+        for (size_t i = 0; i < m_commandBuffers.size(); i++)
+        {
+          VkCommandBufferBeginInfo beginInfo = {};
+          beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+          beginInfo.flags = 0;
+          beginInfo.pInheritanceInfo = nullptr;
+
+          VkResult result =
+              vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo);
+
+          if (result != VK_SUCCESS)
+            throw std::runtime_error(
+                "Failed to begin recording command buffer");
+
+          VkRenderPassBeginInfo renderPassInfo = {};
+          renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+          renderPassInfo.renderPass = m_renderpass;
+          renderPassInfo.framebuffer = m_framebuffers[i];
+          renderPassInfo.renderArea.offset = { 0, 0 };
+          renderPassInfo.renderArea.extent = { 1920, 1080 };
+          renderPassInfo.clearValueCount = 1;
+          renderPassInfo.pClearValues = &clearColor;
+
+          vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo,
+                               VK_SUBPASS_CONTENTS_INLINE);
+
+          vkCmdEndRenderPass(m_commandBuffers[i]);
+          result = vkEndCommandBuffer(m_commandBuffers[i]);
+          if (result != VK_SUCCESS)
+            throw std::runtime_error("failed to record command buffer!");
+        }
       }
     }
   }
