@@ -275,6 +275,38 @@ namespace core
         throw std::runtime_error("Failed to create framebuffer");
     }
 
+    VkClearValue clearColor = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
+
+    for (size_t i = 0; i < m_commandBuffers.size(); i++)
+    {
+      VkCommandBufferBeginInfo beginInfo = {};
+      beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+      beginInfo.flags = 0;
+      beginInfo.pInheritanceInfo = nullptr;
+
+      result = vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo);
+
+      if (result != VK_SUCCESS)
+        throw std::runtime_error("Failed to begin recording command buffer");
+
+      VkRenderPassBeginInfo renderPassInfo = {};
+      renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      renderPassInfo.renderPass = m_renderpass;
+      renderPassInfo.framebuffer = m_framebuffers[i];
+      renderPassInfo.renderArea.offset = { 0, 0 };
+      renderPassInfo.renderArea.extent = { 1920, 1080 };
+      renderPassInfo.clearValueCount = 1;
+      renderPassInfo.pClearValues = &clearColor;
+
+      vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo,
+                           VK_SUBPASS_CONTENTS_INLINE);
+
+      vkCmdEndRenderPass(m_commandBuffers[i]);
+      result = vkEndCommandBuffer(m_commandBuffers[i]);
+      if (result != VK_SUCCESS)
+        throw std::runtime_error("failed to record command buffer!");
+    }
+
     VkCommandPoolCreateInfo poolInfo = {};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.queueFamilyIndex = 0;
@@ -323,7 +355,7 @@ namespace core
 
   void Engine::loop()
   {
-    VkClearValue clearColor = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
+    VkResult result;
 
     bool running = true;
     while (running)
@@ -334,37 +366,56 @@ namespace core
         if (event.type == SDL_EVENT_QUIT)
           running = false;
 
-        for (size_t i = 0; i < m_commandBuffers.size(); i++)
-        {
-          VkCommandBufferBeginInfo beginInfo = {};
-          beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-          beginInfo.flags = 0;
-          beginInfo.pInheritanceInfo = nullptr;
+        uint32_t imageIndex;
+        vkWaitForFences(m_logicalDevice, 1, &m_inFlightFence, VK_TRUE,
+                        UINT64_MAX);
+        vkResetFences(m_logicalDevice, 1, &m_inFlightFence);
 
-          VkResult result =
-              vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo);
+        vkAcquireNextImageKHR(m_logicalDevice, m_swapchain, UINT64_MAX,
+                              m_imageAvailableSemaphore, VK_NULL_HANDLE,
+                              &imageIndex);
 
-          if (result != VK_SUCCESS)
-            throw std::runtime_error(
-                "Failed to begin recording command buffer");
+        VkSubmitInfo submitInfo = {};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-          VkRenderPassBeginInfo renderPassInfo = {};
-          renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-          renderPassInfo.renderPass = m_renderpass;
-          renderPassInfo.framebuffer = m_framebuffers[i];
-          renderPassInfo.renderArea.offset = { 0, 0 };
-          renderPassInfo.renderArea.extent = { 1920, 1080 };
-          renderPassInfo.clearValueCount = 1;
-          renderPassInfo.pClearValues = &clearColor;
+        // Wait until the swapchain image is ready
+        VkSemaphore waitSemaphores[] = { m_imageAvailableSemaphore };
+        VkPipelineStageFlags waitStages[] = {
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+        };
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores = waitSemaphores;
+        submitInfo.pWaitDstStageMask = waitStages;
 
-          vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo,
-                               VK_SUBPASS_CONTENTS_INLINE);
+        // The command buffer to execute
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &m_commandBuffers[imageIndex];
 
-          vkCmdEndRenderPass(m_commandBuffers[i]);
-          result = vkEndCommandBuffer(m_commandBuffers[i]);
-          if (result != VK_SUCCESS)
-            throw std::runtime_error("failed to record command buffer!");
-        }
+        // Signal when rendering is finished
+        VkSemaphore signalSemaphores[] = { m_renderFinishedSemaphore };
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = signalSemaphores;
+
+        VkQueue graphicsQueue;
+        vkGetDeviceQueue(m_logicalDevice, 0, 0, &graphicsQueue);
+
+        result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, m_inFlightFence);
+        if (result != VK_SUCCESS)
+          throw std::runtime_error("Failed to submit draw command buffer");
+
+        VkPresentInfoKHR presentInfo = {};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = signalSemaphores;
+
+        VkSwapchainKHR swapchains[] = { m_swapchain };
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = swapchains;
+        presentInfo.pImageIndices = &imageIndex;
+        presentInfo.pResults = nullptr; // optional
+
+        vkQueuePresentKHR(graphicsQueue, &presentInfo);
       }
     }
   }
