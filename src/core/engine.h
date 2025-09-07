@@ -28,6 +28,7 @@ namespace core
     VkSurfaceKHR m_surface;
     VkSwapchainKHR m_swapchain;
     std::vector<VkImage> m_swapchainImages;
+    std::vector<VkImageView> m_swapchainImageViews;
     VkRenderPass m_renderpass;
 
     SDL_Window* m_window;
