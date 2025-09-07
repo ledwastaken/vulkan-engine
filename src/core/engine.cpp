@@ -274,6 +274,16 @@ namespace core
       if (result != VK_SUCCESS)
         throw std::runtime_error("Failed to create framebuffer");
     }
+
+    VkCommandPoolCreateInfo poolInfo = {};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.queueFamilyIndex = 0;
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+    result = vkCreateCommandPool(m_logicalDevice, &poolInfo, nullptr,
+                                 &m_commandPool);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create command pool");
   }
 
   void Engine::loop()
@@ -292,6 +302,8 @@ namespace core
 
   void Engine::quit()
   {
+    vkDestroyCommandPool(m_logicalDevice, m_commandPool, nullptr);
+
     for (size_t i = 0; i < m_framebuffers.size(); i++)
       vkDestroyFramebuffer(m_logicalDevice, m_framebuffers[i], nullptr);
 

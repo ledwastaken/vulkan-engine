@@ -31,6 +31,7 @@ namespace core
     std::vector<VkImageView> m_swapchainImageViews;
     VkRenderPass m_renderpass;
     std::vector<VkFramebuffer> m_framebuffers;
+    VkCommandPool m_commandPool;
 
     SDL_Window* m_window;
   };
