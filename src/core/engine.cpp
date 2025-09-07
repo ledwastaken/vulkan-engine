@@ -284,6 +284,19 @@ namespace core
                                  &m_commandPool);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create command pool");
+
+    m_commandBuffers.resize(swapChainImageCount);
+
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = m_commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = m_commandBuffers.size();
+
+    result = vkAllocateCommandBuffers(m_logicalDevice, &allocInfo,
+                                      m_commandBuffers.data());
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to allocate command buffer");
   }
 
   void Engine::loop()
@@ -302,6 +315,9 @@ namespace core
 
   void Engine::quit()
   {
+    vkFreeCommandBuffers(m_logicalDevice, m_commandPool,
+                         m_commandBuffers.size(), m_commandBuffers.data());
+
     vkDestroyCommandPool(m_logicalDevice, m_commandPool, nullptr);
 
     for (size_t i = 0; i < m_framebuffers.size(); i++)

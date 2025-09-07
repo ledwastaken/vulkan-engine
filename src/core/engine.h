@@ -32,6 +32,7 @@ namespace core
     VkRenderPass m_renderpass;
     std::vector<VkFramebuffer> m_framebuffers;
     VkCommandPool m_commandPool;
+    std::vector<VkCommandBuffer> m_commandBuffers;
 
     SDL_Window* m_window;
   };
