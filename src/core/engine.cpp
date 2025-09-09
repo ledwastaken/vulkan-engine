@@ -351,6 +351,48 @@ namespace core
         vkCreateFence(m_logicalDevice, &fenceInfo, nullptr, &m_inFlightFence);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create fence");
+
+    struct Vertex
+    {
+      float pos[2];
+      float color[3];
+    };
+
+    const std::vector<Vertex> vertices = {
+      { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } }, // bottom red
+      { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } }, // right green
+      { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } }, // left blue
+    };
+
+    VkBufferCreateInfo bufferInfo = {};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = sizeof(Vertex) * vertices.size();
+    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    result =
+        vkCreateBuffer(m_logicalDevice, &bufferInfo, nullptr, &m_vertexBuffer);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create vertex buffer");
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(m_logicalDevice, m_vertexBuffer,
+                                  &memRequirements);
+
+    // VkMemoryAllocateInfo meoryAllocInfo = {};
+    // meoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    // meoryAllocInfo.allocationSize = memRequirements.size;
+    // meoryAllocInfo.memoryTypeIndex =
+    //     findMemoryType(memRequirements.memoryTypeBits,
+    //                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+    //                        | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    // result = vkAllocateMemory(m_logicalDevice, &meoryAllocInfo, nullptr,
+    //                           &vertexBufferMemory);
+    // if (result != VK_SUCCESS)
+    //   throw std::runtime_error("Failed to allocate vertex buffer memory");
+
+    // vkBindBufferMemory(m_logicalDevice, vertexBuffer, vertexBufferMemory, 0);
   }
 
   void Engine::loop()
@@ -422,6 +464,8 @@ namespace core
 
   void Engine::quit()
   {
+    vkDestroyBuffer(m_logicalDevice, m_vertexBuffer, nullptr);
+
     vkDestroyFence(m_logicalDevice, m_inFlightFence, nullptr);
 
     vkDestroySemaphore(m_logicalDevice, m_renderFinishedSemaphore, nullptr);

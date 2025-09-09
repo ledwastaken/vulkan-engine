@@ -36,6 +36,7 @@ namespace core
     VkSemaphore m_imageAvailableSemaphore;
     VkSemaphore m_renderFinishedSemaphore;
     VkFence m_inFlightFence;
+    VkBuffer m_vertexBuffer;
 
     SDL_Window* m_window;
   };
