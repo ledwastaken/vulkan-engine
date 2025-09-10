@@ -379,20 +379,23 @@ namespace core
     vkGetBufferMemoryRequirements(m_logicalDevice, m_vertexBuffer,
                                   &memRequirements);
 
-    // VkMemoryAllocateInfo meoryAllocInfo = {};
-    // meoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    // meoryAllocInfo.allocationSize = memRequirements.size;
-    // meoryAllocInfo.memoryTypeIndex =
-    //     findMemoryType(memRequirements.memoryTypeBits,
-    //                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-    //                        | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    VkMemoryAllocateInfo memoryAlloInfo = {};
+    memoryAlloInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAlloInfo.allocationSize = memRequirements.size;
+    memoryAlloInfo.memoryTypeIndex =
+        chooseHeapFromFlags(memRequirements,
+                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                                | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                                | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    // result = vkAllocateMemory(m_logicalDevice, &meoryAllocInfo, nullptr,
-    //                           &vertexBufferMemory);
-    // if (result != VK_SUCCESS)
-    //   throw std::runtime_error("Failed to allocate vertex buffer memory");
+    result = vkAllocateMemory(m_logicalDevice, &memoryAlloInfo, nullptr,
+                              &m_vertexBufferMemory);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to allocate vertex buffer memory");
 
-    // vkBindBufferMemory(m_logicalDevice, vertexBuffer, vertexBufferMemory, 0);
+    vkBindBufferMemory(m_logicalDevice, m_vertexBuffer, m_vertexBufferMemory,
+                       0);
   }
 
   void Engine::loop()
@@ -464,6 +467,7 @@ namespace core
 
   void Engine::quit()
   {
+    vkFreeMemory(m_logicalDevice, m_vertexBufferMemory, nullptr);
     vkDestroyBuffer(m_logicalDevice, m_vertexBuffer, nullptr);
 
     vkDestroyFence(m_logicalDevice, m_inFlightFence, nullptr);
@@ -490,5 +494,48 @@ namespace core
 
     SDL_DestroyWindow(m_window);
     SDL_Quit();
+  }
+
+  uint32_t
+  Engine::chooseHeapFromFlags(const VkMemoryRequirements& memoryRequirements,
+                              VkMemoryPropertyFlags requiredFlags,
+                              VkMemoryPropertyFlags preferredFlags) const
+  {
+    VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
+
+    vkGetPhysicalDeviceMemoryProperties(m_physicalDevices[0],
+                                        &deviceMemoryProperties);
+
+    uint32_t selectedType = ~0u;
+    uint32_t memoryType;
+
+    for (memoryType = 0; memoryType < 32; ++memoryType)
+    {
+      if (memoryRequirements.memoryTypeBits & (1 << memoryType))
+      {
+        const VkMemoryType& type =
+            deviceMemoryProperties.memoryTypes[memoryType];
+        // If it exactly matches my preferred properties, grab it.
+        if ((type.propertyFlags & preferredFlags) == preferredFlags)
+          return memoryType;
+      }
+    }
+
+    if (selectedType != ~0u)
+    {
+      for (memoryType = 0; memoryType < 32; ++memoryType)
+      {
+        if (memoryRequirements.memoryTypeBits & (1 << memoryType))
+        {
+          const VkMemoryType& type =
+              deviceMemoryProperties.memoryTypes[memoryType];
+          // If it has all my required properties, it'll do.
+          if ((type.propertyFlags & requiredFlags) == requiredFlags)
+            return selectedType;
+        }
+      }
+    }
+
+    return selectedType;
   }
 } // namespace core

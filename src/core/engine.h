@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include <vulkan/vulkan.h>
 #include <SDL3/SDL.h>
+#include <vulkan/vulkan.h>
 
 namespace core
 {
@@ -21,6 +21,10 @@ namespace core
     void loop();
     void quit();
 
+    uint32_t chooseHeapFromFlags(const VkMemoryRequirements& memoryRequirements,
+                                 VkMemoryPropertyFlags requiredFlags,
+                                 VkMemoryPropertyFlags preferredFlags) const;
+
   private:
     VkInstance m_instance;
     std::vector<VkPhysicalDevice> m_physicalDevices;
@@ -37,6 +41,7 @@ namespace core
     VkSemaphore m_renderFinishedSemaphore;
     VkFence m_inFlightFence;
     VkBuffer m_vertexBuffer;
+    VkDeviceMemory m_vertexBufferMemory;
 
     SDL_Window* m_window;
   };
