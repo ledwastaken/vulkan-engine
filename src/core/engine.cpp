@@ -1,5 +1,6 @@
 #include "engine.h"
 
+#include <cstring>
 #include <iostream>
 
 #include <SDL3/SDL.h>
@@ -396,6 +397,14 @@ namespace core
 
     vkBindBufferMemory(m_logicalDevice, m_vertexBuffer, m_vertexBufferMemory,
                        0);
+
+    Vertex* ppData = nullptr;
+    vkMapMemory(m_logicalDevice, m_vertexBufferMemory, 0, VK_WHOLE_SIZE, 0,
+                reinterpret_cast<void**>(&ppData));
+
+    std::memcpy(ppData, vertices.data(), sizeof(Vertex) * vertices.size());
+
+    vkUnmapMemory(m_logicalDevice, m_vertexBufferMemory);
   }
 
   void Engine::loop()
