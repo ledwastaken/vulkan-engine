@@ -407,29 +407,7 @@ namespace core
 
     vkUnmapMemory(m_logicalDevice, m_vertexBufferMemory);
 
-    std::ifstream file("shader.vert.spv", std::ios::ate | std::ios::binary);
-
-    if (!file.is_open())
-      throw std::runtime_error("Failed to open file");
-
-    size_t fileSize = file.tellg();
-    std::vector<char> buffer(fileSize);
-
-    file.seekg(0);
-    file.read(buffer.data(), fileSize);
-    file.close();
-
-    VkShaderModuleCreateInfo shaderModuleInfo = {};
-    shaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shaderModuleInfo.pNext = nullptr;
-    shaderModuleInfo.flags = 0;
-    shaderModuleInfo.codeSize = fileSize;
-    shaderModuleInfo.pCode = reinterpret_cast<uint32_t*>(buffer.data());
-
-    result = vkCreateShaderModule(m_logicalDevice, &shaderModuleInfo, nullptr,
-                                  &m_vertexShaderModule);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("Failed to create shader module");
+    loadShader("shader.vert.spv", &m_vertexShaderModule);
   }
 
   void Engine::loop()
@@ -573,5 +551,33 @@ namespace core
     }
 
     return selectedType;
+  }
+
+  void Engine::loadShader(const std::string& filename,
+                          VkShaderModule* shaderModule)
+  {
+    std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+    if (!file.is_open())
+      throw std::runtime_error("Failed to open file");
+
+    size_t fileSize = file.tellg();
+    std::vector<char> buffer(fileSize);
+
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+    file.close();
+
+    VkShaderModuleCreateInfo shaderModuleInfo = {};
+    shaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shaderModuleInfo.pNext = nullptr;
+    shaderModuleInfo.flags = 0;
+    shaderModuleInfo.codeSize = fileSize;
+    shaderModuleInfo.pCode = reinterpret_cast<uint32_t*>(buffer.data());
+
+    VkResult result = vkCreateShaderModule(m_logicalDevice, &shaderModuleInfo,
+                                           nullptr, shaderModule);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create shader module");
   }
 } // namespace core

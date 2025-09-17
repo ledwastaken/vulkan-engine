@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include <SDL3/SDL.h>
@@ -25,6 +26,8 @@ namespace core
                                  VkMemoryPropertyFlags requiredFlags,
                                  VkMemoryPropertyFlags preferredFlags) const;
 
+    void loadShader(const std::string& filename, VkShaderModule* shaderModule);
+
   private:
     VkInstance m_instance;
     std::vector<VkPhysicalDevice> m_physicalDevices;
@@ -43,6 +46,7 @@ namespace core
     VkBuffer m_vertexBuffer;
     VkDeviceMemory m_vertexBufferMemory;
     VkShaderModule m_vertexShaderModule;
+    VkShaderModule m_fragmentShaderModule;
 
     SDL_Window* m_window;
   };
