@@ -408,6 +408,7 @@ namespace core
     vkUnmapMemory(m_logicalDevice, m_vertexBufferMemory);
 
     loadShader("shader.vert.spv", &m_vertexShaderModule);
+    loadShader("shader.frag.spv", &m_fragmentShaderModule);
   }
 
   void Engine::loop()
@@ -479,6 +480,7 @@ namespace core
 
   void Engine::quit()
   {
+    vkDestroyShaderModule(m_logicalDevice, m_fragmentShaderModule, nullptr);
     vkDestroyShaderModule(m_logicalDevice, m_vertexShaderModule, nullptr);
 
     vkFreeMemory(m_logicalDevice, m_vertexBufferMemory, nullptr);
