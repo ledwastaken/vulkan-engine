@@ -31,7 +31,7 @@ namespace core
   private:
     VkInstance m_instance;
     std::vector<VkPhysicalDevice> m_physicalDevices;
-    VkDevice m_logicalDevice;
+    VkDevice m_device;
     VkSurfaceKHR m_surface;
     VkSwapchainKHR m_swapchain;
     std::vector<VkImage> m_swapchainImages;

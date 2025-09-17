@@ -99,7 +99,7 @@ namespace core
     // clang-format on
 
     result = vkCreateDevice(m_physicalDevices[0], &deviceCreateInfo, nullptr,
-                            &m_logicalDevice);
+                            &m_device);
 
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create logical device");
@@ -130,7 +130,7 @@ namespace core
     };
     // clang-format on
 
-    result = vkCreateSwapchainKHR(m_logicalDevice, &swapchainCreateInfo,
+    result = vkCreateSwapchainKHR(m_device, &swapchainCreateInfo,
                                   nullptr, &m_swapchain);
 
     if (result != VK_SUCCESS)
@@ -139,7 +139,7 @@ namespace core
     // Next, we query the swap chain for the number of images it actually
     // contains.
     uint32_t swapChainImageCount = 0;
-    result = vkGetSwapchainImagesKHR(m_logicalDevice, m_swapchain,
+    result = vkGetSwapchainImagesKHR(m_device, m_swapchain,
                                      &swapChainImageCount, nullptr);
 
     if (result != VK_SUCCESS)
@@ -149,7 +149,7 @@ namespace core
     // swap chain.
     m_swapchainImages.resize(swapChainImageCount);
     result =
-        vkGetSwapchainImagesKHR(m_logicalDevice, m_swapchain,
+        vkGetSwapchainImagesKHR(m_device, m_swapchain,
                                 &swapChainImageCount, m_swapchainImages.data());
 
     if (result != VK_SUCCESS)
@@ -175,7 +175,7 @@ namespace core
       viewInfo.subresourceRange.baseArrayLayer = 0;
       viewInfo.subresourceRange.layerCount = 1;
 
-      result = vkCreateImageView(m_logicalDevice, &viewInfo, nullptr,
+      result = vkCreateImageView(m_device, &viewInfo, nullptr,
                                  &m_swapchainImageViews[i]);
 
       if (result != VK_SUCCESS)
@@ -247,7 +247,7 @@ namespace core
     };
     // clang-format on
 
-    result = vkCreateRenderPass(m_logicalDevice, &renderpassCreateInfo, nullptr,
+    result = vkCreateRenderPass(m_device, &renderpassCreateInfo, nullptr,
                                 &m_renderpass);
 
     if (result != VK_SUCCESS)
@@ -270,7 +270,7 @@ namespace core
       framebufferCreateInfo.height = 1080;
       framebufferCreateInfo.layers = 1;
 
-      result = vkCreateFramebuffer(m_logicalDevice, &framebufferCreateInfo,
+      result = vkCreateFramebuffer(m_device, &framebufferCreateInfo,
                                    nullptr, &m_framebuffers[i]);
 
       if (result != VK_SUCCESS)
@@ -282,7 +282,7 @@ namespace core
     poolInfo.queueFamilyIndex = 0;
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    result = vkCreateCommandPool(m_logicalDevice, &poolInfo, nullptr,
+    result = vkCreateCommandPool(m_device, &poolInfo, nullptr,
                                  &m_commandPool);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create command pool");
@@ -295,7 +295,7 @@ namespace core
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = m_commandBuffers.size();
 
-    result = vkAllocateCommandBuffers(m_logicalDevice, &allocInfo,
+    result = vkAllocateCommandBuffers(m_device, &allocInfo,
                                       m_commandBuffers.data());
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to allocate command buffer");
@@ -335,12 +335,12 @@ namespace core
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    result = vkCreateSemaphore(m_logicalDevice, &semaphoreInfo, nullptr,
+    result = vkCreateSemaphore(m_device, &semaphoreInfo, nullptr,
                                &m_imageAvailableSemaphore);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create semaphore");
 
-    result = vkCreateSemaphore(m_logicalDevice, &semaphoreInfo, nullptr,
+    result = vkCreateSemaphore(m_device, &semaphoreInfo, nullptr,
                                &m_renderFinishedSemaphore);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create semaphore");
@@ -350,7 +350,7 @@ namespace core
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     result =
-        vkCreateFence(m_logicalDevice, &fenceInfo, nullptr, &m_inFlightFence);
+        vkCreateFence(m_device, &fenceInfo, nullptr, &m_inFlightFence);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create fence");
 
@@ -373,12 +373,12 @@ namespace core
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     result =
-        vkCreateBuffer(m_logicalDevice, &bufferInfo, nullptr, &m_vertexBuffer);
+        vkCreateBuffer(m_device, &bufferInfo, nullptr, &m_vertexBuffer);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create vertex buffer");
 
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(m_logicalDevice, m_vertexBuffer,
+    vkGetBufferMemoryRequirements(m_device, m_vertexBuffer,
                                   &memRequirements);
 
     VkMemoryAllocateInfo memoryAlloInfo = {};
@@ -391,21 +391,21 @@ namespace core
                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
                                 | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    result = vkAllocateMemory(m_logicalDevice, &memoryAlloInfo, nullptr,
+    result = vkAllocateMemory(m_device, &memoryAlloInfo, nullptr,
                               &m_vertexBufferMemory);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to allocate vertex buffer memory");
 
-    vkBindBufferMemory(m_logicalDevice, m_vertexBuffer, m_vertexBufferMemory,
+    vkBindBufferMemory(m_device, m_vertexBuffer, m_vertexBufferMemory,
                        0);
 
     Vertex* ppData = nullptr;
-    vkMapMemory(m_logicalDevice, m_vertexBufferMemory, 0, VK_WHOLE_SIZE, 0,
+    vkMapMemory(m_device, m_vertexBufferMemory, 0, VK_WHOLE_SIZE, 0,
                 reinterpret_cast<void**>(&ppData));
 
     std::memcpy(ppData, vertices.data(), sizeof(Vertex) * vertices.size());
 
-    vkUnmapMemory(m_logicalDevice, m_vertexBufferMemory);
+    vkUnmapMemory(m_device, m_vertexBufferMemory);
 
     loadShader("shader.vert.spv", &m_vertexShaderModule);
     loadShader("shader.frag.spv", &m_fragmentShaderModule);
@@ -425,11 +425,11 @@ namespace core
           running = false;
 
         uint32_t imageIndex;
-        vkWaitForFences(m_logicalDevice, 1, &m_inFlightFence, VK_TRUE,
+        vkWaitForFences(m_device, 1, &m_inFlightFence, VK_TRUE,
                         UINT64_MAX);
-        vkResetFences(m_logicalDevice, 1, &m_inFlightFence);
+        vkResetFences(m_device, 1, &m_inFlightFence);
 
-        vkAcquireNextImageKHR(m_logicalDevice, m_swapchain, UINT64_MAX,
+        vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX,
                               m_imageAvailableSemaphore, VK_NULL_HANDLE,
                               &imageIndex);
 
@@ -455,7 +455,7 @@ namespace core
         submitInfo.pSignalSemaphores = signalSemaphores;
 
         VkQueue queue;
-        vkGetDeviceQueue(m_logicalDevice, 0, 0, &queue);
+        vkGetDeviceQueue(m_device, 0, 0, &queue);
 
         result = vkQueueSubmit(queue, 1, &submitInfo, m_inFlightFence);
         if (result != VK_SUCCESS)
@@ -480,30 +480,30 @@ namespace core
 
   void Engine::quit()
   {
-    vkDestroyShaderModule(m_logicalDevice, m_fragmentShaderModule, nullptr);
-    vkDestroyShaderModule(m_logicalDevice, m_vertexShaderModule, nullptr);
+    vkDestroyShaderModule(m_device, m_fragmentShaderModule, nullptr);
+    vkDestroyShaderModule(m_device, m_vertexShaderModule, nullptr);
 
-    vkFreeMemory(m_logicalDevice, m_vertexBufferMemory, nullptr);
-    vkDestroyBuffer(m_logicalDevice, m_vertexBuffer, nullptr);
+    vkFreeMemory(m_device, m_vertexBufferMemory, nullptr);
+    vkDestroyBuffer(m_device, m_vertexBuffer, nullptr);
 
-    vkDestroyFence(m_logicalDevice, m_inFlightFence, nullptr);
+    vkDestroyFence(m_device, m_inFlightFence, nullptr);
 
-    vkDestroySemaphore(m_logicalDevice, m_renderFinishedSemaphore, nullptr);
-    vkDestroySemaphore(m_logicalDevice, m_imageAvailableSemaphore, nullptr);
+    vkDestroySemaphore(m_device, m_renderFinishedSemaphore, nullptr);
+    vkDestroySemaphore(m_device, m_imageAvailableSemaphore, nullptr);
 
-    vkFreeCommandBuffers(m_logicalDevice, m_commandPool,
+    vkFreeCommandBuffers(m_device, m_commandPool,
                          m_commandBuffers.size(), m_commandBuffers.data());
 
-    vkDestroyCommandPool(m_logicalDevice, m_commandPool, nullptr);
+    vkDestroyCommandPool(m_device, m_commandPool, nullptr);
 
     for (size_t i = 0; i < m_framebuffers.size(); i++)
-      vkDestroyFramebuffer(m_logicalDevice, m_framebuffers[i], nullptr);
+      vkDestroyFramebuffer(m_device, m_framebuffers[i], nullptr);
 
     for (size_t i = 0; i < m_swapchainImageViews.size(); i++)
-      vkDestroyImageView(m_logicalDevice, m_swapchainImageViews[i], nullptr);
+      vkDestroyImageView(m_device, m_swapchainImageViews[i], nullptr);
 
-    vkDestroyRenderPass(m_logicalDevice, m_renderpass, nullptr);
-    vkDestroySwapchainKHR(m_logicalDevice, m_swapchain, nullptr);
+    vkDestroyRenderPass(m_device, m_renderpass, nullptr);
+    vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
 
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     vkDestroyInstance(m_instance, nullptr);
@@ -577,7 +577,7 @@ namespace core
     shaderModuleInfo.codeSize = fileSize;
     shaderModuleInfo.pCode = reinterpret_cast<uint32_t*>(buffer.data());
 
-    VkResult result = vkCreateShaderModule(m_logicalDevice, &shaderModuleInfo,
+    VkResult result = vkCreateShaderModule(m_device, &shaderModuleInfo,
                                            nullptr, shaderModule);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create shader module");
