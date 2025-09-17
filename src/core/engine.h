@@ -42,6 +42,7 @@ namespace core
     VkFence m_inFlightFence;
     VkBuffer m_vertexBuffer;
     VkDeviceMemory m_vertexBufferMemory;
+    VkShaderModule m_vertexShaderModule;
 
     SDL_Window* m_window;
   };
