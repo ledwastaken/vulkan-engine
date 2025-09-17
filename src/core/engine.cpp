@@ -409,6 +409,8 @@ namespace core
 
     loadShader("shader.vert.spv", &m_vertexShaderModule);
     loadShader("shader.frag.spv", &m_fragmentShaderModule);
+
+    // FIXME: Create graphics pipeline
   }
 
   void Engine::loop()
@@ -480,6 +482,8 @@ namespace core
 
   void Engine::quit()
   {
+    vkDestroyPipeline(m_device, m_pipeline, nullptr);
+
     vkDestroyShaderModule(m_device, m_fragmentShaderModule, nullptr);
     vkDestroyShaderModule(m_device, m_vertexShaderModule, nullptr);
 
