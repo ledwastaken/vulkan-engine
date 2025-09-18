@@ -393,7 +393,8 @@ namespace core
     pipelineLayoutInfo.pushConstantRangeCount = 0;
     pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
-    result = vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
+    result = vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr,
+                                    &m_pipelineLayout);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create pipeline layout");
 
@@ -447,19 +448,22 @@ namespace core
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO, // sType
       nullptr,                                                     // pNext
       0,                                                           // flags
-      VK_PRIMITIVE_TOPOLOGY_POINT_LIST,                            // topology
+      VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,                         // topology
       VK_FALSE                                                     // primitiveRestartEnable
     };
 
     static const VkViewport dummyViewport = {
-      0.0f, 0.0f,   // x, y
-      1.0f, 1.0f,   // width, height
-      0.1f, 1000.0f // minDepth, maxDepth
+      0.0f,
+      0.0f,
+      1920.0f,
+      1080.0f,
+      0.0f,
+      1.0f
     };
 
     static const VkRect2D dummyScissor = {
       { 0, 0 }, // offset
-      { 1, 1 }  // extent
+      { 1920, 1080 }  // extent
     };
 
     static const VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {
@@ -477,7 +481,7 @@ namespace core
       nullptr,                                                    // pNext
       0,                                                          // flags
       VK_FALSE,                                                   // depthClampEnable
-      VK_TRUE,                                                    // rasterizerDiscardEnable
+      VK_FALSE,                                                   // rasterizerDiscardEnable
       VK_POLYGON_MODE_FILL,                                       // polygonMode
       VK_CULL_MODE_NONE,                                          // cullMode
       VK_FRONT_FACE_COUNTER_CLOCKWISE,                            // frontFace
@@ -485,8 +489,24 @@ namespace core
       0.0f,                                                       // depthBiasConstantFactor
       0.0f,                                                       // depthBiasClamp
       0.0f,                                                       // depthBiasSlopeFactor
-      0.0f                                                        // lineWidth
+      1.0f                                                        // lineWidth
     };
+
+    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                                      VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachment.blendEnable = VK_FALSE;
+
+    VkPipelineColorBlendStateCreateInfo colorBlending{};
+    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlending.logicOpEnable = VK_FALSE;
+    colorBlending.attachmentCount = 1;
+    colorBlending.pAttachments = &colorBlendAttachment;
+
+    VkPipelineMultisampleStateCreateInfo multisampling{};
+    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisampling.sampleShadingEnable = VK_FALSE;
+    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
     static const VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = {
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, // sType
@@ -499,9 +519,9 @@ namespace core
       nullptr,                                         // pTessellationState
       &viewportStateCreateInfo,                        // pViewportState
       &rasterizationStateCreateInfo,                   // pRasterizationState
-      nullptr,                                         // pMultisampleState
+      &multisampling,                                  // pMultisampleState
       nullptr,                                         // pDepthStencilState
-      nullptr,                                         // pColorBlendState
+      &colorBlending,                                  // pColorBlendState
       nullptr,                                         // pDynamicState
       m_pipelineLayout,                                // layout
       m_renderpass,                                    // renderPass
@@ -547,8 +567,9 @@ namespace core
       vkCmdBindPipeline(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
                         m_pipeline);
 
+      VkDeviceSize offset = 0;
       vkCmdBindVertexBuffers(m_commandBuffers[i], 0, 1, &m_vertexBuffer,
-                             &m_bufferSize);
+                             &offset);
       vkCmdDraw(m_commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1,
                 0, 0);
 
