@@ -386,6 +386,17 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create graphics pipeline");
 
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount = 0;
+    pipelineLayoutInfo.pSetLayouts = nullptr;
+    pipelineLayoutInfo.pushConstantRangeCount = 0;
+    pipelineLayoutInfo.pPushConstantRanges = nullptr;
+
+    result = vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create pipeline layout");
+
     // clang-format off
     VkPipelineShaderStageCreateInfo shaderStageCreateInfos[2] = {
       {
@@ -492,7 +503,7 @@ namespace core
       nullptr,                                         // pDepthStencilState
       nullptr,                                         // pColorBlendState
       nullptr,                                         // pDynamicState
-      VK_NULL_HANDLE,                                  // layout
+      m_pipelineLayout,                                // layout
       m_renderpass,                                    // renderPass
       0,                                               // subpass
       VK_NULL_HANDLE,                                  // basePipelineHandle
@@ -616,6 +627,8 @@ namespace core
 
   void Engine::quit()
   {
+    vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
+
     vkDestroyPipelineCache(m_device, m_pipelineCache, nullptr);
     vkDestroyPipeline(m_device, m_pipeline, nullptr);
 
