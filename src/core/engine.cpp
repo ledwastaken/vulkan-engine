@@ -130,8 +130,8 @@ namespace core
     };
     // clang-format on
 
-    result = vkCreateSwapchainKHR(m_device, &swapchainCreateInfo,
-                                  nullptr, &m_swapchain);
+    result = vkCreateSwapchainKHR(m_device, &swapchainCreateInfo, nullptr,
+                                  &m_swapchain);
 
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create swapchain");
@@ -148,9 +148,8 @@ namespace core
     // Now we resize our image array and retrieve the image handles from the
     // swap chain.
     m_swapchainImages.resize(swapChainImageCount);
-    result =
-        vkGetSwapchainImagesKHR(m_device, m_swapchain,
-                                &swapChainImageCount, m_swapchainImages.data());
+    result = vkGetSwapchainImagesKHR(
+        m_device, m_swapchain, &swapChainImageCount, m_swapchainImages.data());
 
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to retrieve swapchain images");
@@ -270,8 +269,8 @@ namespace core
       framebufferCreateInfo.height = 1080;
       framebufferCreateInfo.layers = 1;
 
-      result = vkCreateFramebuffer(m_device, &framebufferCreateInfo,
-                                   nullptr, &m_framebuffers[i]);
+      result = vkCreateFramebuffer(m_device, &framebufferCreateInfo, nullptr,
+                                   &m_framebuffers[i]);
 
       if (result != VK_SUCCESS)
         throw std::runtime_error("Failed to create framebuffer");
@@ -282,8 +281,7 @@ namespace core
     poolInfo.queueFamilyIndex = 0;
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    result = vkCreateCommandPool(m_device, &poolInfo, nullptr,
-                                 &m_commandPool);
+    result = vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create command pool");
 
@@ -295,8 +293,8 @@ namespace core
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = m_commandBuffers.size();
 
-    result = vkAllocateCommandBuffers(m_device, &allocInfo,
-                                      m_commandBuffers.data());
+    result =
+        vkAllocateCommandBuffers(m_device, &allocInfo, m_commandBuffers.data());
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to allocate command buffer");
 
@@ -349,8 +347,7 @@ namespace core
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    result =
-        vkCreateFence(m_device, &fenceInfo, nullptr, &m_inFlightFence);
+    result = vkCreateFence(m_device, &fenceInfo, nullptr, &m_inFlightFence);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create fence");
 
@@ -372,14 +369,12 @@ namespace core
     bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    result =
-        vkCreateBuffer(m_device, &bufferInfo, nullptr, &m_vertexBuffer);
+    result = vkCreateBuffer(m_device, &bufferInfo, nullptr, &m_vertexBuffer);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create vertex buffer");
 
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(m_device, m_vertexBuffer,
-                                  &memRequirements);
+    vkGetBufferMemoryRequirements(m_device, m_vertexBuffer, &memRequirements);
 
     VkMemoryAllocateInfo memoryAlloInfo = {};
     memoryAlloInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -396,8 +391,7 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to allocate vertex buffer memory");
 
-    vkBindBufferMemory(m_device, m_vertexBuffer, m_vertexBufferMemory,
-                       0);
+    vkBindBufferMemory(m_device, m_vertexBuffer, m_vertexBufferMemory, 0);
 
     Vertex* ppData = nullptr;
     vkMapMemory(m_device, m_vertexBufferMemory, 0, VK_WHOLE_SIZE, 0,
@@ -417,7 +411,8 @@ namespace core
     cacheCreateInfo.pInitialData = nullptr;
     cacheCreateInfo.initialDataSize = 0;
 
-    result = vkCreatePipelineCache(m_device, &cacheCreateInfo, nullptr, &m_pipelineCache);
+    result = vkCreatePipelineCache(m_device, &cacheCreateInfo, nullptr,
+                                   &m_pipelineCache);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create graphics pipeline");
 
@@ -442,8 +437,7 @@ namespace core
           running = false;
 
         uint32_t imageIndex;
-        vkWaitForFences(m_device, 1, &m_inFlightFence, VK_TRUE,
-                        UINT64_MAX);
+        vkWaitForFences(m_device, 1, &m_inFlightFence, VK_TRUE, UINT64_MAX);
         vkResetFences(m_device, 1, &m_inFlightFence);
 
         vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX,
@@ -511,8 +505,8 @@ namespace core
     vkDestroySemaphore(m_device, m_renderFinishedSemaphore, nullptr);
     vkDestroySemaphore(m_device, m_imageAvailableSemaphore, nullptr);
 
-    vkFreeCommandBuffers(m_device, m_commandPool,
-                         m_commandBuffers.size(), m_commandBuffers.data());
+    vkFreeCommandBuffers(m_device, m_commandPool, m_commandBuffers.size(),
+                         m_commandBuffers.data());
 
     vkDestroyCommandPool(m_device, m_commandPool, nullptr);
 
@@ -597,8 +591,8 @@ namespace core
     shaderModuleInfo.codeSize = fileSize;
     shaderModuleInfo.pCode = reinterpret_cast<uint32_t*>(buffer.data());
 
-    VkResult result = vkCreateShaderModule(m_device, &shaderModuleInfo,
-                                           nullptr, shaderModule);
+    VkResult result = vkCreateShaderModule(m_device, &shaderModuleInfo, nullptr,
+                                           shaderModule);
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create shader module");
   }
