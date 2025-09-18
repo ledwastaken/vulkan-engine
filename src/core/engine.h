@@ -44,6 +44,7 @@ namespace core
     VkSemaphore m_renderFinishedSemaphore;
     VkFence m_inFlightFence;
     VkBuffer m_vertexBuffer;
+    VkDeviceSize m_bufferSize;
     VkDeviceMemory m_vertexBufferMemory;
     VkShaderModule m_vertexShaderModule;
     VkShaderModule m_fragmentShaderModule;

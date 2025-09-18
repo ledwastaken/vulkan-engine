@@ -298,38 +298,6 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to allocate command buffer");
 
-    VkClearValue clearColor = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
-
-    for (size_t i = 0; i < m_commandBuffers.size(); i++)
-    {
-      VkCommandBufferBeginInfo beginInfo = {};
-      beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-      beginInfo.flags = 0;
-      beginInfo.pInheritanceInfo = nullptr;
-
-      result = vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo);
-
-      if (result != VK_SUCCESS)
-        throw std::runtime_error("Failed to begin recording command buffer");
-
-      VkRenderPassBeginInfo renderPassInfo = {};
-      renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-      renderPassInfo.renderPass = m_renderpass;
-      renderPassInfo.framebuffer = m_framebuffers[i];
-      renderPassInfo.renderArea.offset = { 0, 0 };
-      renderPassInfo.renderArea.extent = { 1920, 1080 };
-      renderPassInfo.clearValueCount = 1;
-      renderPassInfo.pClearValues = &clearColor;
-
-      vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo,
-                           VK_SUBPASS_CONTENTS_INLINE);
-
-      vkCmdEndRenderPass(m_commandBuffers[i]);
-      result = vkEndCommandBuffer(m_commandBuffers[i]);
-      if (result != VK_SUCCESS)
-        throw std::runtime_error("failed to record command buffer!");
-    }
-
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -363,9 +331,11 @@ namespace core
       { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } }, // left blue
     };
 
+    m_bufferSize = sizeof(Vertex) * vertices.size();
+
     VkBufferCreateInfo bufferInfo = {};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = sizeof(Vertex) * vertices.size();
+    bufferInfo.size = m_bufferSize;
     bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -536,6 +506,46 @@ namespace core
 
     if (result != VK_SUCCESS)
       throw std::runtime_error("Failed to create graphics pipeline");
+
+    VkClearValue clearColor = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
+
+    for (size_t i = 0; i < m_commandBuffers.size(); i++)
+    {
+      VkCommandBufferBeginInfo beginInfo = {};
+      beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+      beginInfo.flags = 0;
+      beginInfo.pInheritanceInfo = nullptr;
+
+      result = vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo);
+
+      if (result != VK_SUCCESS)
+        throw std::runtime_error("Failed to begin recording command buffer");
+
+      VkRenderPassBeginInfo renderPassInfo = {};
+      renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      renderPassInfo.renderPass = m_renderpass;
+      renderPassInfo.framebuffer = m_framebuffers[i];
+      renderPassInfo.renderArea.offset = { 0, 0 };
+      renderPassInfo.renderArea.extent = { 1920, 1080 };
+      renderPassInfo.clearValueCount = 1;
+      renderPassInfo.pClearValues = &clearColor;
+
+      vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo,
+                           VK_SUBPASS_CONTENTS_INLINE);
+
+      vkCmdBindPipeline(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        m_pipeline);
+
+      vkCmdBindVertexBuffers(m_commandBuffers[i], 0, 1, &m_vertexBuffer,
+                             &m_bufferSize);
+      vkCmdDraw(m_commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1,
+                0, 0);
+
+      vkCmdEndRenderPass(m_commandBuffers[i]);
+      result = vkEndCommandBuffer(m_commandBuffers[i]);
+      if (result != VK_SUCCESS)
+        throw std::runtime_error("failed to record command buffer!");
+    }
   }
 
   void Engine::loop()
