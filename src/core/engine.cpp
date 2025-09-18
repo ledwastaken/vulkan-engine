@@ -417,24 +417,49 @@ namespace core
       throw std::runtime_error("Failed to create graphics pipeline");
 
     // clang-format off
-    VkPipelineShaderStageCreateInfo shaderStageCreateInfo = {
-      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, // sType
-      nullptr,                                             // pNext
-      0,                                                   // flags
-      VK_SHADER_STAGE_VERTEX_BIT,                          // stage
-      m_vertexShaderModule,                                // module
-      "main",                                              // pName
-      nullptr                                              // pSpecializationInfo
+    VkPipelineShaderStageCreateInfo shaderStageCreateInfos[2] = {
+      {
+        VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, // sType
+        nullptr,                                             // pNext
+        0,                                                   // flags
+        VK_SHADER_STAGE_VERTEX_BIT,                          // stage
+        m_vertexShaderModule,                                // module
+        "main",                                              // pName
+        nullptr                                              // pSpecializationInfo
+      },
+      {
+        VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, // sType
+        nullptr,                                             // pNext
+        0,                                                   // flags
+        VK_SHADER_STAGE_FRAGMENT_BIT,                        // stage
+        m_fragmentShaderModule,                              // module
+        "main",                                              // pName
+        nullptr                                              // pSpecializationInfo
+      }
+    };
+
+    static const VkVertexInputBindingDescription vertexInputBindings[] =
+    {
+      {
+        0,
+        sizeof(Vertex),
+        VK_VERTEX_INPUT_RATE_VERTEX
+      } // Buffer
+    };
+
+    static const VkVertexInputAttributeDescription vertexAttributes[] = {
+      { 0, 0, VK_FORMAT_R32G32_SFLOAT, 0 }, // Position
+      { 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 2 }, // Color
     };
 
     static const VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
       nullptr,                                                   // pNext
       0,                                                         // flags
-      0,                                                         // vertexBindingDescriptionCount
-      nullptr,                                                   // pVertexBindingDescriptions
-      0,                                                         // vertexAttributeDescriptionCount
-      nullptr                                                    // pVertexAttributeDescriptions
+      1,                                                         // vertexBindingDescriptionCount
+      vertexInputBindings,                                       // pVertexBindingDescriptions
+      2,                                                         // vertexAttributeDescriptionCount
+      vertexAttributes                                           // pVertexAttributeDescriptions
     };
 
     static const VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
@@ -486,8 +511,8 @@ namespace core
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, // sType
       nullptr,                                         // pNext
       0,                                               // flags
-      1,                                               // stageCount
-      &shaderStageCreateInfo,                          // pStages
+      2,                                               // stageCount
+      shaderStageCreateInfos,                          // pStages
       &vertexInputStateCreateInfo,                     // pVertexInputState
       &inputAssemblyStateCreateInfo,                   // pInputAssemblyState
       nullptr,                                         // pTessellationState
