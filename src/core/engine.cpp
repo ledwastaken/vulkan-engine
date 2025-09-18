@@ -410,7 +410,22 @@ namespace core
     loadShader("shader.vert.spv", &m_vertexShaderModule);
     loadShader("shader.frag.spv", &m_fragmentShaderModule);
 
+    VkPipelineCacheCreateInfo cacheCreateInfo = {};
+    cacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+    cacheCreateInfo.pNext = nullptr;
+    cacheCreateInfo.flags = 0;
+    cacheCreateInfo.pInitialData = nullptr;
+    cacheCreateInfo.initialDataSize = 0;
+
+    result = vkCreatePipelineCache(m_device, &cacheCreateInfo, nullptr, &m_pipelineCache);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("Failed to create graphics pipeline");
+
     // FIXME: Create graphics pipeline
+
+    // result = vkCreateGraphicsPipelines(m_device, );
+    // if (result != VK_SUCCESS)
+    //   throw std::runtime_error("Failed to create graphics pipeline");
   }
 
   void Engine::loop()
@@ -482,6 +497,7 @@ namespace core
 
   void Engine::quit()
   {
+    vkDestroyPipelineCache(m_device, m_pipelineCache, nullptr);
     vkDestroyPipeline(m_device, m_pipeline, nullptr);
 
     vkDestroyShaderModule(m_device, m_fragmentShaderModule, nullptr);

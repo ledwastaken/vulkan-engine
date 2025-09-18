@@ -47,6 +47,7 @@ namespace core
     VkDeviceMemory m_vertexBufferMemory;
     VkShaderModule m_vertexShaderModule;
     VkShaderModule m_fragmentShaderModule;
+    VkPipelineCache m_pipelineCache;
     VkPipeline m_pipeline;
 
     SDL_Window* m_window;
