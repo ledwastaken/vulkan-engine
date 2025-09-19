@@ -21,7 +21,8 @@ namespace core
     if (!SDL_Init(SDL_INIT_VIDEO))
       throw std::runtime_error(SDL_GetError());
 
-    m_window = SDL_CreateWindow("Vulkan", 800, 600, SDL_WINDOW_VULKAN);
+    auto flags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY;
+    m_window = SDL_CreateWindow("Vulkan", 800, 600, flags);
     if (!m_window)
       throw std::runtime_error(SDL_GetError());
 
