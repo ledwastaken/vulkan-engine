@@ -55,7 +55,7 @@ namespace core
     uint32_t extensionCount = 0;
     auto extensionNames = SDL_Vulkan_GetInstanceExtensions(&extensionCount);
 
-    static const VkApplicationInfo appInfo = {
+    const VkApplicationInfo appInfo = {
       .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
       .pNext = nullptr,
       .pApplicationName = "vulkan-engine",
@@ -65,7 +65,7 @@ namespace core
       .apiVersion = VK_MAKE_VERSION(1, 0, 0),
     };
 
-    static const VkInstanceCreateInfo createInfo = {
+    const VkInstanceCreateInfo createInfo = {
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
