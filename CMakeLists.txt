@@ -25,10 +25,10 @@ target_compile_options(main PRIVATE
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_options(main PRIVATE
-    -g -fsanitize=address
+    -g -fsanitize=leak
   )
 
   target_link_options(main PRIVATE
-    -fsanitize=address
+    -fsanitize=leak
   )
 endif()
