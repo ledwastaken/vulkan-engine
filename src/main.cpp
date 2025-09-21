@@ -1,23 +1,35 @@
 #include <iostream>
+#include <stdexcept>
 
 #include "core/engine.h"
 
 using namespace core;
 
-int main()
+int main(int argc, char* argv[])
 {
-  Engine& engine = Engine::singleton();
-
   try
   {
-    engine.init();
+    Engine& engine = Engine::instance();
+
+    engine.init(argc, argv);
+
+    // FIXME: init scene
+
     engine.loop();
     engine.quit();
+
     return 0;
   }
-  catch (const std::exception& e)
+
+  // Required to enable stack unwinding.
+  catch (const std::invalid_argument& e)
   {
-    std::cerr << "Error: " << e.what() << '\n';
+    std::cerr << "invalid argument: " << e.what() << '\n';
+    return 64;
+  }
+  catch (const std::runtime_error& e)
+  {
+    std::cerr << "error: " << e.what() << '\n';
     return 1;
   }
 }

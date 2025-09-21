@@ -6,52 +6,29 @@
 #include <SDL3/SDL.h>
 #include <vulkan/vulkan.h>
 
+#include "misc/singleton.h"
+
 namespace core
 {
-  class Engine
+  class Engine : public misc::Singleton<Engine>
   {
-    Engine(const Engine&) = delete;
-    Engine& operator=(const Engine&) = delete;
+    // Give Singleton<Engine> access to Engine’s private constructor
+    friend class Singleton<Engine>;
 
+  private:
+    /// Construct an Engine.
     Engine() = default;
 
   public:
-    static Engine& singleton();
-
-    void init();
+    void init(int argc, char* argv[]);
     void loop();
     void quit();
 
-    uint32_t chooseHeapFromFlags(const VkMemoryRequirements& memoryRequirements,
-                                 VkMemoryPropertyFlags requiredFlags,
-                                 VkMemoryPropertyFlags preferredFlags) const;
-
-    void loadShader(const std::string& filename, VkShaderModule* shaderModule);
-
   private:
-    VkInstance m_instance;
-    std::vector<VkPhysicalDevice> m_physicalDevices;
-    VkDevice m_device;
-    VkSurfaceKHR m_surface;
-    VkSwapchainKHR m_swapchain;
-    std::vector<VkImage> m_swapchainImages;
-    std::vector<VkImageView> m_swapchainImageViews;
-    VkRenderPass m_renderpass;
-    std::vector<VkFramebuffer> m_framebuffers;
-    VkCommandPool m_commandPool;
-    std::vector<VkCommandBuffer> m_commandBuffers;
-    VkSemaphore m_imageAvailableSemaphore;
-    VkSemaphore m_renderFinishedSemaphore;
-    VkFence m_inFlightFence;
-    VkBuffer m_vertexBuffer;
-    VkDeviceSize m_bufferSize;
-    VkDeviceMemory m_vertexBufferMemory;
-    VkShaderModule m_vertexShaderModule;
-    VkShaderModule m_fragmentShaderModule;
-    VkPipelineCache m_pipelineCache;
-    VkPipelineLayout m_pipelineLayout;
-    VkPipeline m_pipeline;
+    void create_window();
+    void create_instance();
 
-    SDL_Window* m_window;
+    SDL_Window* window_;
+    VkInstance instance_ = VK_NULL_HANDLE;
   };
 } // namespace core
