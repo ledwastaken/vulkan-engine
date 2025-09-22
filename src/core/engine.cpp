@@ -260,7 +260,8 @@ namespace core
 
   bool Engine::required_features_not_supported(VkPhysicalDeviceFeatures features)
   {
-    return features.samplerAnisotropy == VK_FALSE;
+    return features.samplerAnisotropy == VK_FALSE || features.tessellationShader == VK_FALSE
+        || features.geometryShader == VK_FALSE;
   }
 
   int Engine::calculate_device_properties_score(VkPhysicalDeviceProperties properties)
