@@ -27,6 +27,7 @@ namespace core
   private:
     void create_window();
     void create_instance();
+    void create_surface();
     void create_device();
     void choose_physical_device(std::vector<VkPhysicalDevice> physical_devices);
     bool required_features_not_supported(VkPhysicalDeviceProperties properties,
@@ -38,6 +39,7 @@ namespace core
 
     SDL_Window* window_;
     VkInstance instance_ = VK_NULL_HANDLE;
+    VkSurfaceKHR surface_ = VK_NULL_HANDLE;
     VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
     VkDevice device_ = VK_NULL_HANDLE;
   };

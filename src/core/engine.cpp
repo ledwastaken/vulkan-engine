@@ -13,6 +13,7 @@ namespace core
   {
     create_window();
     create_instance();
+    create_surface();
     create_device();
   }
 
@@ -33,6 +34,7 @@ namespace core
   void Engine::quit()
   {
     vkDestroyDevice(device_, nullptr);
+    vkDestroySurfaceKHR(instance_, surface_, nullptr);
     vkDestroyInstance(instance_, nullptr);
 
     SDL_DestroyWindow(window_);
@@ -81,6 +83,12 @@ namespace core
     // Create the instance.
     if (vkCreateInstance(&createInfo, nullptr, &instance_) != VK_SUCCESS)
       throw std::runtime_error("failed to create vulkan instance");
+  }
+
+  void Engine::create_surface()
+  {
+    if (!SDL_Vulkan_CreateSurface(window_, instance_, nullptr, &surface_))
+      throw std::runtime_error("failed to create vulkan surface");
   }
 
   void Engine::create_device()
