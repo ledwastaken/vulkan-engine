@@ -176,11 +176,11 @@ namespace core
   {
     VkPhysicalDeviceProperties properties;
     VkPhysicalDeviceFeatures features;
-    VkPhysicalDeviceMemoryProperties memory_properties;
+    // VkPhysicalDeviceMemoryProperties memory_properties;
 
     vkGetPhysicalDeviceProperties(device, &properties);
     vkGetPhysicalDeviceFeatures(device, &features);
-    vkGetPhysicalDeviceMemoryProperties(device, &memory_properties);
+    //vkGetPhysicalDeviceMemoryProperties(device, &memory_properties);
 
     if (required_queue_families_not_spported(device, graphics_family, present_family))
       return -1;
@@ -194,7 +194,7 @@ namespace core
     if (required_features_not_supported(features))
       return -1;
 
-    return 0;
+    return calculate_device_properties_score(properties);
   }
 
   bool Engine::required_queue_families_not_spported(VkPhysicalDevice device, int* graphics_family,
@@ -269,5 +269,19 @@ namespace core
   bool Engine::required_features_not_supported(VkPhysicalDeviceFeatures features)
   {
     return features.samplerAnisotropy == VK_FALSE;
+  }
+
+  int Engine::calculate_device_properties_score(VkPhysicalDeviceProperties properties)
+  {
+    if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+      return 4;
+    else if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+      return 3;
+    else if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU)
+      return 2;
+    else if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU)
+      return 1;
+    else
+      return 0;
   }
 } // namespace core

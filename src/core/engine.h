@@ -36,6 +36,7 @@ namespace core
     bool required_extensions_not_supported(VkPhysicalDevice device);
     bool swapchain_not_spported(VkPhysicalDevice device);
     bool required_features_not_supported(VkPhysicalDeviceFeatures features);
+    int calculate_device_properties_score(VkPhysicalDeviceProperties properties);
 
     SDL_Window* window_;
     VkInstance instance_ = VK_NULL_HANDLE;
