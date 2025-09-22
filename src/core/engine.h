@@ -30,7 +30,6 @@ namespace core
     void create_surface();
     void create_device();
     void choose_physical_device(std::vector<VkPhysicalDevice> physical_devices);
-    int calculate_device_score(VkPhysicalDevice device, int* graphics_family, int* present_family);
     bool required_queue_families_not_spported(VkPhysicalDevice device, int* graphics_family,
                                               int* present_family);
     bool required_extensions_not_supported(VkPhysicalDevice device);

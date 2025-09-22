@@ -156,10 +156,28 @@ namespace core
 
     for (int i = 0; i < devices.size(); i++)
     {
+      VkPhysicalDeviceProperties properties;
+      VkPhysicalDeviceFeatures features;
+
+      vkGetPhysicalDeviceProperties(devices[i], &properties);
+      vkGetPhysicalDeviceFeatures(devices[i], &features);
+
       int graphics_family = -1;
       int present_family = -1;
 
-      int score = calculate_device_score(devices[i], &graphics_family, &present_family);
+      if (required_queue_families_not_spported(devices[i], &graphics_family, &present_family))
+        continue;
+
+      if (required_extensions_not_supported(devices[i]))
+        continue;
+
+      if (swapchain_not_spported(devices[i]))
+        continue;
+
+      if (required_features_not_supported(features))
+        continue;
+
+      int score = calculate_device_properties_score(properties);
       if (score > max_score)
       {
         physical_device_ = devices[i];
@@ -169,32 +187,6 @@ namespace core
 
     if (max_score < 0)
       throw std::runtime_error("no physical device fits minimum requirements");
-  }
-
-  int Engine::calculate_device_score(VkPhysicalDevice device, int* graphics_family,
-                                     int* present_family)
-  {
-    VkPhysicalDeviceProperties properties;
-    VkPhysicalDeviceFeatures features;
-    // VkPhysicalDeviceMemoryProperties memory_properties;
-
-    vkGetPhysicalDeviceProperties(device, &properties);
-    vkGetPhysicalDeviceFeatures(device, &features);
-    //vkGetPhysicalDeviceMemoryProperties(device, &memory_properties);
-
-    if (required_queue_families_not_spported(device, graphics_family, present_family))
-      return -1;
-
-    if (required_extensions_not_supported(device))
-      return -1;
-
-    if (swapchain_not_spported(device))
-      return -1;
-
-    if (required_features_not_supported(features))
-      return -1;
-
-    return calculate_device_properties_score(properties);
   }
 
   bool Engine::required_queue_families_not_spported(VkPhysicalDevice device, int* graphics_family,
