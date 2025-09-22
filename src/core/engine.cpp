@@ -15,6 +15,7 @@ namespace core
     create_instance();
     create_surface();
     create_device();
+    create_swapchain();
   }
 
   void Engine::loop()
@@ -33,6 +34,7 @@ namespace core
 
   void Engine::quit()
   {
+    vkDestroySwapchainKHR(device_, swpachain_, nullptr);
     vkDestroyDevice(device_, nullptr);
     vkDestroySurfaceKHR(instance_, surface_, nullptr);
     vkDestroyInstance(instance_, nullptr);
@@ -156,6 +158,37 @@ namespace core
     result = vkCreateDevice(physical_device_, &deviceCreateInfo, nullptr, &device_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create logical device");
+  }
+
+  void Engine::create_swapchain()
+  {
+    int width, height;
+    if (!SDL_GetWindowSize(window_, &width, &height))
+      throw std::runtime_error(SDL_GetError());
+
+    const VkSwapchainCreateInfoKHR create_info = {
+      .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+      .pNext = nullptr,
+      .flags = 0,
+      .surface = surface_,
+      .minImageCount = 2,
+      .imageFormat = VK_FORMAT_R8G8B8A8_UNORM,
+      .imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR,
+      .imageExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) },
+      .imageArrayLayers = 1,
+      .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+      .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+      .queueFamilyIndexCount = 0,
+      .pQueueFamilyIndices = nullptr,
+      .preTransform = VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR,
+      .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+      .presentMode = VK_PRESENT_MODE_FIFO_KHR,
+      .clipped = VK_TRUE,
+      .oldSwapchain = swpachain_,
+    };
+
+    if (vkCreateSwapchainKHR(device_, &create_info, nullptr, &swpachain_))
+      throw std::runtime_error("failed to create swapchain");
   }
 
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)
