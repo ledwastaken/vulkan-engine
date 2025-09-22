@@ -36,6 +36,8 @@ namespace core
 
   void Engine::quit()
   {
+    vkDeviceWaitIdle(device_);
+
     vkDestroySwapchainKHR(device_, swpachain_, nullptr);
     vkDestroyDevice(device_, nullptr);
     vkDestroySurfaceKHR(instance_, surface_, nullptr);
