@@ -30,17 +30,15 @@ namespace core
     void create_surface();
     void create_device();
     void choose_physical_device(std::vector<VkPhysicalDevice> physical_devices);
-    bool required_features_not_supported(VkPhysicalDeviceProperties properties,
-                                         VkPhysicalDeviceFeatures features,
-                                         VkPhysicalDeviceMemoryProperties memory_properties);
-    int calculate_device_score(VkPhysicalDeviceProperties properties,
-                               VkPhysicalDeviceFeatures features,
-                               VkPhysicalDeviceMemoryProperties memory_properties);
+    int calculate_device_score(VkPhysicalDevice device, int* graphics_family, int* present_family);
+    bool required_queue_families_not_spported(VkPhysicalDevice device, int* graphics_family,
+                                              int* present_family);
 
     SDL_Window* window_;
     VkInstance instance_ = VK_NULL_HANDLE;
     VkSurfaceKHR surface_ = VK_NULL_HANDLE;
     VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
+    VkQueue graphics_queue_ = VK_NULL_HANDLE;
     VkDevice device_ = VK_NULL_HANDLE;
   };
 } // namespace core

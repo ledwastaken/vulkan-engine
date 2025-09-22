@@ -156,27 +156,10 @@ namespace core
 
     for (int i = 0; i < devices.size(); i++)
     {
-      VkPhysicalDeviceProperties properties;
-      VkPhysicalDeviceFeatures features;
-      VkPhysicalDeviceMemoryProperties memory_properties;
+      int graphics_family = -1;
+      int present_family = -1;
 
-      vkGetPhysicalDeviceProperties(devices[i], &properties);
-      vkGetPhysicalDeviceFeatures(devices[i], &features);
-      vkGetPhysicalDeviceMemoryProperties(devices[i], &memory_properties);
-
-      if (required_features_not_supported(properties, features, memory_properties))
-        continue;
-
-      // int graphics_compute_family = -1;
-      // int present_family = -1;
-
-      // uint32_t family_count;
-      // vkGetPhysicalDeviceQueueFamilyProperties(devices[i], &family_count, NULL);
-
-      // auto family_properties = new VkQueueFamilyProperties[family_count];
-      // vkGetPhysicalDeviceQueueFamilyProperties(devices[i], &family_count, family_properties);
-
-      int score = calculate_device_score(properties, features, memory_properties);
+      int score = calculate_device_score(devices[i], &graphics_family, &present_family);
       if (score > max_score)
       {
         physical_device_ = devices[i];
@@ -188,19 +171,52 @@ namespace core
       throw std::runtime_error("no physical device fits minimum requirements");
   }
 
-  bool Engine::required_features_not_supported(VkPhysicalDeviceProperties properties,
-                                               VkPhysicalDeviceFeatures features,
-                                               VkPhysicalDeviceMemoryProperties memory_properties)
+  int Engine::calculate_device_score(VkPhysicalDevice device, int* graphics_family,
+                                     int* present_family)
   {
-    // FIXME
-    return false;
+    VkPhysicalDeviceProperties properties;
+    VkPhysicalDeviceFeatures features;
+    VkPhysicalDeviceMemoryProperties memory_properties;
+
+    vkGetPhysicalDeviceProperties(device, &properties);
+    vkGetPhysicalDeviceFeatures(device, &features);
+    vkGetPhysicalDeviceMemoryProperties(device, &memory_properties);
+
+    if (required_queue_families_not_spported(device, graphics_family, present_family))
+      return -1;
+
+    return 0;
   }
 
-  int Engine::calculate_device_score(VkPhysicalDeviceProperties properties,
-                                     VkPhysicalDeviceFeatures features,
-                                     VkPhysicalDeviceMemoryProperties memory_properties)
+  bool Engine::required_queue_families_not_spported(VkPhysicalDevice device, int* graphics_family,
+                                                    int* present_family)
   {
-    // FIXME
-    return 0;
+    *graphics_family = -1;
+    *present_family = -1;
+
+    uint32_t family_count;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &family_count, NULL);
+
+    auto family_properties = new VkQueueFamilyProperties[family_count];
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &family_count, family_properties);
+
+    for (int idx = 0; idx < family_count; idx++)
+    {
+      VkBool32 supported;
+      VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(device, idx, surface_, &supported);
+      if (result != VK_SUCCESS)
+        throw std::runtime_error("failed to retrieve KHR surface support");
+
+      if (supported)
+        *present_family = idx;
+      if (family_properties[idx].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        *graphics_family = idx;
+      if (*present_family > 0 && *graphics_family > 0)
+        break;
+    }
+
+    delete family_properties;
+
+    return *present_family == -1 || *graphics_family == -1;
   }
 } // namespace core
