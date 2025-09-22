@@ -19,6 +19,7 @@ namespace core
     create_swapchain();
     create_renderpass();
     create_swapchain_image_views_and_frambuffers();
+    create_graphics_pipeline();
   }
 
   void Engine::loop()
@@ -43,6 +44,9 @@ namespace core
   void Engine::quit()
   {
     vkDeviceWaitIdle(device_);
+
+    vkDestroyShaderModule(device_, vertex_shader_, nullptr);
+    vkDestroyShaderModule(device_, fragment_shader_, nullptr);
 
     for (size_t i = 0; i < framebuffers_.size(); i++)
       vkDestroyFramebuffer(device_, framebuffers_[i], nullptr);
@@ -333,6 +337,14 @@ namespace core
     }
   }
 
+  void Engine::create_graphics_pipeline()
+  {
+    create_shader_module("shader.vert.spv", &vertex_shader_);
+    create_shader_module("shader.frag.spv", &fragment_shader_);
+
+    // FIXME
+  }
+
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)
   {
     int max_score = -1;
@@ -476,5 +488,32 @@ namespace core
     vkDestroySwapchainKHR(device_, swapchain_, nullptr);
 
     create_swapchain();
+  }
+
+  void Engine::create_shader_module(const char* path, VkShaderModule* shader_module)
+  {
+    std::ifstream file(path, std::ios::ate | std::ios::binary);
+
+    if (!file.is_open())
+      throw std::runtime_error("failed to open file");
+
+    size_t file_size = file.tellg();
+    std::vector<char> buffer(file_size);
+
+    file.seekg(0);
+    file.read(buffer.data(), file_size);
+    file.close();
+
+    const VkShaderModuleCreateInfo create_info = {
+      .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .codeSize = file_size,
+      .pCode = reinterpret_cast<uint32_t*>(buffer.data()),
+    };
+
+    VkResult result = vkCreateShaderModule(device_, &create_info, nullptr, shader_module);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create shader module");
   }
 } // namespace core

@@ -33,6 +33,7 @@ namespace core
     void create_swapchain();
     void create_renderpass();
     void create_swapchain_image_views_and_frambuffers();
+    void create_graphics_pipeline();
 
     void choose_physical_device(std::vector<VkPhysicalDevice> physical_devices);
     bool required_queue_families_not_spported(VkPhysicalDevice device);
@@ -41,6 +42,7 @@ namespace core
     bool required_features_not_supported(VkPhysicalDevice device);
     int calculate_device_properties_score(VkPhysicalDeviceProperties properties);
     void replace_swapchain();
+    void create_shader_module(const char* path, VkShaderModule* shader_module);
 
     SDL_Window* window_;
     VkInstance instance_ = VK_NULL_HANDLE;
@@ -55,5 +57,7 @@ namespace core
     std::vector<VkImageView> swapchain_image_views_;
     VkRenderPass renderpass_;
     std::vector<VkFramebuffer> framebuffers_;
+    VkShaderModule vertex_shader_ = VK_NULL_HANDLE;
+    VkShaderModule fragment_shader_ = VK_NULL_HANDLE;
   };
 } // namespace core
