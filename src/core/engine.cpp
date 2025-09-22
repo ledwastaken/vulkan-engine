@@ -174,6 +174,14 @@ namespace core
   int Engine::calculate_device_score(VkPhysicalDevice device, int* graphics_family,
                                      int* present_family)
   {
+    VkPhysicalDeviceProperties properties;
+    VkPhysicalDeviceFeatures features;
+    VkPhysicalDeviceMemoryProperties memory_properties;
+
+    vkGetPhysicalDeviceProperties(device, &properties);
+    vkGetPhysicalDeviceFeatures(device, &features);
+    vkGetPhysicalDeviceMemoryProperties(device, &memory_properties);
+
     if (required_queue_families_not_spported(device, graphics_family, present_family))
       return -1;
 
@@ -183,13 +191,8 @@ namespace core
     if (swapchain_not_spported(device))
       return -1;
 
-    VkPhysicalDeviceProperties properties;
-    VkPhysicalDeviceFeatures features;
-    VkPhysicalDeviceMemoryProperties memory_properties;
-
-    vkGetPhysicalDeviceProperties(device, &properties);
-    vkGetPhysicalDeviceFeatures(device, &features);
-    vkGetPhysicalDeviceMemoryProperties(device, &memory_properties);
+    if (required_features_not_supported(features))
+      return -1;
 
     return 0;
   }
@@ -261,5 +264,10 @@ namespace core
                                                        &swapchain_present_mode_count, nullptr);
 
     return swapchain_format_count == 0 || swapchain_present_mode_count == 0;
+  }
+
+  bool Engine::required_features_not_supported(VkPhysicalDeviceFeatures features)
+  {
+    return features.samplerAnisotropy == VK_FALSE;
   }
 } // namespace core
