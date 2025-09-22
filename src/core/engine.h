@@ -31,8 +31,8 @@ namespace core
     void create_device();
 
     void create_swapchain();
-    void create_swapchain_image_views();
     void create_renderpass();
+    void create_swapchain_image_views_and_frambuffers();
 
     void choose_physical_device(std::vector<VkPhysicalDevice> physical_devices);
     bool required_queue_families_not_spported(VkPhysicalDevice device);
@@ -54,5 +54,6 @@ namespace core
     std::vector<VkImage> swapchain_images_;
     std::vector<VkImageView> swapchain_image_views_;
     VkRenderPass renderpass_;
+    std::vector<VkFramebuffer> framebuffers_;
   };
 } // namespace core

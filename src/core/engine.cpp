@@ -18,6 +18,7 @@ namespace core
 
     create_swapchain();
     create_renderpass();
+    create_swapchain_image_views_and_frambuffers();
   }
 
   void Engine::loop()
@@ -31,7 +32,10 @@ namespace core
         if (event.type == SDL_EVENT_QUIT)
           running = false;
         else if (event.type == SDL_EVENT_WINDOW_RESIZED)
+        {
           replace_swapchain();
+          create_swapchain_image_views_and_frambuffers();
+        }
       }
     }
   }
@@ -40,11 +44,13 @@ namespace core
   {
     vkDeviceWaitIdle(device_);
 
-    vkDestroyRenderPass(device_, renderpass_, nullptr);
+    for (size_t i = 0; i < framebuffers_.size(); i++)
+      vkDestroyFramebuffer(device_, framebuffers_[i], nullptr);
 
     for (size_t i = 0; i < swapchain_image_views_.size(); i++)
       vkDestroyImageView(device_, swapchain_image_views_[i], nullptr);
 
+    vkDestroyRenderPass(device_, renderpass_, nullptr);
     vkDestroySwapchainKHR(device_, swapchain_, nullptr);
     vkDestroyDevice(device_, nullptr);
     vkDestroySurfaceKHR(instance_, surface_, nullptr);
@@ -202,58 +208,6 @@ namespace core
 
     if (vkCreateSwapchainKHR(device_, &create_info, nullptr, &swapchain_))
       throw std::runtime_error("failed to create swapchain");
-
-    create_swapchain_image_views();
-  }
-
-  void Engine::create_swapchain_image_views()
-  {
-    uint32_t image_count = 0;
-    VkResult result = vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, nullptr);
-
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to retrieve swpachain image count");
-
-    swapchain_images_.resize(image_count);
-    swapchain_image_views_.resize(image_count);
-    result = vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, swapchain_images_.data());
-
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to retrieve swpachain images");
-
-    for (uint32_t i = 0; i < image_count; i++)
-    {
-      const VkComponentMapping components = {
-        .r = VK_COMPONENT_SWIZZLE_IDENTITY,
-        .g = VK_COMPONENT_SWIZZLE_IDENTITY,
-        .b = VK_COMPONENT_SWIZZLE_IDENTITY,
-        .a = VK_COMPONENT_SWIZZLE_IDENTITY,
-      };
-
-      const VkImageSubresourceRange subresource_range = {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .baseMipLevel = 0,
-        .levelCount = 1,
-        .baseArrayLayer = 0,
-        .layerCount = 1,
-      };
-
-      const VkImageViewCreateInfo create_info = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .image = swapchain_images_[i],
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = VK_FORMAT_R8G8B8A8_UNORM,
-        .components = components,
-        .subresourceRange = subresource_range,
-      };
-
-      result = vkCreateImageView(device_, &create_info, nullptr, &swapchain_image_views_[i]);
-
-      if (result != VK_SUCCESS)
-        throw std::runtime_error("failed to create image view");
-    }
   }
 
   void Engine::create_renderpass()
@@ -302,6 +256,81 @@ namespace core
 
     if (vkCreateRenderPass(device_, &create_info, nullptr, &renderpass_) != VK_SUCCESS)
       throw std::runtime_error("failed to create renderpass");
+  }
+
+  void Engine::create_swapchain_image_views_and_frambuffers()
+  {
+    int width, height;
+    if (!SDL_GetWindowSize(window_, &width, &height))
+      throw std::runtime_error(SDL_GetError());
+
+    uint32_t image_count = 0;
+    VkResult result = vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, nullptr);
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to retrieve swpachain image count");
+
+    swapchain_images_.resize(image_count);
+    swapchain_image_views_.resize(image_count);
+    framebuffers_.resize(image_count);
+    result = vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, swapchain_images_.data());
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to retrieve swpachain images");
+
+    for (uint32_t i = 0; i < image_count; i++)
+    {
+      const VkComponentMapping components = {
+        .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+      };
+
+      const VkImageSubresourceRange subresource_range = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .baseMipLevel = 0,
+        .levelCount = 1,
+        .baseArrayLayer = 0,
+        .layerCount = 1,
+      };
+
+      const VkImageViewCreateInfo image_view_create_info = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .image = swapchain_images_[i],
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = VK_FORMAT_R8G8B8A8_UNORM,
+        .components = components,
+        .subresourceRange = subresource_range,
+      };
+
+      result =
+          vkCreateImageView(device_, &image_view_create_info, nullptr, &swapchain_image_views_[i]);
+
+      if (result != VK_SUCCESS)
+        throw std::runtime_error("failed to create image view");
+
+      const VkImageView attachments[] = { swapchain_image_views_[i] };
+
+      const VkFramebufferCreateInfo framebuffer_create_info = {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .renderPass = renderpass_,
+        .attachmentCount = 1,
+        .pAttachments = attachments,
+        .width = static_cast<uint32_t>(width),
+        .height = static_cast<uint32_t>(height),
+        .layers = 1,
+      };
+
+      result = vkCreateFramebuffer(device_, &framebuffer_create_info, nullptr, &framebuffers_[i]);
+
+      if (result != VK_SUCCESS)
+        throw std::runtime_error("failed to create frambuffer");
+    }
   }
 
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)
