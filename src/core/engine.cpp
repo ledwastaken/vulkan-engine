@@ -28,6 +28,8 @@ namespace core
       {
         if (event.type == SDL_EVENT_QUIT)
           running = false;
+        else if (event.type == SDL_EVENT_WINDOW_RESIZED)
+          replace_swapchain();
       }
     }
   }
@@ -319,5 +321,17 @@ namespace core
       return 1;
     else
       return 0;
+  }
+
+  void Engine::replace_swapchain()
+  {
+    if (vkDeviceWaitIdle(device_) != VK_SUCCESS)
+      throw std::runtime_error("failed to wait idle for device");
+
+    vkDestroySwapchainKHR(device_, swpachain_, nullptr);
+
+    // TODO: Delete framebuffers and imageviews
+
+    create_swapchain();
   }
 } // namespace core

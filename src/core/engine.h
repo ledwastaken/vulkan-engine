@@ -37,6 +37,7 @@ namespace core
     bool swapchain_not_spported(VkPhysicalDevice device);
     bool required_features_not_supported(VkPhysicalDevice device);
     int calculate_device_properties_score(VkPhysicalDeviceProperties properties);
+    void replace_swapchain();
 
     SDL_Window* window_;
     VkInstance instance_ = VK_NULL_HANDLE;
