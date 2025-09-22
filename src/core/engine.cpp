@@ -107,42 +107,50 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to enumerate physical devices");
 
-    choose_physical_device(physical_devices);
-
-    // FIXME
-    VkPhysicalDeviceFeatures supported_features;
-    VkPhysicalDeviceFeatures required_features = {};
-
-    vkGetPhysicalDeviceFeatures(physical_device_, &supported_features);
-
-    required_features.multiDrawIndirect = supported_features.multiDrawIndirect;
-    required_features.tessellationShader = VK_TRUE;
-    required_features.geometryShader = VK_TRUE;
-
-    const char* const swapchain_extension[] = {
+    const char* required_extensions[] = {
       "VK_KHR_swapchain",
     };
 
-    const VkDeviceQueueCreateInfo queue_create_info = {
-      .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .queueFamilyIndex = 0,
-      .queueCount = 1,
-      .pQueuePriorities = nullptr,
+    choose_physical_device(physical_devices);
+
+    VkPhysicalDeviceFeatures supported_features;
+    vkGetPhysicalDeviceFeatures(physical_device_, &supported_features);
+
+    enabled_features_ = {};
+    enabled_features_.multiDrawIndirect = supported_features.multiDrawIndirect;
+    enabled_features_.geometryShader = VK_TRUE;
+    enabled_features_.tessellationShader = VK_TRUE;
+
+    const VkDeviceQueueCreateInfo queue_create_info[] = {
+      {
+          .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+          .pNext = nullptr,
+          .flags = 0,
+          .queueFamilyIndex = graphics_queue_family_,
+          .queueCount = 1,
+          .pQueuePriorities = nullptr,
+      },
+      {
+          .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+          .pNext = nullptr,
+          .flags = 0,
+          .queueFamilyIndex = present_queue_family_,
+          .queueCount = 1,
+          .pQueuePriorities = nullptr,
+      },
     };
 
     const VkDeviceCreateInfo deviceCreateInfo = {
       .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
-      .queueCreateInfoCount = 1,
-      .pQueueCreateInfos = &queue_create_info,
+      .queueCreateInfoCount = 2,
+      .pQueueCreateInfos = queue_create_info,
       .enabledLayerCount = 0,
       .ppEnabledLayerNames = nullptr,
       .enabledExtensionCount = 1,
-      .ppEnabledExtensionNames = swapchain_extension,
-      .pEnabledFeatures = &required_features,
+      .ppEnabledExtensionNames = required_extensions,
+      .pEnabledFeatures = &enabled_features_,
     };
 
     result = vkCreateDevice(physical_device_, &deviceCreateInfo, nullptr, &device_);
@@ -154,18 +162,13 @@ namespace core
   {
     int max_score = -1;
 
-    for (int i = 0; i < devices.size(); i++)
+    for (size_t i = 0; i < devices.size(); i++)
     {
       VkPhysicalDeviceProperties properties;
-      VkPhysicalDeviceFeatures features;
 
       vkGetPhysicalDeviceProperties(devices[i], &properties);
-      vkGetPhysicalDeviceFeatures(devices[i], &features);
 
-      int graphics_family = -1;
-      int present_family = -1;
-
-      if (required_queue_families_not_spported(devices[i], &graphics_family, &present_family))
+      if (required_queue_families_not_spported(devices[i]))
         continue;
 
       if (required_extensions_not_supported(devices[i]))
@@ -174,7 +177,7 @@ namespace core
       if (swapchain_not_spported(devices[i]))
         continue;
 
-      if (required_features_not_supported(features))
+      if (required_features_not_supported(devices[i]))
         continue;
 
       int score = calculate_device_properties_score(properties);
@@ -189,36 +192,42 @@ namespace core
       throw std::runtime_error("no physical device fits minimum requirements");
   }
 
-  bool Engine::required_queue_families_not_spported(VkPhysicalDevice device, int* graphics_family,
-                                                    int* present_family)
+  bool Engine::required_queue_families_not_spported(VkPhysicalDevice device)
   {
-    *graphics_family = -1;
-    *present_family = -1;
-
     uint32_t family_count;
     vkGetPhysicalDeviceQueueFamilyProperties(device, &family_count, NULL);
 
-    auto family_properties = new VkQueueFamilyProperties[family_count];
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &family_count, family_properties);
+    auto family_properties = std::vector<VkQueueFamilyProperties>(family_count);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &family_count, family_properties.data());
 
-    for (int idx = 0; idx < family_count; idx++)
+    bool graphics_family_found = false;
+    bool present_family_found = false;
+
+    for (uint32_t idx = 0; idx < family_count; idx++)
     {
       VkBool32 supported;
       VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(device, idx, surface_, &supported);
+
       if (result != VK_SUCCESS)
         throw std::runtime_error("failed to retrieve KHR surface support");
 
       if (supported)
-        *present_family = idx;
+      {
+        present_queue_family_ = idx;
+        present_family_found = true;
+      }
+
       if (family_properties[idx].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-        *graphics_family = idx;
-      if (*present_family > 0 && *graphics_family > 0)
+      {
+        graphics_queue_family_ = idx;
+        graphics_family_found = true;
+      }
+
+      if (graphics_family_found && present_family_found)
         break;
     }
 
-    delete family_properties;
-
-    return *present_family == -1 || *graphics_family == -1;
+    return !graphics_family_found || !present_family_found;
   }
 
   bool Engine::required_extensions_not_supported(VkPhysicalDevice device)
@@ -226,42 +235,43 @@ namespace core
     uint32_t extension_count;
     vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, nullptr);
 
-    auto extensions = new VkExtensionProperties[extension_count];
-    vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, extensions);
+    auto extensions = std::vector<VkExtensionProperties>(extension_count);
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, extensions.data());
 
-    for (int i = 0; i < extension_count; i++)
+    for (uint32_t i = 0; i < extension_count; i++)
     {
       if (strcmp(extensions[i].extensionName, "VK_KHR_swapchain") == 0)
-      {
-        delete extensions;
         return false;
-      }
     }
 
-    delete extensions;
     return true;
   }
 
   bool Engine::swapchain_not_spported(VkPhysicalDevice device)
   {
-    uint32_t swapchain_format_count;
-    uint32_t swapchain_present_mode_count;
+    uint32_t format_count;
+    uint32_t present_mode_count;
     VkResult result =
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface_, &swapchain_format_count, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface_, &format_count, nullptr);
 
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to retrieve KHR surface formats");
 
-    result = vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface_,
-                                                       &swapchain_present_mode_count, nullptr);
+    result =
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface_, &present_mode_count, nullptr);
 
-    return swapchain_format_count == 0 || swapchain_present_mode_count == 0;
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to retrieve KHR surface present modes");
+
+    return format_count == 0 || present_mode_count == 0;
   }
 
-  bool Engine::required_features_not_supported(VkPhysicalDeviceFeatures features)
+  bool Engine::required_features_not_supported(VkPhysicalDevice device)
   {
-    return features.samplerAnisotropy == VK_FALSE || features.tessellationShader == VK_FALSE
-        || features.geometryShader == VK_FALSE;
+    VkPhysicalDeviceFeatures features;
+    vkGetPhysicalDeviceFeatures(device, &features);
+
+    return features.geometryShader == VK_FALSE || features.tessellationShader == VK_FALSE;
   }
 
   int Engine::calculate_device_properties_score(VkPhysicalDeviceProperties properties)
