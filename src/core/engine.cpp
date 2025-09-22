@@ -38,7 +38,7 @@ namespace core
   {
     vkDeviceWaitIdle(device_);
 
-    vkDestroySwapchainKHR(device_, swpachain_, nullptr);
+    vkDestroySwapchainKHR(device_, swapchain_, nullptr);
     vkDestroyDevice(device_, nullptr);
     vkDestroySurfaceKHR(instance_, surface_, nullptr);
     vkDestroyInstance(instance_, nullptr);
@@ -188,10 +188,10 @@ namespace core
       .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
       .presentMode = VK_PRESENT_MODE_FIFO_KHR,
       .clipped = VK_TRUE,
-      .oldSwapchain = swpachain_,
+      .oldSwapchain = swapchain_,
     };
 
-    if (vkCreateSwapchainKHR(device_, &create_info, nullptr, &swpachain_))
+    if (vkCreateSwapchainKHR(device_, &create_info, nullptr, &swapchain_))
       throw std::runtime_error("failed to create swapchain");
   }
 
@@ -330,7 +330,7 @@ namespace core
     if (vkDeviceWaitIdle(device_) != VK_SUCCESS)
       throw std::runtime_error("failed to wait idle for device");
 
-    vkDestroySwapchainKHR(device_, swpachain_, nullptr);
+    vkDestroySwapchainKHR(device_, swapchain_, nullptr);
 
     // TODO: Delete framebuffers and imageviews
 

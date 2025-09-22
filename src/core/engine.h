@@ -47,6 +47,6 @@ namespace core
     uint32_t present_queue_family_;
     VkPhysicalDeviceFeatures enabled_features_ = {};
     VkDevice device_ = VK_NULL_HANDLE;
-    VkSwapchainKHR swpachain_ = VK_NULL_HANDLE;
+    VkSwapchainKHR swapchain_ = VK_NULL_HANDLE;
   };
 } // namespace core
