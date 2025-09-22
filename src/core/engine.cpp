@@ -180,6 +180,9 @@ namespace core
     if (required_extensions_not_supported(device))
       return -1;
 
+    if (swapchain_not_spported(device))
+      return -1;
+
     VkPhysicalDeviceProperties properties;
     VkPhysicalDeviceFeatures features;
     VkPhysicalDeviceMemoryProperties memory_properties;
@@ -242,5 +245,21 @@ namespace core
 
     delete extensions;
     return true;
+  }
+
+  bool Engine::swapchain_not_spported(VkPhysicalDevice device)
+  {
+    uint32_t swapchain_format_count;
+    uint32_t swapchain_present_mode_count;
+    VkResult result =
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface_, &swapchain_format_count, nullptr);
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to retrieve KHR surface formats");
+
+    result = vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface_,
+                                                       &swapchain_present_mode_count, nullptr);
+
+    return swapchain_format_count == 0 || swapchain_present_mode_count == 0;
   }
 } // namespace core
