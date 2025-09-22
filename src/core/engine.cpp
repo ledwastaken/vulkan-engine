@@ -174,6 +174,12 @@ namespace core
   int Engine::calculate_device_score(VkPhysicalDevice device, int* graphics_family,
                                      int* present_family)
   {
+    if (required_queue_families_not_spported(device, graphics_family, present_family))
+      return -1;
+
+    if (required_extensions_not_supported(device))
+      return -1;
+
     VkPhysicalDeviceProperties properties;
     VkPhysicalDeviceFeatures features;
     VkPhysicalDeviceMemoryProperties memory_properties;
@@ -181,9 +187,6 @@ namespace core
     vkGetPhysicalDeviceProperties(device, &properties);
     vkGetPhysicalDeviceFeatures(device, &features);
     vkGetPhysicalDeviceMemoryProperties(device, &memory_properties);
-
-    if (required_queue_families_not_spported(device, graphics_family, present_family))
-      return -1;
 
     return 0;
   }
@@ -218,5 +221,26 @@ namespace core
     delete family_properties;
 
     return *present_family == -1 || *graphics_family == -1;
+  }
+
+  bool Engine::required_extensions_not_supported(VkPhysicalDevice device)
+  {
+    uint32_t extension_count;
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, nullptr);
+
+    auto extensions = new VkExtensionProperties[extension_count];
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, extensions);
+
+    for (int i = 0; i < extension_count; i++)
+    {
+      if (strcmp(extensions[i].extensionName, "VK_KHR_swapchain") == 0)
+      {
+        delete extensions;
+        return false;
+      }
+    }
+
+    delete extensions;
+    return true;
   }
 } // namespace core
