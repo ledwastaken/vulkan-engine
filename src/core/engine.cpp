@@ -17,6 +17,7 @@ namespace core
     create_device();
 
     create_swapchain();
+    create_renderpass();
   }
 
   void Engine::loop()
@@ -38,6 +39,8 @@ namespace core
   void Engine::quit()
   {
     vkDeviceWaitIdle(device_);
+
+    vkDestroyRenderPass(device_, renderpass_, nullptr);
 
     for (size_t i = 0; i < swapchain_image_views_.size(); i++)
       vkDestroyImageView(device_, swapchain_image_views_[i], nullptr);
@@ -251,6 +254,54 @@ namespace core
       if (result != VK_SUCCESS)
         throw std::runtime_error("failed to create image view");
     }
+  }
+
+  void Engine::create_renderpass()
+  {
+    const VkAttachmentDescription attachment = {
+      .flags = 0,
+      .format = VK_FORMAT_R8G8B8A8_UNORM,
+      .samples = VK_SAMPLE_COUNT_1_BIT,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+      .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+
+    const VkAttachmentReference attachment_reference = {
+      .attachment = 0,
+      .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+
+    const VkSubpassDescription subpass = {
+      .flags = 0,
+      .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+      .inputAttachmentCount = 0,
+      .pInputAttachments = nullptr,
+      .colorAttachmentCount = 1,
+      .pColorAttachments = &attachment_reference,
+      .pResolveAttachments = nullptr,
+      .pDepthStencilAttachment = nullptr,
+      .preserveAttachmentCount = 0,
+      .pPreserveAttachments = nullptr,
+    };
+
+    VkRenderPassCreateInfo create_info = {
+      .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .attachmentCount = 1,
+      .pAttachments = &attachment,
+      .subpassCount = 1,
+      .pSubpasses = &subpass,
+      .dependencyCount = 0,
+      .pDependencies = nullptr,
+    };
+
+    if (vkCreateRenderPass(device_, &create_info, nullptr, &renderpass_) != VK_SUCCESS)
+      throw std::runtime_error("failed to create renderpass");
   }
 
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)
