@@ -29,7 +29,9 @@ namespace core
     void create_instance();
     void create_surface();
     void create_device();
+
     void create_swapchain();
+    void create_swapchain_image_views();
 
     void choose_physical_device(std::vector<VkPhysicalDevice> physical_devices);
     bool required_queue_families_not_spported(VkPhysicalDevice device);
@@ -48,5 +50,7 @@ namespace core
     VkPhysicalDeviceFeatures enabled_features_ = {};
     VkDevice device_ = VK_NULL_HANDLE;
     VkSwapchainKHR swapchain_ = VK_NULL_HANDLE;
+    std::vector<VkImage> swapchain_images_;
+    std::vector<VkImageView> swapchain_image_views_;
   };
 } // namespace core

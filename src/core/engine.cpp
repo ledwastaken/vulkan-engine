@@ -15,6 +15,7 @@ namespace core
     create_instance();
     create_surface();
     create_device();
+
     create_swapchain();
   }
 
@@ -37,6 +38,9 @@ namespace core
   void Engine::quit()
   {
     vkDeviceWaitIdle(device_);
+
+    for (size_t i = 0; i < swapchain_image_views_.size(); i++)
+      vkDestroyImageView(device_, swapchain_image_views_[i], nullptr);
 
     vkDestroySwapchainKHR(device_, swapchain_, nullptr);
     vkDestroyDevice(device_, nullptr);
@@ -170,6 +174,8 @@ namespace core
     if (!SDL_GetWindowSize(window_, &width, &height))
       throw std::runtime_error(SDL_GetError());
 
+    // TODO: Check device's image count capabilities
+
     const VkSwapchainCreateInfoKHR create_info = {
       .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
       .pNext = nullptr,
@@ -193,6 +199,58 @@ namespace core
 
     if (vkCreateSwapchainKHR(device_, &create_info, nullptr, &swapchain_))
       throw std::runtime_error("failed to create swapchain");
+
+    create_swapchain_image_views();
+  }
+
+  void Engine::create_swapchain_image_views()
+  {
+    uint32_t image_count = 0;
+    VkResult result = vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, nullptr);
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to retrieve swpachain image count");
+
+    swapchain_images_.resize(image_count);
+    swapchain_image_views_.resize(image_count);
+    result = vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, swapchain_images_.data());
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to retrieve swpachain images");
+
+    for (uint32_t i = 0; i < image_count; i++)
+    {
+      const VkComponentMapping components = {
+        .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+      };
+
+      const VkImageSubresourceRange subresource_range = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .baseMipLevel = 0,
+        .levelCount = 1,
+        .baseArrayLayer = 0,
+        .layerCount = 1,
+      };
+
+      const VkImageViewCreateInfo create_info = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .image = swapchain_images_[i],
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = VK_FORMAT_R8G8B8A8_UNORM,
+        .components = components,
+        .subresourceRange = subresource_range,
+      };
+
+      result = vkCreateImageView(device_, &create_info, nullptr, &swapchain_image_views_[i]);
+
+      if (result != VK_SUCCESS)
+        throw std::runtime_error("failed to create image view");
+    }
   }
 
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)
@@ -330,9 +388,12 @@ namespace core
     if (vkDeviceWaitIdle(device_) != VK_SUCCESS)
       throw std::runtime_error("failed to wait idle for device");
 
-    vkDestroySwapchainKHR(device_, swapchain_, nullptr);
+    // TODO: Delete framebuffers
 
-    // TODO: Delete framebuffers and imageviews
+    for (size_t i = 0; i < swapchain_image_views_.size(); i++)
+      vkDestroyImageView(device_, swapchain_image_views_[i], nullptr);
+
+    vkDestroySwapchainKHR(device_, swapchain_, nullptr);
 
     create_swapchain();
   }
