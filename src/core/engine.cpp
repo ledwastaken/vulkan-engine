@@ -646,7 +646,8 @@ namespace core
     if (vkDeviceWaitIdle(device_) != VK_SUCCESS)
       throw std::runtime_error("failed to wait idle for device");
 
-    // TODO: Delete framebuffers
+    for (size_t i = 0; i < framebuffers_.size(); i++)
+      vkDestroyFramebuffer(device_, framebuffers_[i], nullptr);
 
     for (size_t i = 0; i < swapchain_image_views_.size(); i++)
       vkDestroyImageView(device_, swapchain_image_views_[i], nullptr);
