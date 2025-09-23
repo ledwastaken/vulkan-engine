@@ -22,6 +22,7 @@ namespace core
     create_pipeline_layout();
     create_pipeline_cache();
     create_graphics_pipeline();
+    create_graphics_command_pool();
   }
 
   void Engine::loop()
@@ -43,6 +44,8 @@ namespace core
   void Engine::quit()
   {
     vkDeviceWaitIdle(device_);
+
+    vkDestroyCommandPool(device_, graphics_command_pool_, nullptr);
 
     vkDestroyPipeline(device_, graphics_pipeline_, nullptr);
 
@@ -458,6 +461,19 @@ namespace core
 
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create graphics pipeline");
+  }
+
+  void Engine::create_graphics_command_pool()
+  {
+    const VkCommandPoolCreateInfo create_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+      .queueFamilyIndex = graphics_queue_family_,
+    };
+
+    if (vkCreateCommandPool(device_, &create_info, nullptr, &graphics_command_pool_) != VK_SUCCESS)
+      throw std::runtime_error("failed to create graphics command pool");
   }
 
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)
