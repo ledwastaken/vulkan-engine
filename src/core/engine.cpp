@@ -23,6 +23,7 @@ namespace core
     create_pipeline_cache();
     create_graphics_pipeline();
     create_command_pools();
+    allocate_command_buffers();
   }
 
   void Engine::loop()
@@ -45,10 +46,11 @@ namespace core
   {
     vkDeviceWaitIdle(device_);
 
+    vkFreeCommandBuffers(device_, graphics_command_pool_, graphics_command_buffers_.size(),
+                         graphics_command_buffers_.data());
+
     vkDestroyCommandPool(device_, graphics_command_pool_, nullptr);
-
     vkDestroyPipeline(device_, graphics_pipeline_, nullptr);
-
     vkDestroyShaderModule(device_, vertex_shader_, nullptr);
     vkDestroyShaderModule(device_, fragment_shader_, nullptr);
 
@@ -476,6 +478,29 @@ namespace core
       throw std::runtime_error("failed to create graphics command pool");
 
     // TODO: create transfer command pool
+  }
+
+  void Engine::allocate_command_buffers()
+  {
+    uint32_t image_count = 0;
+    VkResult result = vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, nullptr);
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to retrieve swpachain image count");
+
+    const VkCommandBufferAllocateInfo allocate_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+      .pNext = nullptr,
+      .commandPool = graphics_command_pool_,
+      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+      .commandBufferCount = image_count,
+    };
+
+    graphics_command_buffers_.resize(image_count);
+    result = vkAllocateCommandBuffers(device_, &allocate_info, graphics_command_buffers_.data());
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to allocate command buffers");
   }
 
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)
