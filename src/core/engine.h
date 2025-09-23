@@ -32,7 +32,7 @@ namespace core
 
     void create_swapchain();
     void create_renderpass();
-    void create_swapchain_image_views_and_frambuffers();
+    void create_swapchain_resources();
     void create_pipeline_layout();
     void create_pipeline_cache();
     void create_graphics_pipeline();
@@ -43,6 +43,8 @@ namespace core
     bool swapchain_not_spported(VkPhysicalDevice device);
     bool required_features_not_supported(VkPhysicalDevice device);
     int calculate_device_properties_score(VkPhysicalDeviceProperties properties);
+    void create_image_view(size_t index);
+    void create_framebuffer(size_t index, uint32_t width, uint32_t height);
     void replace_swapchain();
     void create_shader_module(const char* path, VkShaderModule* shader_module);
 

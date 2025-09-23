@@ -18,7 +18,7 @@ namespace core
 
     create_swapchain();
     create_renderpass();
-    create_swapchain_image_views_and_frambuffers();
+    create_swapchain_resources();
     create_pipeline_layout();
     create_pipeline_cache();
     create_graphics_pipeline();
@@ -35,10 +35,7 @@ namespace core
         if (event.type == SDL_EVENT_QUIT)
           running = false;
         else if (event.type == SDL_EVENT_WINDOW_RESIZED)
-        {
           replace_swapchain();
-          create_swapchain_image_views_and_frambuffers();
-        }
       }
     }
   }
@@ -269,7 +266,7 @@ namespace core
       throw std::runtime_error("failed to create renderpass");
   }
 
-  void Engine::create_swapchain_image_views_and_frambuffers()
+  void Engine::create_swapchain_resources()
   {
     int width, height;
     if (!SDL_GetWindowSize(window_, &width, &height))
@@ -291,56 +288,8 @@ namespace core
 
     for (uint32_t i = 0; i < image_count; i++)
     {
-      const VkComponentMapping components = {
-        .r = VK_COMPONENT_SWIZZLE_IDENTITY,
-        .g = VK_COMPONENT_SWIZZLE_IDENTITY,
-        .b = VK_COMPONENT_SWIZZLE_IDENTITY,
-        .a = VK_COMPONENT_SWIZZLE_IDENTITY,
-      };
-
-      const VkImageSubresourceRange subresource_range = {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .baseMipLevel = 0,
-        .levelCount = 1,
-        .baseArrayLayer = 0,
-        .layerCount = 1,
-      };
-
-      const VkImageViewCreateInfo image_view_create_info = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .image = swapchain_images_[i],
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = VK_FORMAT_R8G8B8A8_UNORM,
-        .components = components,
-        .subresourceRange = subresource_range,
-      };
-
-      result =
-          vkCreateImageView(device_, &image_view_create_info, nullptr, &swapchain_image_views_[i]);
-
-      if (result != VK_SUCCESS)
-        throw std::runtime_error("failed to create image view");
-
-      const VkImageView attachments[] = { swapchain_image_views_[i] };
-
-      const VkFramebufferCreateInfo framebuffer_create_info = {
-        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .renderPass = renderpass_,
-        .attachmentCount = 1,
-        .pAttachments = attachments,
-        .width = static_cast<uint32_t>(width),
-        .height = static_cast<uint32_t>(height),
-        .layers = 1,
-      };
-
-      result = vkCreateFramebuffer(device_, &framebuffer_create_info, nullptr, &framebuffers_[i]);
-
-      if (result != VK_SUCCESS)
-        throw std::runtime_error("failed to create frambuffer");
+      create_image_view(i);
+      create_framebuffer(i, width, height);
     }
   }
 
@@ -641,6 +590,64 @@ namespace core
       return 0;
   }
 
+  void Engine::create_image_view(size_t index)
+  {
+    const VkComponentMapping components = {
+      .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+    };
+
+    const VkImageSubresourceRange subresource_range = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    };
+
+    const VkImageViewCreateInfo image_view_create_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .image = swapchain_images_[index],
+      .viewType = VK_IMAGE_VIEW_TYPE_2D,
+      .format = VK_FORMAT_R8G8B8A8_UNORM,
+      .components = components,
+      .subresourceRange = subresource_range,
+    };
+
+    VkResult result = vkCreateImageView(device_, &image_view_create_info, nullptr,
+                                        &swapchain_image_views_[index]);
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create image view");
+  }
+
+  void Engine::create_framebuffer(size_t index, uint32_t width, uint32_t height)
+  {
+    const VkImageView attachments[] = { swapchain_image_views_[index] };
+
+    const VkFramebufferCreateInfo framebuffer_create_info = {
+      .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .renderPass = renderpass_,
+      .attachmentCount = 1,
+      .pAttachments = attachments,
+      .width = width,
+      .height = height,
+      .layers = 1,
+    };
+
+    VkResult result =
+        vkCreateFramebuffer(device_, &framebuffer_create_info, nullptr, &framebuffers_[index]);
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create frambuffer");
+  }
+
   void Engine::replace_swapchain()
   {
     if (vkDeviceWaitIdle(device_) != VK_SUCCESS)
@@ -655,6 +662,7 @@ namespace core
     vkDestroySwapchainKHR(device_, swapchain_, nullptr);
 
     create_swapchain();
+    create_swapchain_resources();
   }
 
   void Engine::create_shader_module(const char* path, VkShaderModule* shader_module)
