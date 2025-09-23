@@ -38,6 +38,7 @@ namespace core
     void create_graphics_pipeline();
     void create_command_pools();
     void allocate_command_buffers();
+    void create_fences();
 
     void choose_physical_device(std::vector<VkPhysicalDevice> physical_devices);
     bool required_queue_families_not_spported(VkPhysicalDevice device);
@@ -70,5 +71,6 @@ namespace core
     VkPipeline graphics_pipeline_ = VK_NULL_HANDLE;
     VkCommandPool graphics_command_pool_ = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> graphics_command_buffers_;
+    VkFence in_flight_fence_ = VK_NULL_HANDLE;
   };
 } // namespace core

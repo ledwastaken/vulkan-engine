@@ -24,6 +24,7 @@ namespace core
     create_graphics_pipeline();
     create_command_pools();
     allocate_command_buffers();
+    create_fences();
   }
 
   void Engine::loop()
@@ -45,6 +46,8 @@ namespace core
   void Engine::quit()
   {
     vkDeviceWaitIdle(device_);
+
+    vkDestroyFence(device_, in_flight_fence_, nullptr);
 
     vkFreeCommandBuffers(device_, graphics_command_pool_, graphics_command_buffers_.size(),
                          graphics_command_buffers_.data());
@@ -501,6 +504,18 @@ namespace core
 
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to allocate command buffers");
+  }
+
+  void Engine::create_fences()
+  {
+    const VkFenceCreateInfo create_info = {
+      .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+    };
+
+    if (vkCreateFence(device_, &create_info, nullptr, &in_flight_fence_) != VK_SUCCESS)
+      throw std::runtime_error("failed to create fence");
   }
 
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)
