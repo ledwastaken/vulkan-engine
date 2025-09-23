@@ -63,5 +63,6 @@ namespace core
     VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
     VkShaderModule vertex_shader_ = VK_NULL_HANDLE;
     VkShaderModule fragment_shader_ = VK_NULL_HANDLE;
+    VkPipeline graphics_pipeline_ = VK_NULL_HANDLE;
   };
 } // namespace core

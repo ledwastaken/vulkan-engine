@@ -47,6 +47,8 @@ namespace core
   {
     vkDeviceWaitIdle(device_);
 
+    vkDestroyPipeline(device_, graphics_pipeline_, nullptr);
+
     vkDestroyShaderModule(device_, vertex_shader_, nullptr);
     vkDestroyShaderModule(device_, fragment_shader_, nullptr);
 
@@ -377,7 +379,136 @@ namespace core
     create_shader_module("shader.vert.spv", &vertex_shader_);
     create_shader_module("shader.frag.spv", &fragment_shader_);
 
-    // FIXME
+    const VkPipelineShaderStageCreateInfo shader_stage_infos[] = {
+      {
+          .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+          .pNext = nullptr,
+          .flags = 0,
+          .stage = VK_SHADER_STAGE_VERTEX_BIT,
+          .module = vertex_shader_,
+          .pName = "main",
+          .pSpecializationInfo = nullptr,
+      },
+      {
+          .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+          .pNext = nullptr,
+          .flags = 0,
+          .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+          .module = fragment_shader_,
+          .pName = "main",
+          .pSpecializationInfo = nullptr,
+      },
+    };
+
+    const VkVertexInputBindingDescription vertex_binding_descriptions[] = {
+      {
+          .binding = 0,
+          .stride = sizeof(float) * 6,
+          .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+      },
+    };
+
+    const VkVertexInputAttributeDescription vertex_attribute_descriptions[] = {
+      {
+          .location = 0,
+          .binding = 0,
+          .format = VK_FORMAT_R32G32_SFLOAT,
+          .offset = 0,
+      },
+      {
+          .location = 1,
+          .binding = 0,
+          .format = VK_FORMAT_R32G32B32_SFLOAT,
+          .offset = sizeof(float) * 2,
+      }
+    };
+
+    const VkPipelineVertexInputStateCreateInfo vertex_input_state = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .vertexBindingDescriptionCount = 1,
+      .pVertexBindingDescriptions = vertex_binding_descriptions,
+      .vertexAttributeDescriptionCount = 2,
+      .pVertexAttributeDescriptions = vertex_attribute_descriptions,
+    };
+
+    const VkPipelineInputAssemblyStateCreateInfo input_assembly_state = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+      .primitiveRestartEnable = VK_FALSE,
+    };
+
+    const VkPipelineRasterizationStateCreateInfo rasterization_state = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .depthClampEnable = VK_FALSE,
+      .rasterizerDiscardEnable = VK_FALSE,
+      .polygonMode = VK_POLYGON_MODE_FILL,
+      .cullMode = VK_CULL_MODE_NONE,
+      .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+      .depthBiasEnable = VK_FALSE,
+      .depthBiasConstantFactor = 0.0f,
+      .depthBiasClamp = 0.0f,
+      .depthBiasSlopeFactor = 0.0f,
+      .lineWidth = 1.0f,
+    };
+
+    const VkPipelineMultisampleStateCreateInfo multisample_state = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+      .sampleShadingEnable = VK_FALSE,
+      .minSampleShading = 0.0f,
+      .pSampleMask = nullptr,
+      .alphaToCoverageEnable = VK_FALSE,
+      .alphaToOneEnable = VK_FALSE,
+    };
+
+    const VkDynamicState dynamic_states[] = {
+      VK_DYNAMIC_STATE_VIEWPORT,
+      VK_DYNAMIC_STATE_SCISSOR,
+    };
+
+    const VkPipelineDynamicStateCreateInfo dynamic_state = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+      .pNext = NULL,
+      .flags = 0,
+      .dynamicStateCount = 2,
+      .pDynamicStates = dynamic_states,
+    };
+
+    const VkGraphicsPipelineCreateInfo create_info = {
+      .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .stageCount = 2,
+      .pStages = shader_stage_infos,
+      .pVertexInputState = &vertex_input_state,
+      .pInputAssemblyState = &input_assembly_state,
+      .pTessellationState = nullptr,
+      .pViewportState = nullptr,
+      .pRasterizationState = &rasterization_state,
+      .pMultisampleState = &multisample_state,
+      .pDepthStencilState = nullptr,
+      .pColorBlendState = nullptr,
+      .pDynamicState = &dynamic_state,
+      .layout = pipeline_layout_,
+      .renderPass = renderpass_,
+      .subpass = 0,
+      .basePipelineHandle = VK_NULL_HANDLE,
+      .basePipelineIndex = 0,
+    };
+
+    VkResult result = vkCreateGraphicsPipelines(device_, pipeline_cache_, 1, &create_info, nullptr,
+                                                &graphics_pipeline_);
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create graphics pipeline");
   }
 
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)
