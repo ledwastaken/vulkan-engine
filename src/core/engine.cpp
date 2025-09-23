@@ -22,7 +22,7 @@ namespace core
     create_pipeline_layout();
     create_pipeline_cache();
     create_graphics_pipeline();
-    create_graphics_command_pool();
+    create_command_pools();
   }
 
   void Engine::loop()
@@ -463,7 +463,7 @@ namespace core
       throw std::runtime_error("failed to create graphics pipeline");
   }
 
-  void Engine::create_graphics_command_pool()
+  void Engine::create_command_pools()
   {
     const VkCommandPoolCreateInfo create_info = {
       .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -474,6 +474,8 @@ namespace core
 
     if (vkCreateCommandPool(device_, &create_info, nullptr, &graphics_command_pool_) != VK_SUCCESS)
       throw std::runtime_error("failed to create graphics command pool");
+
+    // TODO: create transfer command pool
   }
 
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)

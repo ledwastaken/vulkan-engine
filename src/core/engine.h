@@ -36,7 +36,7 @@ namespace core
     void create_pipeline_layout();
     void create_pipeline_cache();
     void create_graphics_pipeline();
-    void create_graphics_command_pool();
+    void create_command_pools();
 
     void choose_physical_device(std::vector<VkPhysicalDevice> physical_devices);
     bool required_queue_families_not_spported(VkPhysicalDevice device);
