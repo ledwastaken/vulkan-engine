@@ -20,6 +20,7 @@ namespace core
     create_renderpass();
     create_swapchain_image_views_and_frambuffers();
     create_pipeline_layout();
+    create_pipeline_cache();
     create_graphics_pipeline();
   }
 
@@ -49,6 +50,7 @@ namespace core
     vkDestroyShaderModule(device_, vertex_shader_, nullptr);
     vkDestroyShaderModule(device_, fragment_shader_, nullptr);
 
+    vkDestroyPipelineCache(device_, pipeline_cache_, nullptr);
     vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
 
     for (size_t i = 0; i < framebuffers_.size(); i++)
@@ -354,6 +356,20 @@ namespace core
 
     if (vkCreatePipelineLayout(device_, &create_info, nullptr, &pipeline_layout_) != VK_SUCCESS)
       throw std::runtime_error("failed to create pipeline layout");
+  }
+
+  void Engine::create_pipeline_cache()
+  {
+    const VkPipelineCacheCreateInfo create_info = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .initialDataSize = 0,
+      .pInitialData = nullptr,
+    };
+
+    if (vkCreatePipelineCache(device_, &create_info, nullptr, &pipeline_cache_) != VK_SUCCESS)
+      throw std::runtime_error("failed to create pipeline cache");
   }
 
   void Engine::create_graphics_pipeline()
