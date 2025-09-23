@@ -39,6 +39,7 @@ namespace core
     void create_command_pools();
     void allocate_command_buffers();
     void create_fences();
+    void create_semaphores();
 
     void choose_physical_device(std::vector<VkPhysicalDevice> physical_devices);
     bool required_queue_families_not_spported(VkPhysicalDevice device);
@@ -72,5 +73,7 @@ namespace core
     VkCommandPool graphics_command_pool_ = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> graphics_command_buffers_;
     VkFence in_flight_fence_ = VK_NULL_HANDLE;
+    VkSemaphore image_available_semaphore_ = VK_NULL_HANDLE;
+    VkSemaphore render_finished_semaphore_ = VK_NULL_HANDLE;
   };
 } // namespace core

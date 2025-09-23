@@ -25,6 +25,7 @@ namespace core
     create_command_pools();
     allocate_command_buffers();
     create_fences();
+    create_semaphores();
   }
 
   void Engine::loop()
@@ -47,6 +48,8 @@ namespace core
   {
     vkDeviceWaitIdle(device_);
 
+    vkDestroySemaphore(device_, image_available_semaphore_, nullptr);
+    vkDestroySemaphore(device_, render_finished_semaphore_, nullptr);
     vkDestroyFence(device_, in_flight_fence_, nullptr);
 
     vkFreeCommandBuffers(device_, graphics_command_pool_, graphics_command_buffers_.size(),
@@ -516,6 +519,24 @@ namespace core
 
     if (vkCreateFence(device_, &create_info, nullptr, &in_flight_fence_) != VK_SUCCESS)
       throw std::runtime_error("failed to create fence");
+  }
+
+  void Engine::create_semaphores()
+  {
+    const VkSemaphoreCreateInfo create_info = {
+      .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+    };
+
+    VkResult result =
+        vkCreateSemaphore(device_, &create_info, nullptr, &image_available_semaphore_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create semaphore");
+
+    result = vkCreateSemaphore(device_, &create_info, nullptr, &render_finished_semaphore_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create semaphore");
   }
 
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)
