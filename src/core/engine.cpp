@@ -19,6 +19,7 @@ namespace core
     create_swapchain();
     create_renderpass();
     create_swapchain_image_views_and_frambuffers();
+    create_pipeline_layout();
     create_graphics_pipeline();
   }
 
@@ -47,6 +48,8 @@ namespace core
 
     vkDestroyShaderModule(device_, vertex_shader_, nullptr);
     vkDestroyShaderModule(device_, fragment_shader_, nullptr);
+
+    vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
 
     for (size_t i = 0; i < framebuffers_.size(); i++)
       vkDestroyFramebuffer(device_, framebuffers_[i], nullptr);
@@ -335,6 +338,22 @@ namespace core
       if (result != VK_SUCCESS)
         throw std::runtime_error("failed to create frambuffer");
     }
+  }
+
+  void Engine::create_pipeline_layout()
+  {
+    const VkPipelineLayoutCreateInfo create_info = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .setLayoutCount = 0,
+      .pSetLayouts = nullptr,
+      .pushConstantRangeCount = 0,
+      .pPushConstantRanges = nullptr,
+    };
+
+    if (vkCreatePipelineLayout(device_, &create_info, nullptr, &pipeline_layout_) != VK_SUCCESS)
+      throw std::runtime_error("failed to create pipeline layout");
   }
 
   void Engine::create_graphics_pipeline()

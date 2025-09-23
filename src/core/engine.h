@@ -33,6 +33,7 @@ namespace core
     void create_swapchain();
     void create_renderpass();
     void create_swapchain_image_views_and_frambuffers();
+    void create_pipeline_layout();
     void create_graphics_pipeline();
 
     void choose_physical_device(std::vector<VkPhysicalDevice> physical_devices);
@@ -57,6 +58,7 @@ namespace core
     std::vector<VkImageView> swapchain_image_views_;
     VkRenderPass renderpass_;
     std::vector<VkFramebuffer> framebuffers_;
+    VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
     VkShaderModule vertex_shader_ = VK_NULL_HANDLE;
     VkShaderModule fragment_shader_ = VK_NULL_HANDLE;
   };
