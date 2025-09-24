@@ -363,7 +363,7 @@ namespace core
     const VkVertexInputBindingDescription vertex_binding_descriptions[] = {
       {
           .binding = 0,
-          .stride = sizeof(float) * 6,
+          .stride = 24, // total size of one vertex (aligned)
           .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
       },
     };
@@ -372,14 +372,20 @@ namespace core
       {
           .location = 0,
           .binding = 0,
-          .format = VK_FORMAT_R32G32_SFLOAT,
+          .format = VK_FORMAT_R32G32B32_SFLOAT,
           .offset = 0,
       },
       {
           .location = 1,
           .binding = 0,
-          .format = VK_FORMAT_R32G32B32_SFLOAT,
-          .offset = sizeof(float) * 2,
+          .format = VK_FORMAT_R16G16B16_SFLOAT,
+          .offset = 12,
+      },
+      {
+          .location = 1,
+          .binding = 0,
+          .format = VK_FORMAT_R16G16_SFLOAT,
+          .offset = 20,
       }
     };
 
