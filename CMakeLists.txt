@@ -7,6 +7,8 @@ find_package(SDL3 REQUIRED)
 add_executable(main
   src/core/engine.cpp
 
+  src/scene/instance.cpp
+
   src/types/cframe.cpp
   src/types/vector3.cpp
 
