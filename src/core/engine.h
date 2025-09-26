@@ -24,6 +24,8 @@ namespace core
     void loop();
     void quit();
 
+    uint32_t find_memory_type(uint32_t required_memory_type, VkMemoryPropertyFlags flags);
+
     VkDevice get_device() const;
 
   private:

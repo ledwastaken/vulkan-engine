@@ -79,6 +79,23 @@ namespace core
     SDL_Quit();
   }
 
+  uint32_t Engine::find_memory_type(uint32_t required_memory_type, VkMemoryPropertyFlags flags)
+  {
+    VkPhysicalDeviceMemoryProperties device_memory_properties;
+    vkGetPhysicalDeviceMemoryProperties(physical_device_, &device_memory_properties);
+
+    for (uint32_t memory_type = 0; memory_type < VK_MAX_MEMORY_TYPES; memory_type++)
+      if (required_memory_type & (1 << memory_type))
+      {
+        const VkMemoryType& type = device_memory_properties.memoryTypes[memory_type];
+
+        if ((type.propertyFlags & flags) == flags)
+          return memory_type;
+      }
+
+    throw std::runtime_error("no suitable memory type found");
+  }
+
   void Engine::create_window()
   {
     if (!SDL_Init(SDL_INIT_VIDEO))
