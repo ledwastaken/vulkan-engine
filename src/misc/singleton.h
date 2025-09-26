@@ -14,7 +14,7 @@ namespace misc
 
   public:
     /// Access to the unique instance.
-    static T& instance()
+    static T& get_singleton()
     {
       static T instance;
       return instance;

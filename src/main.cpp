@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
 {
   try
   {
-    Engine& engine = Engine::instance();
+    Engine& engine = Engine::get_singleton();
 
     engine.init(argc, argv);
 
