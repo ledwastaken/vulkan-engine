@@ -24,6 +24,8 @@ namespace core
     void loop();
     void quit();
 
+    VkDevice get_device() const;
+
   private:
     void create_window();
     void create_instance();
@@ -77,3 +79,5 @@ namespace core
     VkSemaphore render_finished_semaphore_ = VK_NULL_HANDLE;
   };
 } // namespace core
+
+#include "core/engine.hxx"
