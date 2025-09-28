@@ -2,20 +2,29 @@
 #include <stdexcept>
 
 #include "core/engine.h"
+#include "core/scene-manager.h"
 
 using namespace core;
+using namespace scene;
+
+void init(Scene& scene)
+{
+  // FIXME
+}
 
 int main(int argc, char* argv[])
 {
   try
   {
-    Engine& engine = Engine::get_singleton();
+    auto& engine = Engine::get_singleton();
+    auto& scene_manager = SceneManager::get_singleton();
+    auto scene = new Scene();
 
     engine.init(argc, argv);
-
-    // FIXME: init scene
-
+    init(*scene);
+    scene_manager.set_current_scene(scene);
     engine.loop();
+    delete scene;
     engine.quit();
 
     return 0;
