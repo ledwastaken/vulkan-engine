@@ -10,6 +10,7 @@ add_executable(main
   src/scene/instance.cpp
   src/scene/mesh.cpp
   src/scene/scene.cpp
+  src/scene/visitor.cpp
 
   src/types/cframe.cpp
   src/types/vector2.cpp

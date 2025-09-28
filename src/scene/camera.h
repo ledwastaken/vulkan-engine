@@ -8,5 +8,9 @@ namespace scene
   {
   public:
     Camera() = default;
+
+    void accept(Visitor& visitor) override;
   };
 } // namespace scene
+
+#include "scene/camera.hxx"

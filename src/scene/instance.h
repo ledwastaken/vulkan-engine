@@ -3,6 +3,8 @@
 #include <set>
 #include <string>
 
+#include "scene/visitor.h"
+
 namespace scene
 {
   class Instance
@@ -20,6 +22,8 @@ namespace scene
 
     virtual std::set<Instance*> get_children() const;
     virtual Instance* find_first_child(const std::string& name) const;
+
+    virtual void accept(Visitor& visitor) = 0;
 
   public:
     std::string name;

@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include "scene/object.h"
+#include "scene/visitor.h"
 #include "types/vector2.h"
 #include "types/vector3.h"
 
@@ -27,8 +28,12 @@ namespace scene
     virtual void load_vertices(const std::vector<Vertex>& vertices);
     virtual void reset();
 
+    void accept(Visitor& visitor) override;
+
   private:
     VkBuffer vertex_buffer_ = VK_NULL_HANDLE;
     VkDeviceMemory vertex_buffer_memory_ = VK_NULL_HANDLE;
   };
 } // namespace scene
+
+#include "scene/mesh.hxx"
