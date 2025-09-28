@@ -8,6 +8,7 @@ add_executable(main
   src/core/engine.cpp
 
   src/scene/instance.cpp
+  src/scene/mesh.cpp
   src/scene/scene.cpp
 
   src/types/cframe.cpp
