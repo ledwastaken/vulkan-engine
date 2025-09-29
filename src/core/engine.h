@@ -36,7 +36,6 @@ namespace core
     void create_instance();
     void create_surface();
     void create_device();
-
     void create_swapchain();
     void create_renderpass();
     void create_swapchain_resources();

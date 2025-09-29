@@ -15,7 +15,6 @@ namespace core
     create_instance();
     create_surface();
     create_device();
-
     create_swapchain();
     create_renderpass();
     create_swapchain_resources();
