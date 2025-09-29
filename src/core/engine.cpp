@@ -400,10 +400,10 @@ namespace core
           .offset = 12,
       },
       {
-          .location = 1,
+          .location = 2,
           .binding = 0,
           .format = VK_FORMAT_R16G16_SFLOAT,
-          .offset = 20,
+          .offset = 24,
       }
     };
 
@@ -413,7 +413,7 @@ namespace core
       .flags = 0,
       .vertexBindingDescriptionCount = 1,
       .pVertexBindingDescriptions = vertex_binding_descriptions,
-      .vertexAttributeDescriptionCount = 2,
+      .vertexAttributeDescriptionCount = 3,
       .pVertexAttributeDescriptions = vertex_attribute_descriptions,
     };
 
