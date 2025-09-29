@@ -8,4 +8,5 @@ namespace core
   }
 
   inline VkDevice Engine::get_device() const { return device_; }
+  inline VkExtent2D Engine::get_swapchain_extent() const { return swapchain_extent_; }
 } // namespace core

@@ -219,6 +219,8 @@ namespace core
     if (!SDL_GetWindowSize(window_, &width, &height))
       throw std::runtime_error(SDL_GetError());
 
+    swapchain_extent_ = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
+
     // TODO: Check device's image count capabilities
 
     const VkSwapchainCreateInfoKHR create_info = {
@@ -229,7 +231,7 @@ namespace core
       .minImageCount = 2,
       .imageFormat = VK_FORMAT_R8G8B8A8_UNORM,
       .imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR,
-      .imageExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) },
+      .imageExtent = swapchain_extent_,
       .imageArrayLayers = 1,
       .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
       .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
@@ -296,10 +298,6 @@ namespace core
 
   void Engine::create_swapchain_resources()
   {
-    int width, height;
-    if (!SDL_GetWindowSize(window_, &width, &height))
-      throw std::runtime_error(SDL_GetError());
-
     uint32_t image_count = 0;
     VkResult result = vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, nullptr);
 
@@ -317,7 +315,7 @@ namespace core
     for (uint32_t i = 0; i < image_count; i++)
     {
       create_image_view(i);
-      create_framebuffer(i, width, height);
+      create_framebuffer(i);
     }
   }
 
@@ -727,7 +725,7 @@ namespace core
       throw std::runtime_error("failed to create image view");
   }
 
-  void Engine::create_framebuffer(size_t index, uint32_t width, uint32_t height)
+  void Engine::create_framebuffer(size_t index)
   {
     const VkImageView attachments[] = { swapchain_image_views_[index] };
 
@@ -738,8 +736,8 @@ namespace core
       .renderPass = renderpass_,
       .attachmentCount = 1,
       .pAttachments = attachments,
-      .width = width,
-      .height = height,
+      .width = swapchain_extent_.width,
+      .height = swapchain_extent_.height,
       .layers = 1,
     };
 

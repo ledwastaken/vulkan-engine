@@ -27,6 +27,7 @@ namespace core
     uint32_t find_memory_type(uint32_t required_memory_type, VkMemoryPropertyFlags flags);
     VkCommandBuffer get_command_buffer(uint32_t image_index) const;
     VkDevice get_device() const;
+    VkExtent2D get_swapchain_extent() const;
 
   private:
     void create_window();
@@ -52,7 +53,7 @@ namespace core
     bool required_features_not_supported(VkPhysicalDevice device);
     int calculate_device_properties_score(VkPhysicalDeviceProperties properties);
     void create_image_view(size_t index);
-    void create_framebuffer(size_t index, uint32_t width, uint32_t height);
+    void create_framebuffer(size_t index);
     void replace_swapchain();
     void create_shader_module(const char* path, VkShaderModule* shader_module);
 
@@ -64,6 +65,7 @@ namespace core
     uint32_t present_queue_family_;
     VkPhysicalDeviceFeatures enabled_features_ = {};
     VkDevice device_ = VK_NULL_HANDLE;
+    VkExtent2D swapchain_extent_;
     VkSwapchainKHR swapchain_ = VK_NULL_HANDLE;
     std::vector<VkImage> swapchain_images_;
     std::vector<VkImageView> swapchain_image_views_;
