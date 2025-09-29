@@ -69,6 +69,8 @@ namespace scene
 
     std::memcpy(data, vertices.data(), buffer_size);
     vkUnmapMemory(engine.get_device(), vertex_buffer_memory_);
+
+    vertex_count_ = vertices.size();
   }
 
   void Mesh::reset()
