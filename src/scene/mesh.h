@@ -30,6 +30,8 @@ namespace scene
 
     void accept(Visitor& visitor) override;
 
+    VkBuffer get_vertex_buffer() const;
+
   private:
     VkBuffer vertex_buffer_ = VK_NULL_HANDLE;
     VkDeviceMemory vertex_buffer_memory_ = VK_NULL_HANDLE;
