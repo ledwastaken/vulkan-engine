@@ -14,4 +14,5 @@ namespace core
 
   inline VkDevice Engine::get_device() const { return device_; }
   inline VkExtent2D Engine::get_swapchain_extent() const { return swapchain_extent_; }
+  inline VkRenderPass Engine::get_renderpass() const { return renderpass_; }
 } // namespace core

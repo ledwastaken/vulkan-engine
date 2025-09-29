@@ -29,6 +29,7 @@ namespace core
     VkFramebuffer get_frambuffer(uint32_t image_index) const;
     VkDevice get_device() const;
     VkExtent2D get_swapchain_extent() const;
+    VkRenderPass get_renderpass() const;
 
   private:
     void create_window();
