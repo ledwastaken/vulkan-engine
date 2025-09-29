@@ -7,6 +7,11 @@ namespace core
     return graphics_command_buffers_[image_index];
   }
 
+  inline VkFramebuffer Engine::get_frambuffer(uint32_t image_index) const
+  {
+    return framebuffers_[image_index];
+  }
+
   inline VkDevice Engine::get_device() const { return device_; }
   inline VkExtent2D Engine::get_swapchain_extent() const { return swapchain_extent_; }
 } // namespace core
