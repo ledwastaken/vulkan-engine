@@ -3,13 +3,50 @@
 
 #include "core/engine.h"
 #include "core/scene-manager.h"
+#include "scene/mesh.h"
 
 using namespace core;
 using namespace scene;
 
 void init(Scene& scene)
 {
-  // FIXME
+  auto mesh = new Mesh();
+
+  std::vector<Vertex> vertices = {
+    {
+        .position = { -0.9f, 0.9f, 0.0f },
+        .normal = { 0.0f, 0.0f, 1.0f },
+        .uv = { 0.0f, 0.0f },
+    },
+    {
+        .position = { -0.9f, -0.9f, 0.0f },
+        .normal = { 0.0f, 0.0f, 1.0f },
+        .uv = { 0.0f, 0.0f },
+    },
+    {
+        .position = { 0.9f, -0.9f, 0.0f },
+        .normal = { 0.0f, 0.0f, 1.0f },
+        .uv = { 0.0f, 0.0f },
+    },
+    {
+        .position = { 0.9f, -0.9f, 0.0f },
+        .normal = { 0.0f, 0.0f, 1.0f },
+        .uv = { 0.0f, 0.0f },
+    },
+    {
+        .position = { 0.9f, 0.9f, 0.0f },
+        .normal = { 0.0f, 0.0f, 1.0f },
+        .uv = { 0.0f, 0.0f },
+    },
+    {
+        .position = { -0.9f, 0.9f, 0.0f },
+        .normal = { 0.0f, 0.0f, 1.0f },
+        .uv = { 0.0f, 0.0f },
+    },
+  };
+
+  mesh->load_vertices(vertices);
+  mesh->set_parent(&scene);
 }
 
 int main(int argc, char* argv[])

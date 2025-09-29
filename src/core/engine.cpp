@@ -381,7 +381,7 @@ namespace core
     const VkVertexInputBindingDescription vertex_binding_descriptions[] = {
       {
           .binding = 0,
-          .stride = 24, // total size of one vertex (aligned)
+          .stride = 32,
           .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
       },
     };
@@ -396,13 +396,13 @@ namespace core
       {
           .location = 1,
           .binding = 0,
-          .format = VK_FORMAT_R16G16B16_SFLOAT,
+          .format = VK_FORMAT_R32G32B32_SFLOAT,
           .offset = 12,
       },
       {
           .location = 2,
           .binding = 0,
-          .format = VK_FORMAT_R16G16_SFLOAT,
+          .format = VK_FORMAT_R32G32_SFLOAT,
           .offset = 24,
       }
     };
@@ -453,6 +453,29 @@ namespace core
       .alphaToOneEnable = VK_FALSE,
     };
 
+    const VkPipelineColorBlendAttachmentState color_blend_attachment = {
+      .blendEnable = VK_FALSE,
+      .srcColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+      .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+      .colorBlendOp = VK_BLEND_OP_ADD,
+      .srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+      .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+      .alphaBlendOp = VK_BLEND_OP_ADD,
+      .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
+          | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+    };
+
+    const VkPipelineColorBlendStateCreateInfo color_blend_state = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .logicOpEnable = VK_FALSE,
+      .logicOp = VK_LOGIC_OP_COPY,
+      .attachmentCount = 1,
+      .pAttachments = &color_blend_attachment,
+      .blendConstants = { 0.0f, 0.0f, 0.0f, 0.0f },
+    };
+
     const VkDynamicState dynamic_states[] = {
       VK_DYNAMIC_STATE_VIEWPORT,
       VK_DYNAMIC_STATE_SCISSOR,
@@ -466,6 +489,16 @@ namespace core
       .pDynamicStates = dynamic_states,
     };
 
+    const VkPipelineViewportStateCreateInfo viewport_state = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .viewportCount = 1,
+      .pViewports = nullptr,
+      .scissorCount = 1,
+      .pScissors = nullptr,
+    };
+
     const VkGraphicsPipelineCreateInfo create_info = {
       .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
       .pNext = nullptr,
@@ -475,11 +508,11 @@ namespace core
       .pVertexInputState = &vertex_input_state,
       .pInputAssemblyState = &input_assembly_state,
       .pTessellationState = nullptr,
-      .pViewportState = nullptr,
+      .pViewportState = &viewport_state,
       .pRasterizationState = &rasterization_state,
       .pMultisampleState = &multisample_state,
       .pDepthStencilState = nullptr,
-      .pColorBlendState = nullptr,
+      .pColorBlendState = &color_blend_state,
       .pDynamicState = &dynamic_state,
       .layout = pipeline_layout_,
       .renderPass = renderpass_,
