@@ -7,6 +7,8 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
+#include "core/scene-manager.h"
+
 namespace core
 {
   void Engine::init(int argc, char* argv[])
@@ -795,6 +797,12 @@ namespace core
 
   void Engine::render()
   {
+    auto& scene_manager = SceneManager::get_singleton();
+    auto scene = scene_manager.get_current_scene();
+
+    if (!scene)
+      return;
+
     uint32_t image_index;
     VkResult result = vkWaitForFences(device_, 1, &in_flight_fence_, VK_TRUE, UINT64_MAX);
     if (result != VK_SUCCESS)
@@ -809,49 +817,7 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to acquire next image");
 
-    // TODO: Call renderer for buffer recording instead
-    const VkCommandBufferBeginInfo command_buffer_begin_info = {
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .pInheritanceInfo = nullptr,
-    };
-
-    VkCommandBuffer command_buffer = graphics_command_buffers_[image_index];
-
-    result = vkResetCommandBuffer(command_buffer, 0);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to reset command buffer");
-
-    result = vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to begin command buffer recording");
-
-    const VkRect2D render_area = {
-      .offset = { 0, 0 },
-      .extent = swapchain_extent_,
-    };
-
-    const VkClearValue clear_value = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
-
-    const VkRenderPassBeginInfo renderpass_begin_info = {
-      .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-      .pNext = nullptr,
-      .renderPass = renderpass_,
-      .framebuffer = framebuffers_[image_index],
-      .renderArea = render_area,
-      .clearValueCount = 1,
-      .pClearValues = &clear_value,
-    };
-
-    vkCmdBeginRenderPass(command_buffer, &renderpass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-    // Draw nothing, it just clear the screen
-
-    vkCmdEndRenderPass(command_buffer);
-    result = vkEndCommandBuffer(command_buffer);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to end command buffer recording");
+    renderer_(*scene, image_index);
 
     const VkPipelineStageFlags wait_stages[] = {
       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,

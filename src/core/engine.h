@@ -7,6 +7,7 @@
 #include <vulkan/vulkan.h>
 
 #include "misc/singleton.h"
+#include "render/renderer.h"
 
 namespace core
 {
@@ -84,6 +85,8 @@ namespace core
     VkFence in_flight_fence_ = VK_NULL_HANDLE;
     VkSemaphore image_available_semaphore_ = VK_NULL_HANDLE;
     VkSemaphore render_finished_semaphore_ = VK_NULL_HANDLE;
+
+    render::Renderer renderer_;
   };
 } // namespace core
 
