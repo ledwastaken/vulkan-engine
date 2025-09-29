@@ -40,6 +40,8 @@ namespace core
         else if (event.type == SDL_EVENT_WINDOW_RESIZED)
           replace_swapchain();
       }
+
+      render();
     }
   }
 
@@ -789,5 +791,107 @@ namespace core
     VkResult result = vkCreateShaderModule(device_, &create_info, nullptr, shader_module);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create shader module");
+  }
+
+  void Engine::render()
+  {
+    uint32_t image_index;
+    VkResult result = vkWaitForFences(device_, 1, &in_flight_fence_, VK_TRUE, UINT64_MAX);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to wait for fences");
+
+    vkResetFences(device_, 1, &in_flight_fence_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to reset fences");
+
+    vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, image_available_semaphore_,
+                          VK_NULL_HANDLE, &image_index);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to acquire next image");
+
+    // TODO: Call renderer for buffer recording instead
+    const VkCommandBufferBeginInfo command_buffer_begin_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .pInheritanceInfo = nullptr,
+    };
+
+    VkCommandBuffer command_buffer = graphics_command_buffers_[image_index];
+
+    result = vkResetCommandBuffer(command_buffer, 0);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to reset command buffer");
+
+    result = vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to begin command buffer recording");
+
+    const VkRect2D render_area = {
+      .offset = { 0, 0 },
+      .extent = swapchain_extent_,
+    };
+
+    const VkClearValue clear_value = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
+
+    const VkRenderPassBeginInfo renderpass_begin_info = {
+      .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+      .pNext = nullptr,
+      .renderPass = renderpass_,
+      .framebuffer = framebuffers_[image_index],
+      .renderArea = render_area,
+      .clearValueCount = 1,
+      .pClearValues = &clear_value,
+    };
+
+    vkCmdBeginRenderPass(command_buffer, &renderpass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+    // Draw nothing, it just clear the screen
+
+    vkCmdEndRenderPass(command_buffer);
+    result = vkEndCommandBuffer(command_buffer);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to end command buffer recording");
+
+    const VkPipelineStageFlags wait_stages[] = {
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+    };
+
+    const VkSubmitInfo submit_info = {
+      .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      .pNext = nullptr,
+      .waitSemaphoreCount = 1,
+      .pWaitSemaphores = &image_available_semaphore_,
+      .pWaitDstStageMask = wait_stages,
+      .commandBufferCount = 1,
+      .pCommandBuffers = &graphics_command_buffers_[image_index],
+      .signalSemaphoreCount = 1,
+      .pSignalSemaphores = &render_finished_semaphore_,
+    };
+
+    VkQueue graphics_queue;
+    vkGetDeviceQueue(device_, graphics_queue_family_, 0, &graphics_queue);
+
+    result = vkQueueSubmit(graphics_queue, 1, &submit_info, in_flight_fence_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to submit");
+
+    const VkPresentInfoKHR present_info = {
+      .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+      .pNext = nullptr,
+      .waitSemaphoreCount = 1,
+      .pWaitSemaphores = &render_finished_semaphore_,
+      .swapchainCount = 1,
+      .pSwapchains = &swapchain_,
+      .pImageIndices = &image_index,
+      .pResults = nullptr,
+    };
+
+    VkQueue present_queue;
+    vkGetDeviceQueue(device_, present_queue_family_, 0, &present_queue);
+
+    result = vkQueuePresentKHR(present_queue, &present_info);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to present");
   }
 } // namespace core

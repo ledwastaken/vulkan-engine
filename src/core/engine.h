@@ -58,6 +58,8 @@ namespace core
     void replace_swapchain();
     void create_shader_module(const char* path, VkShaderModule* shader_module);
 
+    void render();
+
     SDL_Window* window_;
     VkInstance instance_ = VK_NULL_HANDLE;
     VkSurfaceKHR surface_ = VK_NULL_HANDLE;
