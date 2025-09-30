@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 
 #include "core/engine.h"
@@ -8,37 +9,41 @@
 using namespace core;
 using namespace scene;
 
+static const std::vector<Vertex> vertices = {
+  {
+      .position = { -1.0f, 1.0f, 0.0f },
+      .normal = { 0.0f, 0.0f, 1.0f },
+      .uv = { 0.0f, 0.0f },
+  },
+  {
+      .position = { -1.0f, -1.0f, 0.0f },
+      .normal = { 0.0f, 0.0f, 1.0f },
+      .uv = { 0.0f, 0.0f },
+  },
+  {
+      .position = { 1.0f, -1.0f, 0.0f },
+      .normal = { 0.0f, 0.0f, 1.0f },
+      .uv = { 0.0f, 0.0f },
+  },
+  {
+      .position = { 1.0f, 1.0f, 0.0f },
+      .normal = { 0.0f, 0.0f, 1.0f },
+      .uv = { 0.0f, 0.0f },
+  },
+};
+
+static const std::vector<uint32_t> indices = { 0, 1, 2, 2, 3, 0 };
+
 void init(Scene& scene)
 {
   auto mesh = new Mesh();
-
-  std::vector<Vertex> vertices = {
-    {
-        .position = { -1.0f, 1.0f, 0.0f },
-        .normal = { 0.0f, 0.0f, 1.0f },
-        .uv = { 0.0f, 0.0f },
-    },
-    {
-        .position = { -1.0f, -1.0f, 0.0f },
-        .normal = { 0.0f, 0.0f, 1.0f },
-        .uv = { 0.0f, 0.0f },
-    },
-    {
-        .position = { 1.0f, -1.0f, 0.0f },
-        .normal = { 0.0f, 0.0f, 1.0f },
-        .uv = { 0.0f, 0.0f },
-    },
-    {
-        .position = { 1.0f, 1.0f, 0.0f },
-        .normal = { 0.0f, 0.0f, 1.0f },
-        .uv = { 0.0f, 0.0f },
-    },
-  };
-
-  std::vector<uint32_t> indices = { 0, 1, 2, 2, 3, 0 };
-
   mesh->load_mesh_data(vertices, indices);
   mesh->set_parent(&scene);
+
+  auto camera = new Camera();
+  camera->set_parent(&scene);
+
+  scene.current_camera = camera;
 }
 
 int main(int argc, char* argv[])
