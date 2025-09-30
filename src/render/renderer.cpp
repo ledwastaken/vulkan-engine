@@ -79,7 +79,8 @@ namespace render
 
     VkDeviceSize offset = 0;
     vkCmdBindVertexBuffers(command_buffer_, 0, 1, &vertex_buffer, &offset);
-    vkCmdDraw(command_buffer_, mesh.get_vertex_count(), 1, 0, 0);
+    vkCmdBindIndexBuffer(command_buffer_, mesh.get_index_buffer(), 0, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(command_buffer_, mesh.get_index_count(), 1, 0, 0, 0);
 
     Visitor::operator()(mesh);
   }

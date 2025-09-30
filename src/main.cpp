@@ -14,38 +14,30 @@ void init(Scene& scene)
 
   std::vector<Vertex> vertices = {
     {
-        .position = { -0.9f, 0.9f, 0.0f },
+        .position = { -1.0f, 1.0f, 0.0f },
         .normal = { 0.0f, 0.0f, 1.0f },
         .uv = { 0.0f, 0.0f },
     },
     {
-        .position = { -0.9f, -0.9f, 0.0f },
+        .position = { -1.0f, -1.0f, 0.0f },
         .normal = { 0.0f, 0.0f, 1.0f },
         .uv = { 0.0f, 0.0f },
     },
     {
-        .position = { 0.9f, -0.9f, 0.0f },
+        .position = { 1.0f, -1.0f, 0.0f },
         .normal = { 0.0f, 0.0f, 1.0f },
         .uv = { 0.0f, 0.0f },
     },
     {
-        .position = { 0.9f, -0.9f, 0.0f },
-        .normal = { 0.0f, 0.0f, 1.0f },
-        .uv = { 0.0f, 0.0f },
-    },
-    {
-        .position = { 0.9f, 0.9f, 0.0f },
-        .normal = { 0.0f, 0.0f, 1.0f },
-        .uv = { 0.0f, 0.0f },
-    },
-    {
-        .position = { -0.9f, 0.9f, 0.0f },
+        .position = { 1.0f, 1.0f, 0.0f },
         .normal = { 0.0f, 0.0f, 1.0f },
         .uv = { 0.0f, 0.0f },
     },
   };
 
-  mesh->load_vertices(vertices);
+  std::vector<uint32_t> indices = { 0, 1, 2, 2, 3, 0 };
+
+  mesh->load_mesh_data(vertices, indices);
   mesh->set_parent(&scene);
 }
 
