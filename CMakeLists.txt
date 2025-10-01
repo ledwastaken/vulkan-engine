@@ -15,6 +15,7 @@ add_executable(main
   src/scene/visitor.cpp
 
   src/types/cframe.cpp
+  src/types/matrix4.cpp
   src/types/vector2.cpp
   src/types/vector3.cpp
 
