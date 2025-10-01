@@ -14,6 +14,7 @@ namespace render
     create_shader_module("shader.vert.spv", &vertex_shader_);
     create_shader_module("shader.frag.spv", &fragment_shader_);
 
+    create_descriptor_set_layout();
     create_pipeline_layout();
     create_pipeline_cache();
 
@@ -141,7 +142,7 @@ namespace render
       throw std::runtime_error("failed to create shader module");
   }
 
-  void Renderer::create_pipeline_layout()
+  void Renderer::create_descriptor_set_layout()
   {
     auto& engine = core::Engine::get_singleton();
 
@@ -181,6 +182,11 @@ namespace render
                                                   nullptr, &descriptor_set_layout_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create create descriptor set layout");
+  }
+
+  void Renderer::create_pipeline_layout()
+  {
+    auto& engine = core::Engine::get_singleton();
 
     const VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -192,8 +198,8 @@ namespace render
       .pPushConstantRanges = nullptr,
     };
 
-    result = vkCreatePipelineLayout(engine.get_device(), &pipeline_layout_create_info, nullptr,
-                                    &pipeline_layout_);
+    VkResult result = vkCreatePipelineLayout(engine.get_device(), &pipeline_layout_create_info,
+                                             nullptr, &pipeline_layout_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create pipeline layout");
   }

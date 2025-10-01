@@ -20,6 +20,7 @@ namespace render
 
   private:
     void create_shader_module(const char* path, VkShaderModule* shader_module);
+    void create_descriptor_set_layout();
     void create_pipeline_layout();
     void create_pipeline_cache();
     void create_pipeline();
