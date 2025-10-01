@@ -92,6 +92,11 @@ namespace render
     vkCmdSetViewport(command_buffer_, 0, 1, &viewport);
     vkCmdSetScissor(command_buffer_, 0, 1, &scissor);
 
+    static float time = 0.0f;
+    time += 0.05f;
+    vkCmdPushConstants(command_buffer_, pipeline_layout_, VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                       sizeof(float), &time);
+
     this->operator()(scene);
 
     vkCmdEndRenderPass(command_buffer_);
@@ -188,14 +193,21 @@ namespace render
   {
     auto& engine = core::Engine::get_singleton();
 
+    // TODO: Remove those constants
+    const VkPushConstantRange push_constants = {
+      .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+      .offset = 0,
+      .size = sizeof(float),
+    };
+
     const VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
       .setLayoutCount = 1,
       .pSetLayouts = &descriptor_set_layout_,
-      .pushConstantRangeCount = 0,
-      .pPushConstantRanges = nullptr,
+      .pushConstantRangeCount = 1,
+      .pPushConstantRanges = &push_constants,
     };
 
     VkResult result = vkCreatePipelineLayout(engine.get_device(), &pipeline_layout_create_info,
