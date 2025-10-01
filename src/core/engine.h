@@ -28,7 +28,6 @@ namespace core
     uint32_t find_memory_type(uint32_t required_memory_type, VkMemoryPropertyFlags flags);
     VkCommandBuffer get_command_buffer(uint32_t image_index) const;
     VkFramebuffer get_frambuffer(uint32_t image_index) const;
-    VkPipeline get_graphics_pipeline() const;
     VkDevice get_device() const;
     VkExtent2D get_swapchain_extent() const;
     VkRenderPass get_renderpass() const;
@@ -41,9 +40,6 @@ namespace core
     void create_swapchain();
     void create_renderpass();
     void create_swapchain_resources();
-    void create_pipeline_layout();
-    void create_pipeline_cache();
-    void create_graphics_pipeline();
     void create_command_pools();
     void allocate_command_buffers();
     void create_fences();
@@ -58,7 +54,6 @@ namespace core
     void create_image_view(size_t index);
     void create_framebuffer(size_t index);
     void replace_swapchain();
-    void create_shader_module(const char* path, VkShaderModule* shader_module);
 
     void render();
 
@@ -76,12 +71,6 @@ namespace core
     std::vector<VkImageView> swapchain_image_views_;
     VkRenderPass renderpass_;
     std::vector<VkFramebuffer> framebuffers_;
-    VkDescriptorSetLayout descriptor_set_layout_ = VK_NULL_HANDLE;
-    VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
-    VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
-    VkShaderModule vertex_shader_ = VK_NULL_HANDLE;
-    VkShaderModule fragment_shader_ = VK_NULL_HANDLE;
-    VkPipeline graphics_pipeline_ = VK_NULL_HANDLE;
     VkCommandPool graphics_command_pool_ = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> graphics_command_buffers_;
     VkFence in_flight_fence_ = VK_NULL_HANDLE;

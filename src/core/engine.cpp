@@ -1,7 +1,6 @@
 #include "engine.h"
 
 #include <cstring>
-#include <fstream>
 #include <iostream>
 
 #include <SDL3/SDL.h>
@@ -20,13 +19,12 @@ namespace core
     create_swapchain();
     create_renderpass();
     create_swapchain_resources();
-    create_pipeline_layout();
-    create_pipeline_cache();
-    create_graphics_pipeline();
     create_command_pools();
     allocate_command_buffers();
     create_fences();
     create_semaphores();
+
+    renderer_.init();
   }
 
   void Engine::loop()
@@ -51,6 +49,8 @@ namespace core
   {
     vkDeviceWaitIdle(device_);
 
+    renderer_.free();
+
     vkDestroySemaphore(device_, image_available_semaphore_, nullptr);
     vkDestroySemaphore(device_, render_finished_semaphore_, nullptr);
     vkDestroyFence(device_, in_flight_fence_, nullptr);
@@ -59,13 +59,6 @@ namespace core
                          graphics_command_buffers_.data());
 
     vkDestroyCommandPool(device_, graphics_command_pool_, nullptr);
-    vkDestroyPipeline(device_, graphics_pipeline_, nullptr);
-    vkDestroyShaderModule(device_, vertex_shader_, nullptr);
-    vkDestroyShaderModule(device_, fragment_shader_, nullptr);
-
-    vkDestroyPipelineCache(device_, pipeline_cache_, nullptr);
-    vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
-    vkDestroyDescriptorSetLayout(device_, descriptor_set_layout_, nullptr);
 
     for (size_t i = 0; i < framebuffers_.size(); i++)
       vkDestroyFramebuffer(device_, framebuffers_[i], nullptr);
@@ -321,250 +314,6 @@ namespace core
       create_image_view(i);
       create_framebuffer(i);
     }
-  }
-
-  void Engine::create_pipeline_layout()
-  {
-    const VkDescriptorSetLayoutBinding bindings[] = {
-      {
-          .binding = 0,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .descriptorCount = 1,
-          .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-          .pImmutableSamplers = nullptr,
-      },
-      {
-          .binding = 1,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .descriptorCount = 1,
-          .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-          .pImmutableSamplers = nullptr,
-      },
-      {
-          .binding = 2,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .descriptorCount = 1,
-          .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-          .pImmutableSamplers = nullptr,
-      },
-    };
-
-    const VkDescriptorSetLayoutCreateInfo descriptor_set_create_info = {
-      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .bindingCount = 3,
-      .pBindings = bindings,
-    };
-
-    VkResult result = vkCreateDescriptorSetLayout(device_, &descriptor_set_create_info, nullptr,
-                                                  &descriptor_set_layout_);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to create create descriptor set layout");
-
-    const VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .setLayoutCount = 1,
-      .pSetLayouts = &descriptor_set_layout_,
-      .pushConstantRangeCount = 0,
-      .pPushConstantRanges = nullptr,
-    };
-
-    if (vkCreatePipelineLayout(device_, &pipeline_layout_create_info, nullptr, &pipeline_layout_)
-        != VK_SUCCESS)
-      throw std::runtime_error("failed to create pipeline layout");
-  }
-
-  void Engine::create_pipeline_cache()
-  {
-    const VkPipelineCacheCreateInfo create_info = {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .initialDataSize = 0,
-      .pInitialData = nullptr,
-    };
-
-    if (vkCreatePipelineCache(device_, &create_info, nullptr, &pipeline_cache_) != VK_SUCCESS)
-      throw std::runtime_error("failed to create pipeline cache");
-  }
-
-  void Engine::create_graphics_pipeline()
-  {
-    create_shader_module("shader.vert.spv", &vertex_shader_);
-    create_shader_module("shader.frag.spv", &fragment_shader_);
-
-    const VkPipelineShaderStageCreateInfo shader_stage_infos[] = {
-      {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-          .pNext = nullptr,
-          .flags = 0,
-          .stage = VK_SHADER_STAGE_VERTEX_BIT,
-          .module = vertex_shader_,
-          .pName = "main",
-          .pSpecializationInfo = nullptr,
-      },
-      {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-          .pNext = nullptr,
-          .flags = 0,
-          .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-          .module = fragment_shader_,
-          .pName = "main",
-          .pSpecializationInfo = nullptr,
-      },
-    };
-
-    const VkVertexInputBindingDescription vertex_binding_descriptions[] = {
-      {
-          .binding = 0,
-          .stride = 32,
-          .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-      },
-    };
-
-    const VkVertexInputAttributeDescription vertex_attribute_descriptions[] = {
-      {
-          .location = 0,
-          .binding = 0,
-          .format = VK_FORMAT_R32G32B32_SFLOAT,
-          .offset = 0,
-      },
-      {
-          .location = 1,
-          .binding = 0,
-          .format = VK_FORMAT_R32G32B32_SFLOAT,
-          .offset = 12,
-      },
-      {
-          .location = 2,
-          .binding = 0,
-          .format = VK_FORMAT_R32G32_SFLOAT,
-          .offset = 24,
-      }
-    };
-
-    const VkPipelineVertexInputStateCreateInfo vertex_input_state = {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .vertexBindingDescriptionCount = 1,
-      .pVertexBindingDescriptions = vertex_binding_descriptions,
-      .vertexAttributeDescriptionCount = 3,
-      .pVertexAttributeDescriptions = vertex_attribute_descriptions,
-    };
-
-    const VkPipelineInputAssemblyStateCreateInfo input_assembly_state = {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-      .primitiveRestartEnable = VK_FALSE,
-    };
-
-    const VkPipelineRasterizationStateCreateInfo rasterization_state = {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .depthClampEnable = VK_FALSE,
-      .rasterizerDiscardEnable = VK_FALSE,
-      .polygonMode = VK_POLYGON_MODE_FILL,
-      .cullMode = VK_CULL_MODE_NONE,
-      .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-      .depthBiasEnable = VK_FALSE,
-      .depthBiasConstantFactor = 0.0f,
-      .depthBiasClamp = 0.0f,
-      .depthBiasSlopeFactor = 0.0f,
-      .lineWidth = 1.0f,
-    };
-
-    const VkPipelineMultisampleStateCreateInfo multisample_state = {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-      .sampleShadingEnable = VK_FALSE,
-      .minSampleShading = 0.0f,
-      .pSampleMask = nullptr,
-      .alphaToCoverageEnable = VK_FALSE,
-      .alphaToOneEnable = VK_FALSE,
-    };
-
-    const VkPipelineColorBlendAttachmentState color_blend_attachment = {
-      .blendEnable = VK_FALSE,
-      .srcColorBlendFactor = VK_BLEND_FACTOR_ZERO,
-      .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
-      .colorBlendOp = VK_BLEND_OP_ADD,
-      .srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-      .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-      .alphaBlendOp = VK_BLEND_OP_ADD,
-      .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
-          | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-    };
-
-    const VkPipelineColorBlendStateCreateInfo color_blend_state = {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .logicOpEnable = VK_FALSE,
-      .logicOp = VK_LOGIC_OP_COPY,
-      .attachmentCount = 1,
-      .pAttachments = &color_blend_attachment,
-      .blendConstants = { 0.0f, 0.0f, 0.0f, 0.0f },
-    };
-
-    const VkDynamicState dynamic_states[] = {
-      VK_DYNAMIC_STATE_VIEWPORT,
-      VK_DYNAMIC_STATE_SCISSOR,
-    };
-
-    const VkPipelineDynamicStateCreateInfo dynamic_state = {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-      .pNext = NULL,
-      .flags = 0,
-      .dynamicStateCount = 2,
-      .pDynamicStates = dynamic_states,
-    };
-
-    const VkPipelineViewportStateCreateInfo viewport_state = {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .viewportCount = 1,
-      .pViewports = nullptr,
-      .scissorCount = 1,
-      .pScissors = nullptr,
-    };
-
-    const VkGraphicsPipelineCreateInfo create_info = {
-      .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .stageCount = 2,
-      .pStages = shader_stage_infos,
-      .pVertexInputState = &vertex_input_state,
-      .pInputAssemblyState = &input_assembly_state,
-      .pTessellationState = nullptr,
-      .pViewportState = &viewport_state,
-      .pRasterizationState = &rasterization_state,
-      .pMultisampleState = &multisample_state,
-      .pDepthStencilState = nullptr,
-      .pColorBlendState = &color_blend_state,
-      .pDynamicState = &dynamic_state,
-      .layout = pipeline_layout_,
-      .renderPass = renderpass_,
-      .subpass = 0,
-      .basePipelineHandle = VK_NULL_HANDLE,
-      .basePipelineIndex = 0,
-    };
-
-    VkResult result = vkCreateGraphicsPipelines(device_, pipeline_cache_, 1, &create_info, nullptr,
-                                                &graphics_pipeline_);
-
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to create graphics pipeline");
   }
 
   void Engine::create_command_pools()
@@ -838,33 +587,6 @@ namespace core
 
     create_swapchain();
     create_swapchain_resources();
-  }
-
-  void Engine::create_shader_module(const char* path, VkShaderModule* shader_module)
-  {
-    std::ifstream file(path, std::ios::ate | std::ios::binary);
-
-    if (!file.is_open())
-      throw std::runtime_error("failed to open file");
-
-    size_t file_size = file.tellg();
-    std::vector<char> buffer(file_size);
-
-    file.seekg(0);
-    file.read(buffer.data(), file_size);
-    file.close();
-
-    const VkShaderModuleCreateInfo create_info = {
-      .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .codeSize = file_size,
-      .pCode = reinterpret_cast<uint32_t*>(buffer.data()),
-    };
-
-    VkResult result = vkCreateShaderModule(device_, &create_info, nullptr, shader_module);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to create shader module");
   }
 
   void Engine::render()
