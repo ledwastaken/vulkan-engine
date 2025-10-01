@@ -24,6 +24,7 @@ namespace render
     void create_pipeline_layout();
     void create_pipeline_cache();
     void create_pipeline();
+    void create_uniform_buffer();
 
     VkShaderModule vertex_shader_ = VK_NULL_HANDLE;
     VkShaderModule fragment_shader_ = VK_NULL_HANDLE;
@@ -32,5 +33,8 @@ namespace render
     VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
     VkPipeline pipeline_ = VK_NULL_HANDLE;
     VkCommandBuffer command_buffer_ = VK_NULL_HANDLE;
+    VkBuffer uniform_buffer_ = VK_NULL_HANDLE;
+    VkDeviceMemory uniform_buffer_memory_ = VK_NULL_HANDLE;
+    void* uniform_buffer_data_;
   };
 } // namespace render

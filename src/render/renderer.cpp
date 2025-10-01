@@ -1,5 +1,6 @@
 #include "render/renderer.h"
 
+#include <cstring>
 #include <fstream>
 
 #include "core/engine.h"
@@ -19,6 +20,7 @@ namespace render
     create_pipeline_cache();
 
     create_pipeline();
+    create_uniform_buffer();
   }
 
   void Renderer::free()
@@ -33,6 +35,10 @@ namespace render
 
     vkDestroyShaderModule(engine.get_device(), vertex_shader_, nullptr);
     vkDestroyShaderModule(engine.get_device(), fragment_shader_, nullptr);
+
+    vkUnmapMemory(engine.get_device(), uniform_buffer_memory_);
+    vkDestroyBuffer(engine.get_device(), uniform_buffer_, nullptr);
+    vkFreeMemory(engine.get_device(), uniform_buffer_memory_, nullptr);
   }
 
   void Renderer::operator()(scene::Scene& scene, uint32_t image_index)
@@ -96,6 +102,10 @@ namespace render
     time += 0.05f;
     vkCmdPushConstants(command_buffer_, pipeline_layout_, VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                        sizeof(float), &time);
+
+    // TODO: Load MVP matrices into uniform_buffer_data_
+    float data[48] = {};
+    std::memcpy(uniform_buffer_data_, data, 48 * sizeof(float));
 
     this->operator()(scene);
 
@@ -404,5 +414,51 @@ namespace render
 
     VkResult result = vkCreateGraphicsPipelines(engine.get_device(), pipeline_cache_, 1,
                                                 &create_info, nullptr, &pipeline_);
+  }
+
+  void Renderer::create_uniform_buffer()
+  {
+    auto& engine = core::Engine::get_singleton();
+    auto buffer_size = 48 * sizeof(float);
+
+    const VkBufferCreateInfo create_info = {
+      .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .size = buffer_size,
+      .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+      .queueFamilyIndexCount = 0,
+      .pQueueFamilyIndices = nullptr,
+    };
+
+    VkResult result = vkCreateBuffer(engine.get_device(), &create_info, nullptr, &uniform_buffer_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create buffer");
+
+    VkMemoryRequirements memory_requirements;
+    vkGetBufferMemoryRequirements(engine.get_device(), uniform_buffer_, &memory_requirements);
+
+    auto flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    const VkMemoryAllocateInfo allocate_info = {
+      .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+      .pNext = nullptr,
+      .allocationSize = memory_requirements.size,
+      .memoryTypeIndex = engine.find_memory_type(memory_requirements.memoryTypeBits, flags),
+    };
+
+    result =
+        vkAllocateMemory(engine.get_device(), &allocate_info, nullptr, &uniform_buffer_memory_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to allocate device memory");
+
+    result = vkBindBufferMemory(engine.get_device(), uniform_buffer_, uniform_buffer_memory_, 0);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to bind buffer memory");
+
+    result = vkMapMemory(engine.get_device(), uniform_buffer_memory_, 0, buffer_size, 0,
+                         &uniform_buffer_data_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to map buffer memory");
   }
 } // namespace render
