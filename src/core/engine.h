@@ -76,6 +76,7 @@ namespace core
     std::vector<VkImageView> swapchain_image_views_;
     VkRenderPass renderpass_;
     std::vector<VkFramebuffer> framebuffers_;
+    VkDescriptorSetLayout descriptor_set_layout_ = VK_NULL_HANDLE;
     VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
     VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
     VkShaderModule vertex_shader_ = VK_NULL_HANDLE;

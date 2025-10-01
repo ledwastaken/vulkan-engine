@@ -65,6 +65,7 @@ namespace core
 
     vkDestroyPipelineCache(device_, pipeline_cache_, nullptr);
     vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
+    vkDestroyDescriptorSetLayout(device_, descriptor_set_layout_, nullptr);
 
     for (size_t i = 0; i < framebuffers_.size(); i++)
       vkDestroyFramebuffer(device_, framebuffers_[i], nullptr);
@@ -324,17 +325,55 @@ namespace core
 
   void Engine::create_pipeline_layout()
   {
-    const VkPipelineLayoutCreateInfo create_info = {
+    const VkDescriptorSetLayoutBinding bindings[] = {
+      {
+          .binding = 0,
+          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          .descriptorCount = 1,
+          .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+          .pImmutableSamplers = nullptr,
+      },
+      {
+          .binding = 1,
+          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          .descriptorCount = 1,
+          .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+          .pImmutableSamplers = nullptr,
+      },
+      {
+          .binding = 2,
+          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          .descriptorCount = 1,
+          .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+          .pImmutableSamplers = nullptr,
+      },
+    };
+
+    const VkDescriptorSetLayoutCreateInfo descriptor_set_create_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .bindingCount = 3,
+      .pBindings = bindings,
+    };
+
+    VkResult result = vkCreateDescriptorSetLayout(device_, &descriptor_set_create_info, nullptr,
+                                                  &descriptor_set_layout_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create create descriptor set layout");
+
+    const VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
-      .setLayoutCount = 0,
-      .pSetLayouts = nullptr,
+      .setLayoutCount = 1,
+      .pSetLayouts = &descriptor_set_layout_,
       .pushConstantRangeCount = 0,
       .pPushConstantRanges = nullptr,
     };
 
-    if (vkCreatePipelineLayout(device_, &create_info, nullptr, &pipeline_layout_) != VK_SUCCESS)
+    if (vkCreatePipelineLayout(device_, &pipeline_layout_create_info, nullptr, &pipeline_layout_)
+        != VK_SUCCESS)
       throw std::runtime_error("failed to create pipeline layout");
   }
 
