@@ -34,6 +34,20 @@ namespace types
     , r22_(r22)
   {}
 
+  Matrix4 CFrame::to_matrix() const
+  {
+    // clang-format off
+    const float data[] = {
+      r00_,   r10_,   r20_,   0.0f,
+      r01_,   r11_,   r21_,   0.0f,
+      r02_,   r12_,   r22_,   0.0f,
+      pos_.x, pos_.y, pos_.z, 1.0f,
+    };
+    // clang-format on
+
+    return Matrix4(data);
+  }
+
   CFrame CFrame::invert() const
   {
     CFrame cf(Vector3(), r00_, r10_, r20_, r01_, r11_, r21_, r02_, r12_, r22_);
@@ -41,6 +55,11 @@ namespace types
     cf.pos_ = (cf * -pos_);
 
     return cf;
+  }
+
+  CFrame CFrame::operator+(const Vector3& vec) const
+  {
+    return CFrame(pos_ + vec, r00_, r01_, r02_, r10_, r11_, r12_, r20_, r21_, r22_);
   }
 
   Vector3 CFrame::operator*(const Vector3& vec) const

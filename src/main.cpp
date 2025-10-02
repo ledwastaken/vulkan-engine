@@ -38,6 +38,7 @@ void init(Scene& scene)
 {
   auto mesh = new Mesh();
   mesh->load_mesh_data(vertices, indices);
+  mesh->cframe = mesh->cframe + types::Vector3(0, 0, 0);
   mesh->set_parent(&scene);
 
   auto camera = new Camera();

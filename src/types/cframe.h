@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "types/matrix4.h"
 #include "types/vector3.h"
 
 namespace types
@@ -14,8 +15,10 @@ namespace types
     CFrame(const Vector3& pos, float r00, float r01, float r02, float r10, float r11, float r12,
            float r20, float r21, float r22);
 
+    Matrix4 to_matrix() const;
     CFrame invert() const;
 
+    CFrame operator+(const Vector3& vec) const;
     Vector3 operator*(const Vector3& vec) const;
 
     const float* data() const;

@@ -49,4 +49,14 @@ namespace types
 
     return frustum(left, right, bottom, top, near, far);
   }
+
+  std::ostream& operator<<(std::ostream& out, const Matrix4& mat)
+  {
+    const float* data = mat.data();
+
+    return out << data[0] << ", " << data[1] << ", " << data[2] << ", " << data[3] << "\n"
+               << data[4] << ", " << data[5] << ", " << data[6] << ", " << data[7] << "\n"
+               << data[8] << ", " << data[9] << ", " << data[10] << ", " << data[11] << "\n"
+               << data[12] << ", " << data[13] << ", " << data[14] << ", " << data[15];
+  }
 } // namespace types

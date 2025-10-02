@@ -5,13 +5,18 @@
 
 #include "core/engine.h"
 #include "scene/mesh.h"
+#include "scene/scene.h"
+#include "types/matrix4.h"
 
 using namespace scene;
+using namespace types;
 
 namespace render
 {
   void Renderer::init()
   {
+    create_uniform_buffer();
+
     create_shader_module("shader.vert.spv", &vertex_shader_);
     create_shader_module("shader.frag.spv", &fragment_shader_);
 
@@ -20,12 +25,15 @@ namespace render
     create_pipeline_cache();
 
     create_pipeline();
-    create_uniform_buffer();
   }
 
   void Renderer::free()
   {
     auto& engine = core::Engine::get_singleton();
+
+    vkUnmapMemory(engine.get_device(), uniform_buffer_memory_);
+    vkDestroyBuffer(engine.get_device(), uniform_buffer_, nullptr);
+    vkFreeMemory(engine.get_device(), uniform_buffer_memory_, nullptr);
 
     vkDestroyPipeline(engine.get_device(), pipeline_, nullptr);
 
@@ -35,14 +43,15 @@ namespace render
 
     vkDestroyShaderModule(engine.get_device(), vertex_shader_, nullptr);
     vkDestroyShaderModule(engine.get_device(), fragment_shader_, nullptr);
-
-    vkUnmapMemory(engine.get_device(), uniform_buffer_memory_);
-    vkDestroyBuffer(engine.get_device(), uniform_buffer_, nullptr);
-    vkFreeMemory(engine.get_device(), uniform_buffer_memory_, nullptr);
   }
 
   void Renderer::operator()(scene::Scene& scene, uint32_t image_index)
   {
+    auto camera = scene.current_camera;
+
+    if (!camera)
+      return;
+
     auto& engine = core::Engine::get_singleton();
     command_buffer_ = engine.get_command_buffer(image_index);
 
@@ -66,7 +75,7 @@ namespace render
       .extent = engine.get_swapchain_extent(),
     };
 
-    const VkClearValue clear_value = { { { 0.3f, 0.3f, 0.3f, 1.0f } } };
+    const VkClearValue clear_value = { { { 0.3f, 0.3f, 0.4f, 1.0f } } };
 
     const VkRenderPassBeginInfo renderpass_begin_info = {
       .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -99,13 +108,22 @@ namespace render
     vkCmdSetScissor(command_buffer_, 0, 1, &scissor);
 
     static float time = 0.0f;
-    time += 0.05f;
+    time += 0.025f;
     vkCmdPushConstants(command_buffer_, pipeline_layout_, VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                        sizeof(float), &time);
 
     // TODO: Load MVP matrices into uniform_buffer_data_
-    float data[48] = {};
-    std::memcpy(uniform_buffer_data_, data, 48 * sizeof(float));
+    auto projection = Matrix4::perpective(camera->field_of_view, 800.0f / 600.0f, 0.1f, 100.0f);
+    auto view = camera->cframe.invert();
+    float one = 1.0f;
+
+    // std::memcpy(uniform_buffer_data_ + 16 * sizeof(float), view.data(), 12 * sizeof(float));
+    // std::memcpy(uniform_buffer_data_ + 31 * sizeof(float), &one, 1 * sizeof(float));
+    // std::memcpy(uniform_buffer_data_ + 32 * sizeof(float), projection.data(), 16 *
+    // sizeof(float));
+
+    vkCmdBindDescriptorSets(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 0,
+                            1, &descriptor_set_, 0, nullptr);
 
     this->operator()(scene);
 
@@ -118,6 +136,9 @@ namespace render
   void Renderer::operator()(Mesh& mesh)
   {
     auto vertex_buffer = mesh.get_vertex_buffer();
+    auto model = mesh.cframe.to_matrix();
+
+    std::memcpy(uniform_buffer_data_, model.data(), 16 * sizeof(float));
 
     VkDeviceSize offset = 0;
     vkCmdBindVertexBuffers(command_buffer_, 0, 1, &vertex_buffer, &offset);
@@ -197,6 +218,97 @@ namespace render
                                                   nullptr, &descriptor_set_layout_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create create descriptor set layout");
+
+    const VkDescriptorPoolSize descriptor_pool_size = {
+      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .descriptorCount = 3,
+    };
+
+    const VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .maxSets = 1,
+      .poolSizeCount = 1,
+      .pPoolSizes = &descriptor_pool_size,
+    };
+
+    result = vkCreateDescriptorPool(engine.get_device(), &descriptor_pool_create_info, nullptr,
+                                    &descriptor_pool_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create descriptor pool");
+
+    const VkDescriptorSetAllocateInfo descriptor_allocate_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+      .pNext = nullptr,
+      .descriptorPool = descriptor_pool_,
+      .descriptorSetCount = 1,
+      .pSetLayouts = &descriptor_set_layout_,
+    };
+
+    result =
+        vkAllocateDescriptorSets(engine.get_device(), &descriptor_allocate_info, &descriptor_set_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to allocate descriptor set");
+
+    const VkDescriptorBufferInfo model_info = {
+      .buffer = uniform_buffer_,
+      .offset = 0,
+      .range = 16 * sizeof(float),
+    };
+
+    const VkDescriptorBufferInfo view_info = {
+      .buffer = uniform_buffer_,
+      .offset = 16 * sizeof(float),
+      .range = 16 * sizeof(float),
+    };
+
+    const VkDescriptorBufferInfo projection_info = {
+      .buffer = uniform_buffer_,
+      .offset = 32 * sizeof(float),
+      .range = 16 * sizeof(float),
+    };
+
+    const VkWriteDescriptorSet descriptor_writes[] = {
+      {
+          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+          .pNext = nullptr,
+          .dstSet = descriptor_set_,
+          .dstBinding = 0,
+          .dstArrayElement = 0,
+          .descriptorCount = 1,
+          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          .pImageInfo = nullptr,
+          .pBufferInfo = &model_info,
+          .pTexelBufferView = nullptr,
+      },
+      {
+          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+          .pNext = nullptr,
+          .dstSet = descriptor_set_,
+          .dstBinding = 1,
+          .dstArrayElement = 0,
+          .descriptorCount = 1,
+          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          .pImageInfo = nullptr,
+          .pBufferInfo = &view_info,
+          .pTexelBufferView = nullptr,
+      },
+      {
+          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+          .pNext = nullptr,
+          .dstSet = descriptor_set_,
+          .dstBinding = 2,
+          .dstArrayElement = 0,
+          .descriptorCount = 1,
+          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          .pImageInfo = nullptr,
+          .pBufferInfo = &projection_info,
+          .pTexelBufferView = nullptr,
+      },
+    };
+
+    vkUpdateDescriptorSets(engine.get_device(), 1, descriptor_writes, 0, nullptr);
   }
 
   void Renderer::create_pipeline_layout()

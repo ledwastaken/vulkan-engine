@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 namespace types
 {
   class Matrix4
@@ -18,6 +20,8 @@ namespace types
   private:
     float data_[16] = {};
   };
+
+  std::ostream& operator<<(std::ostream& out, const Matrix4& mat);
 } // namespace types
 
 #include "types/matrix4.hxx"
