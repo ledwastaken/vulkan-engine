@@ -30,10 +30,10 @@ namespace types
 
     // clang-format off
     float data[16] = {
-      v0 / v1,      0,            0,             0,
-      0,            v0 / v2,      0,             0,
-      (r + l) / v1, (t + b) / v2, -(f + n) / v3, -1,
-      0,            0,            -f * v0 / v3,  0
+      v0 / v1,       0,             0,              0,
+      0,            -v0 / v2,       0,              0,
+      (r + l) / v1, -(t + b) / v2, -f / v3,        -1,
+      0,             0,            -f * v0 / v3,    0
     };
     // clang-format on
 
