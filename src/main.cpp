@@ -8,6 +8,7 @@
 
 using namespace core;
 using namespace scene;
+using namespace types;
 
 static const std::vector<Vertex> vertices = {
   {
@@ -38,10 +39,10 @@ void init(Scene& scene)
 {
   auto mesh = new Mesh();
   mesh->load_mesh_data(vertices, indices);
-  mesh->cframe = mesh->cframe + types::Vector3(0, 0, 0);
   mesh->set_parent(&scene);
 
   auto camera = new Camera();
+  camera->cframe = CFrame(Vector3(10, 2, 10), Vector3());
   camera->set_parent(&scene);
 
   scene.current_camera = camera;

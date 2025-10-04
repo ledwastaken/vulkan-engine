@@ -11,6 +11,7 @@ namespace types
   {
   public:
     CFrame() = default;
+    CFrame(const Vector3& pos);
     CFrame(const Vector3& pos, const Vector3& look_at);
     CFrame(const Vector3& pos, float r00, float r01, float r02, float r10, float r11, float r12,
            float r20, float r21, float r22);

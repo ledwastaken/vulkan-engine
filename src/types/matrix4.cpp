@@ -30,10 +30,10 @@ namespace types
 
     // clang-format off
     float data[16] = {
-      v0 / v1,       0,             0,              0,
-      0,            -v0 / v2,       0,              0,
-      (r + l) / v1, -(t + b) / v2, -f / v3,        -1,
-      0,             0,            -f * v0 / v3,    0
+        v0 / v1,        0,              0,               0,
+        0,              -v0 / v2,       0,               0,
+        (r + l) / v1,   (t + b) / v2,   -(f + n) / v3,   -1,
+        0,              0,              -v0 * f / v3,    0
     };
     // clang-format on
 
@@ -54,9 +54,9 @@ namespace types
   {
     const float* data = mat.data();
 
-    return out << data[0] << ", " << data[1] << ", " << data[2] << ", " << data[3] << "\n"
-               << data[4] << ", " << data[5] << ", " << data[6] << ", " << data[7] << "\n"
-               << data[8] << ", " << data[9] << ", " << data[10] << ", " << data[11] << "\n"
-               << data[12] << ", " << data[13] << ", " << data[14] << ", " << data[15];
+    return out << data[0] << ", " << data[4] << ", " << data[8] << ", " << data[12] << "\n"
+               << data[1] << ", " << data[5] << ", " << data[9] << ", " << data[13] << "\n"
+               << data[2] << ", " << data[6] << ", " << data[10] << ", " << data[14] << "\n"
+               << data[3] << ", " << data[7] << ", " << data[11] << ", " << data[15];
   }
 } // namespace types

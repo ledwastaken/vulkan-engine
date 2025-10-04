@@ -2,22 +2,33 @@
 
 namespace types
 {
+  CFrame::CFrame(const Vector3& pos)
+    : pos_(pos)
+  {}
+
   CFrame::CFrame(const Vector3& pos, const Vector3& look_at)
     : pos_(pos)
   {
-    auto z_dir = (look_at - pos).unit();
-    auto x_dir = z_dir.cross(Vector3(0, 1, 0));
-    auto y_dir = x_dir.cross(z_dir);
+    // Z-axis points FORWARD (toward look_at for a model transform)
+    // For a view matrix, you'll invert this CFrame later
+    auto z_axis = (pos - look_at).unit();
 
-    r00_ = x_dir.x;
-    r01_ = y_dir.x;
-    r02_ = -z_dir.x;
-    r10_ = x_dir.y;
-    r11_ = y_dir.y;
-    r12_ = -z_dir.y;
-    r20_ = x_dir.z;
-    r21_ = y_dir.z;
-    r22_ = -z_dir.z;
+    // Choose an up vector, avoiding singularity when z_axis is parallel to world up
+    auto up = std::abs(z_axis.dot(Vector3(0, 1, 0))) > 0.999f ? Vector3(1, 0, 0) : Vector3(0, 1, 0);
+
+    // Build orthonormal basis using cross products
+    auto x_axis = z_axis.cross(up).unit();
+    auto y_axis = z_axis.cross(x_axis); // Already unit length
+
+    r00_ = x_axis.x;
+    r01_ = x_axis.y;
+    r02_ = x_axis.z;
+    r10_ = y_axis.x;
+    r11_ = y_axis.y;
+    r12_ = y_axis.z;
+    r20_ = z_axis.x;
+    r21_ = z_axis.y;
+    r22_ = z_axis.z;
   }
 
   CFrame::CFrame(const Vector3& pos, float r00, float r01, float r02, float r10, float r11,

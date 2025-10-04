@@ -114,13 +114,10 @@ namespace render
 
     // TODO: Load MVP matrices into uniform_buffer_data_
     auto projection = Matrix4::perpective(camera->field_of_view, 800.0f / 600.0f, 0.1f, 100.0f);
-    auto view = camera->cframe.invert();
-    float one = 1.0f;
+    auto view = camera->cframe.invert().to_matrix();
 
-    // std::memcpy(uniform_buffer_data_ + 16 * sizeof(float), view.data(), 12 * sizeof(float));
-    // std::memcpy(uniform_buffer_data_ + 31 * sizeof(float), &one, 1 * sizeof(float));
-    // std::memcpy(uniform_buffer_data_ + 32 * sizeof(float), projection.data(), 16 *
-    // sizeof(float));
+    std::memcpy(uniform_buffer_data_ + 16 * sizeof(float), view.data(), 16 * sizeof(float));
+    std::memcpy(uniform_buffer_data_ + 32 * sizeof(float), projection.data(), 16 * sizeof(float));
 
     vkCmdBindDescriptorSets(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 0,
                             1, &descriptor_set_, 0, nullptr);
@@ -190,27 +187,13 @@ namespace render
           .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
           .pImmutableSamplers = nullptr,
       },
-      {
-          .binding = 1,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .descriptorCount = 1,
-          .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-          .pImmutableSamplers = nullptr,
-      },
-      {
-          .binding = 2,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .descriptorCount = 1,
-          .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-          .pImmutableSamplers = nullptr,
-      },
     };
 
     const VkDescriptorSetLayoutCreateInfo descriptor_set_create_info = {
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
-      .bindingCount = 3,
+      .bindingCount = 1,
       .pBindings = bindings,
     };
 
@@ -251,64 +234,26 @@ namespace render
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to allocate descriptor set");
 
-    const VkDescriptorBufferInfo model_info = {
+    const VkDescriptorBufferInfo ubo_info = {
       .buffer = uniform_buffer_,
       .offset = 0,
-      .range = 16 * sizeof(float),
+      .range = 48 * sizeof(float),
     };
 
-    const VkDescriptorBufferInfo view_info = {
-      .buffer = uniform_buffer_,
-      .offset = 16 * sizeof(float),
-      .range = 16 * sizeof(float),
+    const VkWriteDescriptorSet descriptor_write = {
+      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+      .pNext = nullptr,
+      .dstSet = descriptor_set_,
+      .dstBinding = 0,
+      .dstArrayElement = 0,
+      .descriptorCount = 1,
+      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .pImageInfo = nullptr,
+      .pBufferInfo = &ubo_info,
+      .pTexelBufferView = nullptr,
     };
 
-    const VkDescriptorBufferInfo projection_info = {
-      .buffer = uniform_buffer_,
-      .offset = 32 * sizeof(float),
-      .range = 16 * sizeof(float),
-    };
-
-    const VkWriteDescriptorSet descriptor_writes[] = {
-      {
-          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-          .pNext = nullptr,
-          .dstSet = descriptor_set_,
-          .dstBinding = 0,
-          .dstArrayElement = 0,
-          .descriptorCount = 1,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .pImageInfo = nullptr,
-          .pBufferInfo = &model_info,
-          .pTexelBufferView = nullptr,
-      },
-      {
-          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-          .pNext = nullptr,
-          .dstSet = descriptor_set_,
-          .dstBinding = 1,
-          .dstArrayElement = 0,
-          .descriptorCount = 1,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .pImageInfo = nullptr,
-          .pBufferInfo = &view_info,
-          .pTexelBufferView = nullptr,
-      },
-      {
-          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-          .pNext = nullptr,
-          .dstSet = descriptor_set_,
-          .dstBinding = 2,
-          .dstArrayElement = 0,
-          .descriptorCount = 1,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .pImageInfo = nullptr,
-          .pBufferInfo = &projection_info,
-          .pTexelBufferView = nullptr,
-      },
-    };
-
-    vkUpdateDescriptorSets(engine.get_device(), 1, descriptor_writes, 0, nullptr);
+    vkUpdateDescriptorSets(engine.get_device(), 1, &descriptor_write, 0, nullptr);
   }
 
   void Renderer::create_pipeline_layout()
