@@ -113,7 +113,13 @@ namespace render
                        sizeof(float), &time);
 
     // TODO: Load MVP matrices into uniform_buffer_data_
-    auto projection = Matrix4::perpective(camera->field_of_view, 800.0f / 600.0f, 0.1f, 100.0f);
+    int width, height;
+    if (!SDL_GetWindowSize(engine.get_window(), &width, &height))
+      throw std::runtime_error(SDL_GetError());
+
+    float ratio = static_cast<float>(width) / static_cast<float>(height);
+
+    auto projection = Matrix4::perpective(camera->field_of_view, ratio, 0.1f, 100.0f);
     auto view = camera->cframe.invert().to_matrix();
 
     std::memcpy(uniform_buffer_data_ + 16 * sizeof(float), view.data(), 16 * sizeof(float));

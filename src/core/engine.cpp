@@ -602,14 +602,19 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to wait for fences");
 
-    vkResetFences(device_, 1, &in_flight_fence_);
+    result = vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, image_available_semaphore_,
+                                   VK_NULL_HANDLE, &image_index);
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+    {
+      replace_swapchain();
+      return;
+    }
+    else if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to acquire next image");
+
+    result = vkResetFences(device_, 1, &in_flight_fence_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to reset fences");
-
-    vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, image_available_semaphore_,
-                          VK_NULL_HANDLE, &image_index);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to acquire next image");
 
     renderer_(*scene, image_index);
 
@@ -651,7 +656,9 @@ namespace core
     vkGetDeviceQueue(device_, present_queue_family_, 0, &present_queue);
 
     result = vkQueuePresentKHR(present_queue, &present_info);
-    if (result != VK_SUCCESS)
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+      replace_swapchain();
+    else if (result != VK_SUCCESS)
       throw std::runtime_error("failed to present");
   }
 } // namespace core
