@@ -2,6 +2,8 @@
 
 namespace core
 {
+  SDL_Window* Engine::get_window() const { return window_; }
+
   inline VkCommandBuffer Engine::get_command_buffer(uint32_t image_index) const
   {
     return graphics_command_buffers_[image_index];

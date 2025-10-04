@@ -26,6 +26,7 @@ namespace core
     void quit();
 
     uint32_t find_memory_type(uint32_t required_memory_type, VkMemoryPropertyFlags flags);
+    SDL_Window* get_window() const;
     VkCommandBuffer get_command_buffer(uint32_t image_index) const;
     VkFramebuffer get_frambuffer(uint32_t image_index) const;
     VkDevice get_device() const;
