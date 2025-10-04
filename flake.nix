@@ -23,6 +23,7 @@
               vulkan-memory-allocator
               shaderc
               spirv-tools
+              ktx-tools
               gcc
               gdb
             ];
