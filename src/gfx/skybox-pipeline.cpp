@@ -1,4 +1,4 @@
-#include "gfx/skybox-renderer.h"
+#include "gfx/skybox-pipeline.h"
 
 #include <cstring>
 
@@ -6,7 +6,7 @@
 
 namespace gfx
 {
-  void SkyboxRenderer::init()
+  void SkyboxPipeline::init()
   {
     create_pipeline_layout();
     create_pipeline_cache();
@@ -19,7 +19,7 @@ namespace gfx
     create_vertex_buffer();
   }
 
-  void SkyboxRenderer::draw(VkImageView image_view, VkCommandBuffer command_buffer,
+  void SkyboxPipeline::draw(VkImageView image_view, VkCommandBuffer command_buffer,
                             const types::Matrix4& view, const types::Matrix4& projection)
   {
     auto& engine = core::Engine::get_singleton();
@@ -107,7 +107,7 @@ namespace gfx
     vkEndCommandBuffer(command_buffer);
   }
 
-  void SkyboxRenderer::free()
+  void SkyboxPipeline::free()
   {
     auto& engine = core::Engine::get_singleton();
     auto device = engine.get_device();
@@ -124,7 +124,7 @@ namespace gfx
     vkDestroyPipelineLayout(device, pipeline_layout_, nullptr);
   }
 
-  void SkyboxRenderer::create_pipeline_layout()
+  void SkyboxPipeline::create_pipeline_layout()
   {
     auto& engine = core::Engine::get_singleton();
 
@@ -150,7 +150,7 @@ namespace gfx
       throw std::runtime_error("failed to create pipeline layout");
   }
 
-  void SkyboxRenderer::create_pipeline_cache()
+  void SkyboxPipeline::create_pipeline_cache()
   {
     auto& engine = core::Engine::get_singleton();
     auto device = engine.get_device();
@@ -168,7 +168,7 @@ namespace gfx
       throw std::runtime_error("failed to create pipeline cache");
   }
 
-  void SkyboxRenderer::create_graphics_pipeline()
+  void SkyboxPipeline::create_graphics_pipeline()
   {
     auto& engine = core::Engine::get_singleton();
     auto device = engine.get_device();
@@ -339,7 +339,7 @@ namespace gfx
       throw std::runtime_error("failed to create graphics pipeline");
   }
 
-  void SkyboxRenderer::create_vertex_buffer()
+  void SkyboxPipeline::create_vertex_buffer()
   {
     auto& engine = core::Engine::get_singleton();
     auto device = engine.get_device();

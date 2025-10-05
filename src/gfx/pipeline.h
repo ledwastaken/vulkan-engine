@@ -4,7 +4,7 @@
 
 namespace gfx
 {
-  class Renderer
+  class Pipeline
   {
   protected:
     virtual void create_shader_module(const char* path, VkShaderModule* shader_module);

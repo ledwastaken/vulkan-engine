@@ -6,7 +6,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
-#include "gfx/skybox-renderer.h"
+#include "gfx/skybox-pipeline.h"
 #include "render/deferred-renderer.h"
 
 namespace core
@@ -25,10 +25,10 @@ namespace core
     create_fences();
     create_semaphores();
 
-    auto& skybox_renderer = gfx::SkyboxRenderer::get_singleton();
+    auto& skybox_pipeline = gfx::SkyboxPipeline::get_singleton();
     auto& deferred_renderer = render::DeferredRenderer::get_singleton();
 
-    skybox_renderer.init();
+    skybox_pipeline.init();
     deferred_renderer.init();
   }
 
@@ -52,12 +52,12 @@ namespace core
 
   void Engine::quit()
   {
-    auto& skybox_renderer = gfx::SkyboxRenderer::get_singleton();
+    auto& skybox_pipeline = gfx::SkyboxPipeline::get_singleton();
     auto& deferred_renderer = render::DeferredRenderer::get_singleton();
 
     vkDeviceWaitIdle(device_);
 
-    skybox_renderer.free();
+    skybox_pipeline.free();
     deferred_renderer.free();
 
     vkDestroySemaphore(device_, image_available_semaphore_, nullptr);

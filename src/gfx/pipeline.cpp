@@ -1,4 +1,4 @@
-#include "gfx/renderer.h"
+#include "gfx/pipeline.h"
 
 #include <fstream>
 #include <vector>
@@ -7,7 +7,7 @@
 
 namespace gfx
 {
-  void Renderer::create_shader_module(const char* path, VkShaderModule* shader_module)
+  void Pipeline::create_shader_module(const char* path, VkShaderModule* shader_module)
   {
     auto& engine = core::Engine::get_singleton();
 

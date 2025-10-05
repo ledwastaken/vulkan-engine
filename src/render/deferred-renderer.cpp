@@ -4,7 +4,7 @@
 
 #include "core/engine.h"
 #include "core/scene-manager.h"
-#include "gfx/skybox-renderer.h"
+#include "gfx/skybox-pipeline.h"
 #include "types/matrix4.h"
 
 namespace render
@@ -35,7 +35,7 @@ namespace render
     // Visitor::operator()(*scene);
     // TODO: Visit the scene tree instead
 
-    auto& skybox_renderer = gfx::SkyboxRenderer::get_singleton();
+    auto& skybox_renderer = gfx::SkyboxPipeline::get_singleton();
 
     skybox_renderer.draw(image_view, command_buffer, view, projection);
   }

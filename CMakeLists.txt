@@ -7,8 +7,8 @@ find_package(SDL3 REQUIRED)
 add_executable(main
   src/core/engine.cpp
 
-  src/gfx/renderer.cpp
-  src/gfx/skybox-renderer.cpp
+  src/gfx/pipeline.cpp
+  src/gfx/skybox-pipeline.cpp
 
   src/render/deferred-renderer.cpp
 

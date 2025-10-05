@@ -2,21 +2,21 @@
 
 #include <ktx.h>
 
-#include "gfx/renderer.h"
+#include "gfx/pipeline.h"
 #include "misc/singleton.h"
 #include "types/matrix4.h"
 
 namespace gfx
 {
-  class SkyboxRenderer
-    : public misc::Singleton<SkyboxRenderer>
-    , public Renderer
+  class SkyboxPipeline
+    : public misc::Singleton<SkyboxPipeline>
+    , public Pipeline
   {
-    // Give Singleton<SkyboxRenderer> access to class’s private constructor
-    friend class Singleton<SkyboxRenderer>;
+    // Give Singleton<SkyboxPipeline> access to class’s private constructor
+    friend class Singleton<SkyboxPipeline>;
 
   private:
-    SkyboxRenderer() = default;
+    SkyboxPipeline() = default;
 
   public:
     void init();
@@ -40,4 +40,4 @@ namespace gfx
   };
 } // namespace gfx
 
-#include "gfx/skybox-renderer.hxx"
+#include "gfx/skybox-pipeline.hxx"
