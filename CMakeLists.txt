@@ -10,7 +10,7 @@ add_executable(main
   src/gfx/renderer.cpp
   src/gfx/skybox-renderer.cpp
 
-  src/render/renderer.cpp
+  src/render/deferred-renderer.cpp
 
   src/scene/instance.cpp
   src/scene/mesh.cpp

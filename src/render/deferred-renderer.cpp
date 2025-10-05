@@ -1,0 +1,47 @@
+#include "render/deferred-renderer.h"
+
+#include <SDL3/SDL.h>
+
+#include "core/engine.h"
+#include "core/scene-manager.h"
+#include "gfx/skybox-renderer.h"
+#include "types/matrix4.h"
+
+namespace render
+{
+  void DeferredRenderer::init()
+  {
+    // FIXME
+  }
+
+  void DeferredRenderer::draw(VkImageView image_view, VkCommandBuffer command_buffer)
+  {
+    auto& engine = core::Engine::get_singleton();
+    auto& scene_manager = core::SceneManager::get_singleton();
+    auto scene = scene_manager.get_current_scene();
+
+    if (!scene || !scene->current_camera)
+      return;
+
+    int width, height;
+    if (!SDL_GetWindowSize(engine.get_window(), &width, &height))
+      throw std::runtime_error(SDL_GetError());
+
+    float ratio = static_cast<float>(width) / static_cast<float>(height);
+    auto& camera = *scene->current_camera;
+    auto view = camera.cframe.invert().to_matrix();
+    auto projection = types::Matrix4::perpective(camera.field_of_view, ratio, 0.1f, 100.0f);
+
+    // Visitor::operator()(*scene);
+    // TODO: Visit the scene tree instead
+
+    auto& skybox_renderer = gfx::SkyboxRenderer::get_singleton();
+
+    skybox_renderer.draw(image_view, command_buffer, view, projection);
+  }
+
+  void DeferredRenderer::free()
+  {
+    // FIXME
+  }
+} // namespace render

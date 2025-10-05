@@ -6,7 +6,8 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
-#include "core/scene-manager.h"
+#include "gfx/skybox-renderer.h"
+#include "render/deferred-renderer.h"
 
 namespace core
 {
@@ -24,7 +25,11 @@ namespace core
     create_fences();
     create_semaphores();
 
-    renderer_.init();
+    auto& skybox_renderer = gfx::SkyboxRenderer::get_singleton();
+    auto& deferred_renderer = render::DeferredRenderer::get_singleton();
+
+    skybox_renderer.init();
+    deferred_renderer.init();
   }
 
   void Engine::loop()
@@ -47,9 +52,13 @@ namespace core
 
   void Engine::quit()
   {
+    auto& skybox_renderer = gfx::SkyboxRenderer::get_singleton();
+    auto& deferred_renderer = render::DeferredRenderer::get_singleton();
+
     vkDeviceWaitIdle(device_);
 
-    renderer_.free();
+    skybox_renderer.free();
+    deferred_renderer.free();
 
     vkDestroySemaphore(device_, image_available_semaphore_, nullptr);
     vkDestroySemaphore(device_, render_finished_semaphore_, nullptr);
@@ -111,6 +120,8 @@ namespace core
     uint32_t extensionCount = 0;
     auto extensionNames = SDL_Vulkan_GetInstanceExtensions(&extensionCount);
 
+    const char* validation_layers[] = { "VK_LAYER_KHRONOS_validation" };
+
     const VkApplicationInfo appInfo = {
       .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
       .pNext = nullptr,
@@ -118,7 +129,7 @@ namespace core
       .applicationVersion = 1,
       .pEngineName = "vulkan-engine",
       .engineVersion = 1,
-      .apiVersion = VK_MAKE_VERSION(1, 0, 0),
+      .apiVersion = VK_API_VERSION_1_3,
     };
 
     const VkInstanceCreateInfo createInfo = {
@@ -126,8 +137,8 @@ namespace core
       .pNext = nullptr,
       .flags = 0,
       .pApplicationInfo = &appInfo,
-      .enabledLayerCount = 0,
-      .ppEnabledLayerNames = nullptr,
+      .enabledLayerCount = 1,
+      .ppEnabledLayerNames = validation_layers,
       .enabledExtensionCount = extensionCount,
       .ppEnabledExtensionNames = extensionNames,
     };
@@ -192,9 +203,21 @@ namespace core
       },
     };
 
+    VkPhysicalDeviceDynamicRenderingFeatures dynamic_rendering_features = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES,
+      .pNext = nullptr,
+      .dynamicRendering = VK_TRUE,
+    };
+
+    const VkPhysicalDeviceFeatures2 device_features2 = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+      .pNext = &dynamic_rendering_features,
+      .features = {},
+    };
+
     const VkDeviceCreateInfo deviceCreateInfo = {
       .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-      .pNext = nullptr,
+      .pNext = &device_features2,
       .flags = 0,
       .queueCreateInfoCount = 2,
       .pQueueCreateInfos = queue_create_info,
@@ -591,12 +614,6 @@ namespace core
 
   void Engine::render()
   {
-    auto& scene_manager = SceneManager::get_singleton();
-    auto scene = scene_manager.get_current_scene();
-
-    if (!scene)
-      return;
-
     uint32_t image_index;
     VkResult result = vkWaitForFences(device_, 1, &in_flight_fence_, VK_TRUE, UINT64_MAX);
     if (result != VK_SUCCESS)
@@ -616,7 +633,11 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to reset fences");
 
-    renderer_(*scene, image_index);
+    auto& deferred_renderer = render::DeferredRenderer::get_singleton();
+    auto image_view = swapchain_image_views_[image_index];
+    auto command_buffer = graphics_command_buffers_[image_index];
+
+    deferred_renderer.draw(image_view, command_buffer);
 
     const VkPipelineStageFlags wait_stages[] = {
       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,

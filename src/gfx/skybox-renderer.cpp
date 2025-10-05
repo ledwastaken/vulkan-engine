@@ -11,8 +11,8 @@ namespace gfx
     create_pipeline_layout();
     create_pipeline_cache();
 
-    create_shader_module("shaders/skybox/skybox.vert", &vertex_shader_);
-    create_shader_module("shaders/skybox/skybox.frag", &fragment_shader_);
+    create_shader_module("shaders/skybox/skybox.vert.spv", &vertex_shader_);
+    create_shader_module("shaders/skybox/skybox.frag.spv", &fragment_shader_);
 
     create_graphics_pipeline();
 
@@ -58,6 +58,21 @@ namespace gfx
       .pStencilAttachment = nullptr,
     };
 
+    const VkCommandBufferBeginInfo command_buffer_begin_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .pInheritanceInfo = nullptr,
+    };
+
+    VkResult result = vkResetCommandBuffer(command_buffer, 0);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to reset command buffer");
+
+    result = vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to begin command buffer recording");
+
     vkCmdBeginRendering(command_buffer, &rendering_info);
     vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
 
@@ -71,8 +86,8 @@ namespace gfx
     };
 
     const VkRect2D scissor = {
-      { 0, 0 },
-      { static_cast<float>(extent.width), static_cast<float>(extent.height) },
+      .offset = { 0, 0 },
+      .extent = extent,
     };
 
     vkCmdSetViewport(command_buffer, 0, 1, &viewport);
@@ -89,6 +104,7 @@ namespace gfx
                        sizeof(data), data);
     vkCmdDraw(command_buffer, 36, 1, 0, 0);
     vkCmdEndRendering(command_buffer);
+    vkEndCommandBuffer(command_buffer);
   }
 
   void SkyboxRenderer::free()
@@ -291,7 +307,7 @@ namespace gfx
       .viewMask = 0,
       .colorAttachmentCount = 1,
       .pColorAttachmentFormats = color_attachments,
-      .depthAttachmentFormat = VK_FORMAT_D32_SFLOAT,
+      .depthAttachmentFormat = VK_FORMAT_UNDEFINED,
       .stencilAttachmentFormat = VK_FORMAT_UNDEFINED,
     };
 

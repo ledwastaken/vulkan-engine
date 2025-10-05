@@ -3,12 +3,21 @@
 #include <ktx.h>
 
 #include "gfx/renderer.h"
+#include "misc/singleton.h"
 #include "types/matrix4.h"
 
 namespace gfx
 {
-  class SkyboxRenderer : public Renderer
+  class SkyboxRenderer
+    : public misc::Singleton<SkyboxRenderer>
+    , public Renderer
   {
+    // Give Singleton<SkyboxRenderer> access to class’s private constructor
+    friend class Singleton<SkyboxRenderer>;
+
+  private:
+    SkyboxRenderer() = default;
+
   public:
     void init();
     void draw(VkImageView image_view, VkCommandBuffer command_buffer, const types::Matrix4& view,
