@@ -32,12 +32,28 @@ namespace render
     auto view = camera.cframe.invert().to_matrix();
     auto projection = types::Matrix4::perpective(camera.field_of_view, ratio, 0.1f, 100.0f);
 
+    const VkCommandBufferBeginInfo command_buffer_begin_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .pInheritanceInfo = nullptr,
+    };
+
+    VkResult result = vkResetCommandBuffer(command_buffer, 0);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to reset command buffer");
+
+    result = vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to begin command buffer recording");
+
     // Visitor::operator()(*scene);
     // TODO: Visit the scene tree instead
 
     auto& skybox_renderer = gfx::SkyboxPipeline::get_singleton();
-
     skybox_renderer.draw(image_view, command_buffer, view, projection);
+
+    vkEndCommandBuffer(command_buffer);
   }
 
   void DeferredRenderer::free()

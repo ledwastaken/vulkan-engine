@@ -58,21 +58,6 @@ namespace gfx
       .pStencilAttachment = nullptr,
     };
 
-    const VkCommandBufferBeginInfo command_buffer_begin_info = {
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .pInheritanceInfo = nullptr,
-    };
-
-    VkResult result = vkResetCommandBuffer(command_buffer, 0);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to reset command buffer");
-
-    result = vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to begin command buffer recording");
-
     vkCmdBeginRendering(command_buffer, &rendering_info);
     vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
 
@@ -104,7 +89,6 @@ namespace gfx
                        sizeof(data), data);
     vkCmdDraw(command_buffer, 36, 1, 0, 0);
     vkCmdEndRendering(command_buffer);
-    vkEndCommandBuffer(command_buffer);
   }
 
   void SkyboxPipeline::free()
