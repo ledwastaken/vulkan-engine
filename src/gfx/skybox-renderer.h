@@ -11,7 +11,8 @@ namespace gfx
   {
   public:
     void init();
-    void draw();
+    void draw(VkImageView image_view, VkCommandBuffer command_buffer, const types::Matrix4& view,
+              const types::Matrix4& projection);
     void free();
 
   private:
@@ -29,3 +30,5 @@ namespace gfx
     VkDeviceMemory vertex_buffer_memory_ = VK_NULL_HANDLE;
   };
 } // namespace gfx
+
+#include "gfx/skybox-renderer.hxx"

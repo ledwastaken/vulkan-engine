@@ -19,9 +19,76 @@ namespace gfx
     create_vertex_buffer();
   }
 
-  void SkyboxRenderer::draw()
+  void SkyboxRenderer::draw(VkImageView image_view, VkCommandBuffer command_buffer,
+                            const types::Matrix4& view, const types::Matrix4& projection)
   {
-    // FIXME
+    auto& engine = core::Engine::get_singleton();
+    auto extent = engine.get_swapchain_extent();
+
+    const VkClearValue clear_value = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
+
+    const VkRenderingAttachmentInfo color_attachment = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .pNext = nullptr,
+      .imageView = image_view,
+      .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .resolveMode = VK_RESOLVE_MODE_NONE,
+      .resolveImageView = VK_NULL_HANDLE,
+      .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .clearValue = clear_value,
+    };
+
+    const VkRect2D render_area = {
+      .offset = { 0, 0 },
+      .extent = extent,
+    };
+
+    const VkRenderingInfo rendering_info = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .renderArea = render_area,
+      .layerCount = 1,
+      .viewMask = 0,
+      .colorAttachmentCount = 1,
+      .pColorAttachments = &color_attachment,
+      .pDepthAttachment = nullptr,
+      .pStencilAttachment = nullptr,
+    };
+
+    vkCmdBeginRendering(command_buffer, &rendering_info);
+    vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
+
+    const VkViewport viewport{
+      .x = 0.0f,
+      .y = 0.0f,
+      .width = static_cast<float>(extent.width),
+      .height = static_cast<float>(extent.height),
+      .minDepth = 0.0f,
+      .maxDepth = 1.0f,
+    };
+
+    const VkRect2D scissor = {
+      { 0, 0 },
+      { static_cast<float>(extent.width), static_cast<float>(extent.height) },
+    };
+
+    vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+    vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+    VkDeviceSize offset = 0;
+    vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer_, &offset);
+
+    float data[32];
+    std::memcpy(data, view.data(), 16 * sizeof(float));
+    std::memcpy(data + 16, projection.data(), 16 * sizeof(float));
+
+    vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0,
+                       sizeof(data), data);
+    vkCmdDraw(command_buffer, 36, 1, 0, 0);
+    vkCmdEndRendering(command_buffer);
   }
 
   void SkyboxRenderer::free()
@@ -48,7 +115,7 @@ namespace gfx
     const VkPushConstantRange push_constants = {
       .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
       .offset = 0,
-      .size = 25 * sizeof(float),
+      .size = 32 * sizeof(float),
     };
 
     const VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
@@ -216,9 +283,21 @@ namespace gfx
       .pScissors = nullptr,
     };
 
+    const VkFormat color_attachments[] = { VK_FORMAT_R8G8B8A8_UNORM };
+
+    const VkPipelineRenderingCreateInfo pipeline_rendering_create_info = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
+      .pNext = nullptr,
+      .viewMask = 0,
+      .colorAttachmentCount = 1,
+      .pColorAttachmentFormats = color_attachments,
+      .depthAttachmentFormat = VK_FORMAT_D32_SFLOAT,
+      .stencilAttachmentFormat = VK_FORMAT_UNDEFINED,
+    };
+
     const VkGraphicsPipelineCreateInfo create_info = {
       .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      .pNext = nullptr,
+      .pNext = &pipeline_rendering_create_info,
       .flags = 0,
       .stageCount = 2,
       .pStages = shader_stage_infos,
