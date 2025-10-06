@@ -18,7 +18,6 @@ namespace core
     create_surface();
     create_device();
     create_swapchain();
-    create_renderpass();
     create_swapchain_resources();
     create_command_pools();
     allocate_command_buffers();
@@ -72,13 +71,9 @@ namespace core
     vkDestroyCommandPool(device_, transfer_command_pool_, nullptr);
     vkDestroyCommandPool(device_, graphics_command_pool_, nullptr);
 
-    for (size_t i = 0; i < framebuffers_.size(); i++)
-      vkDestroyFramebuffer(device_, framebuffers_[i], nullptr);
-
     for (size_t i = 0; i < swapchain_image_views_.size(); i++)
       vkDestroyImageView(device_, swapchain_image_views_[i], nullptr);
 
-    vkDestroyRenderPass(device_, renderpass_, nullptr);
     vkDestroySwapchainKHR(device_, swapchain_, nullptr);
     vkDestroyDevice(device_, nullptr);
     vkDestroySurfaceKHR(instance_, surface_, nullptr);
@@ -271,54 +266,6 @@ namespace core
       throw std::runtime_error("failed to create swapchain");
   }
 
-  void Engine::create_renderpass()
-  {
-    const VkAttachmentDescription attachment = {
-      .flags = 0,
-      .format = VK_FORMAT_R8G8B8A8_UNORM,
-      .samples = VK_SAMPLE_COUNT_1_BIT,
-      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-      .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-      .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-      .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    };
-
-    const VkAttachmentReference attachment_reference = {
-      .attachment = 0,
-      .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    };
-
-    const VkSubpassDescription subpass = {
-      .flags = 0,
-      .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-      .inputAttachmentCount = 0,
-      .pInputAttachments = nullptr,
-      .colorAttachmentCount = 1,
-      .pColorAttachments = &attachment_reference,
-      .pResolveAttachments = nullptr,
-      .pDepthStencilAttachment = nullptr,
-      .preserveAttachmentCount = 0,
-      .pPreserveAttachments = nullptr,
-    };
-
-    VkRenderPassCreateInfo create_info = {
-      .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .attachmentCount = 1,
-      .pAttachments = &attachment,
-      .subpassCount = 1,
-      .pSubpasses = &subpass,
-      .dependencyCount = 0,
-      .pDependencies = nullptr,
-    };
-
-    if (vkCreateRenderPass(device_, &create_info, nullptr, &renderpass_) != VK_SUCCESS)
-      throw std::runtime_error("failed to create renderpass");
-  }
-
   void Engine::create_swapchain_resources()
   {
     uint32_t image_count = 0;
@@ -329,17 +276,13 @@ namespace core
 
     swapchain_images_.resize(image_count);
     swapchain_image_views_.resize(image_count);
-    framebuffers_.resize(image_count);
     result = vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, swapchain_images_.data());
 
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to retrieve swpachain images");
 
     for (uint32_t i = 0; i < image_count; i++)
-    {
       create_image_view(i);
-      create_framebuffer(i);
-    }
   }
 
   void Engine::create_command_pools()
@@ -608,36 +551,10 @@ namespace core
       throw std::runtime_error("failed to create image view");
   }
 
-  void Engine::create_framebuffer(size_t index)
-  {
-    const VkImageView attachments[] = { swapchain_image_views_[index] };
-
-    const VkFramebufferCreateInfo framebuffer_create_info = {
-      .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .renderPass = renderpass_,
-      .attachmentCount = 1,
-      .pAttachments = attachments,
-      .width = swapchain_extent_.width,
-      .height = swapchain_extent_.height,
-      .layers = 1,
-    };
-
-    VkResult result =
-        vkCreateFramebuffer(device_, &framebuffer_create_info, nullptr, &framebuffers_[index]);
-
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to create frambuffer");
-  }
-
   void Engine::replace_swapchain()
   {
     if (vkDeviceWaitIdle(device_) != VK_SUCCESS)
       throw std::runtime_error("failed to wait idle for device");
-
-    for (size_t i = 0; i < framebuffers_.size(); i++)
-      vkDestroyFramebuffer(device_, framebuffers_[i], nullptr);
 
     for (size_t i = 0; i < swapchain_image_views_.size(); i++)
       vkDestroyImageView(device_, swapchain_image_views_[i], nullptr);

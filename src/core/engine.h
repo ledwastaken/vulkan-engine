@@ -27,10 +27,8 @@ namespace core
     uint32_t find_memory_type(uint32_t required_memory_type, VkMemoryPropertyFlags flags);
     SDL_Window* get_window() const;
     VkCommandBuffer get_command_buffer(uint32_t image_index) const;
-    VkFramebuffer get_frambuffer(uint32_t image_index) const;
     VkDevice get_device() const;
     VkExtent2D get_swapchain_extent() const;
-    VkRenderPass get_renderpass() const;
 
   private:
     void create_window();
@@ -38,7 +36,6 @@ namespace core
     void create_surface();
     void create_device();
     void create_swapchain();
-    void create_renderpass();
     void create_swapchain_resources();
     void create_command_pools();
     void allocate_command_buffers();
@@ -52,7 +49,6 @@ namespace core
     bool required_features_not_supported(VkPhysicalDevice device);
     int calculate_device_properties_score(VkPhysicalDeviceProperties properties);
     void create_image_view(size_t index);
-    void create_framebuffer(size_t index);
     void replace_swapchain();
 
     void render();
@@ -70,8 +66,6 @@ namespace core
     VkSwapchainKHR swapchain_ = VK_NULL_HANDLE;
     std::vector<VkImage> swapchain_images_;
     std::vector<VkImageView> swapchain_image_views_;
-    VkRenderPass renderpass_;
-    std::vector<VkFramebuffer> framebuffers_;
     VkCommandPool graphics_command_pool_ = VK_NULL_HANDLE;
     VkCommandPool transfer_command_pool_ = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> graphics_command_buffers_;
