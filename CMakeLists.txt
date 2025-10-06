@@ -7,7 +7,9 @@ pkg_check_modules(SDL3 REQUIRED sdl3)
 pkg_check_modules(STB REQUIRED stb)
 
 add_executable(main
+  src/core/asset-manager.cpp
   src/core/engine.cpp
+  src/core/stb_impl.cpp
 
   src/gfx/pipeline.cpp
   src/gfx/skybox-pipeline.cpp
@@ -34,7 +36,6 @@ target_include_directories(main PRIVATE
 target_link_libraries(main PUBLIC
   ${VULKAN_LIBRARIES}
   ${SDL3_LIBRARIES}
-  ${SDTB_LIBRARIES}
 )
 
 target_compile_options(main PRIVATE
