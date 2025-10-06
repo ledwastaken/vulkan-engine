@@ -63,6 +63,7 @@ namespace core
     VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
     uint32_t graphics_queue_family_;
     uint32_t present_queue_family_;
+    uint32_t transfer_queue_family_;
     VkPhysicalDeviceFeatures enabled_features_ = {};
     VkDevice device_ = VK_NULL_HANDLE;
     VkExtent2D swapchain_extent_;
@@ -72,7 +73,9 @@ namespace core
     VkRenderPass renderpass_;
     std::vector<VkFramebuffer> framebuffers_;
     VkCommandPool graphics_command_pool_ = VK_NULL_HANDLE;
+    VkCommandPool transfer_command_pool_ = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> graphics_command_buffers_;
+    std::vector<VkCommandBuffer> transfer_command_buffers_;
     VkFence in_flight_fence_ = VK_NULL_HANDLE;
     VkSemaphore image_available_semaphore_ = VK_NULL_HANDLE;
     VkSemaphore render_finished_semaphore_ = VK_NULL_HANDLE;

@@ -64,9 +64,12 @@ namespace core
     vkDestroySemaphore(device_, render_finished_semaphore_, nullptr);
     vkDestroyFence(device_, in_flight_fence_, nullptr);
 
+    vkFreeCommandBuffers(device_, transfer_command_pool_, transfer_command_buffers_.size(),
+                         transfer_command_buffers_.data());
     vkFreeCommandBuffers(device_, graphics_command_pool_, graphics_command_buffers_.size(),
                          graphics_command_buffers_.data());
 
+    vkDestroyCommandPool(device_, transfer_command_pool_, nullptr);
     vkDestroyCommandPool(device_, graphics_command_pool_, nullptr);
 
     for (size_t i = 0; i < framebuffers_.size(); i++)
@@ -341,17 +344,29 @@ namespace core
 
   void Engine::create_command_pools()
   {
-    const VkCommandPoolCreateInfo create_info = {
+    const VkCommandPoolCreateInfo graphics_command_pool_create_info = {
       .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
       .pNext = nullptr,
       .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
       .queueFamilyIndex = graphics_queue_family_,
     };
 
-    if (vkCreateCommandPool(device_, &create_info, nullptr, &graphics_command_pool_) != VK_SUCCESS)
+    VkResult result = vkCreateCommandPool(device_, &graphics_command_pool_create_info, nullptr,
+                                          &graphics_command_pool_);
+    if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create graphics command pool");
 
-    // TODO: create transfer command pool
+    const VkCommandPoolCreateInfo transfer_command_pool_create_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+      .queueFamilyIndex = transfer_queue_family_,
+    };
+
+    result = vkCreateCommandPool(device_, &transfer_command_pool_create_info, nullptr,
+                                 &transfer_command_pool_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create graphics command pool");
   }
 
   void Engine::allocate_command_buffers()
@@ -362,7 +377,7 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to retrieve swpachain image count");
 
-    const VkCommandBufferAllocateInfo allocate_info = {
+    const VkCommandBufferAllocateInfo graphics_allocate_info = {
       .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       .pNext = nullptr,
       .commandPool = graphics_command_pool_,
@@ -371,8 +386,22 @@ namespace core
     };
 
     graphics_command_buffers_.resize(image_count);
-    result = vkAllocateCommandBuffers(device_, &allocate_info, graphics_command_buffers_.data());
+    result = vkAllocateCommandBuffers(device_, &graphics_allocate_info,
+                                      graphics_command_buffers_.data());
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to allocate command buffers");
 
+    const VkCommandBufferAllocateInfo transfer_allocate_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+      .pNext = nullptr,
+      .commandPool = transfer_command_pool_,
+      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+      .commandBufferCount = 1,
+    };
+
+    transfer_command_buffers_.resize(1);
+    result = vkAllocateCommandBuffers(device_, &graphics_allocate_info,
+                                      graphics_command_buffers_.data());
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to allocate command buffers");
   }
@@ -451,6 +480,7 @@ namespace core
 
     bool graphics_family_found = false;
     bool present_family_found = false;
+    bool transfer_family_found = false;
 
     for (uint32_t idx = 0; idx < family_count; idx++)
     {
@@ -472,7 +502,13 @@ namespace core
         graphics_family_found = true;
       }
 
-      if (graphics_family_found && present_family_found)
+      if (family_properties[idx].queueFlags & VK_QUEUE_TRANSFER_BIT)
+      {
+        transfer_queue_family_ = idx;
+        transfer_family_found = true;
+      }
+
+      if (graphics_family_found && present_family_found && transfer_family_found)
         break;
     }
 
