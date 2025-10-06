@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.21.2)
 project(vulkan-engine)
 
-find_package(Vulkan REQUIRED)
-find_package(SDL3 REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(VULKAN REQUIRED vulkan)
+pkg_check_modules(SDL3 REQUIRED sdl3)
+pkg_check_modules(STB REQUIRED stb)
 
 add_executable(main
   src/core/engine.cpp
@@ -30,8 +32,9 @@ target_include_directories(main PRIVATE
 )
 
 target_link_libraries(main PUBLIC
-  Vulkan::Vulkan
-  SDL3::SDL3
+  ${VULKAN_LIBRARIES}
+  ${SDL3_LIBRARIES}
+  ${SDTB_LIBRARIES}
 )
 
 target_compile_options(main PRIVATE

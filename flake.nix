@@ -17,6 +17,7 @@
               cmake
               pkg-config
               sdl3
+              stb
               vulkan-headers
               vulkan-loader
               vulkan-validation-layers
