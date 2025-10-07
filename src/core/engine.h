@@ -28,6 +28,7 @@ namespace core
     SDL_Window* get_window() const;
     VkDevice get_device() const;
     VkExtent2D get_swapchain_extent() const;
+    VkSurfaceFormatKHR get_surface_format() const;
 
   private:
     void create_window();
