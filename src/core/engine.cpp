@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <set>
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
@@ -184,24 +185,27 @@ namespace core
 
     float queue_priority = 1.0f;
 
-    const VkDeviceQueueCreateInfo queue_create_info[] = {
-      {
-          .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-          .pNext = nullptr,
-          .flags = 0,
-          .queueFamilyIndex = graphics_queue_family_,
-          .queueCount = 1,
-          .pQueuePriorities = &queue_priority,
-      },
-      {
-          .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-          .pNext = nullptr,
-          .flags = 0,
-          .queueFamilyIndex = present_queue_family_,
-          .queueCount = 1,
-          .pQueuePriorities = &queue_priority,
-      },
+    std::set<uint32_t> unique_queue_families = {
+      graphics_queue_family_,
+      present_queue_family_,
+      transfer_queue_family_,
     };
+
+    std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
+
+    for (auto queue_family : unique_queue_families)
+    {
+      const VkDeviceQueueCreateInfo queue_create_info = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .queueFamilyIndex = queue_family,
+        .queueCount = 1,
+        .pQueuePriorities = &queue_priority,
+      };
+
+      queue_create_infos.push_back(queue_create_info);
+    }
 
     VkPhysicalDeviceDynamicRenderingFeatures dynamic_rendering_features = {
       .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES,
@@ -212,20 +216,20 @@ namespace core
     const VkPhysicalDeviceFeatures2 device_features2 = {
       .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
       .pNext = &dynamic_rendering_features,
-      .features = {},
+      .features = enabled_features_,
     };
 
     const VkDeviceCreateInfo deviceCreateInfo = {
       .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
       .pNext = &device_features2,
       .flags = 0,
-      .queueCreateInfoCount = 2,
-      .pQueueCreateInfos = queue_create_info,
+      .queueCreateInfoCount = queue_create_infos.size(),
+      .pQueueCreateInfos = queue_create_infos.data(),
       .enabledLayerCount = 0,
       .ppEnabledLayerNames = nullptr,
       .enabledExtensionCount = 1,
       .ppEnabledExtensionNames = required_extensions,
-      .pEnabledFeatures = &enabled_features_,
+      .pEnabledFeatures = nullptr,
     };
 
     result = vkCreateDevice(physical_device_, &deviceCreateInfo, nullptr, &device_);
