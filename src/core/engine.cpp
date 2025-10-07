@@ -182,6 +182,8 @@ namespace core
     enabled_features_.geometryShader = VK_TRUE;
     enabled_features_.tessellationShader = VK_TRUE;
 
+    float queue_priority = 1.0f;
+
     const VkDeviceQueueCreateInfo queue_create_info[] = {
       {
           .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -189,7 +191,7 @@ namespace core
           .flags = 0,
           .queueFamilyIndex = graphics_queue_family_,
           .queueCount = 1,
-          .pQueuePriorities = nullptr,
+          .pQueuePriorities = &queue_priority,
       },
       {
           .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -197,7 +199,7 @@ namespace core
           .flags = 0,
           .queueFamilyIndex = present_queue_family_,
           .queueCount = 1,
-          .pQueuePriorities = nullptr,
+          .pQueuePriorities = &queue_priority,
       },
     };
 
