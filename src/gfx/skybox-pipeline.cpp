@@ -283,7 +283,7 @@ namespace gfx
       .pScissors = nullptr,
     };
 
-    const VkFormat color_attachments[] = { VK_FORMAT_R8G8B8A8_UNORM };
+    const VkFormat color_attachments[] = { engine.get_surface_format().format };
 
     const VkPipelineRenderingCreateInfo pipeline_rendering_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
