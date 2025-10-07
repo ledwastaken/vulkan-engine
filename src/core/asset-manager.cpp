@@ -76,8 +76,8 @@ namespace core
     stbi_image_free(pixels);
 
     const VkExtent3D image_extent = {
-      .width = width,
-      .height = height,
+      .width = static_cast<uint32_t>(width),
+      .height = static_cast<uint32_t>(height),
       .depth = 4,
     };
 
@@ -110,7 +110,7 @@ namespace core
       .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
       .pNext = nullptr,
       .allocationSize = memory_requirements.size,
-      .memoryTypeIndex = engine.find_memory_type(memory_requirements.memoryTypeBits, flags),
+      .memoryTypeIndex = engine.find_memory_type(memory_requirements.memoryTypeBits, flag),
     };
 
     result = vkAllocateMemory(device, &image_allocate_info, nullptr, &image_data->memory);
@@ -180,6 +180,8 @@ namespace core
     result = vkCreateSampler(device, &sampler_create_info, nullptr, &image_data->sampler);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create sampler");
+
+    return image_data;
   }
 
   ImageData* AssetManager::find_image(const std::string& name)
