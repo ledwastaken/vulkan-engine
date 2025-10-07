@@ -245,30 +245,63 @@ namespace core
 
     swapchain_extent_ = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 
-    // TODO: Check device's image count capabilities
+    VkSurfaceCapabilitiesKHR capabilities;
+    VkResult result =
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device_, surface_, &capabilities);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to retrieve physical device surface capbilities");
+
+    uint32_t format_count = 0;
+    result =
+        vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_, surface_, &format_count, nullptr);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to retrieve physical device surface formats");
+
+    std::vector<VkSurfaceFormatKHR> surface_formats(format_count);
+    result = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_, surface_, &format_count,
+                                                  surface_formats.data());
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to retrieve physical device surface formats");
+
+    if (format_count == 1 && surface_formats[0].format == VK_FORMAT_UNDEFINED)
+      surface_format_ = { VK_FORMAT_R8G8B8A8_UNORM, VK_COLORSPACE_SRGB_NONLINEAR_KHR };
+    else
+    {
+      surface_format_ = surface_formats[0];
+      for (const auto& available_format : surface_formats)
+      {
+        if (available_format.format == VK_FORMAT_R8G8B8A8_UNORM
+            && available_format.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR)
+        {
+          surface_format_ = available_format;
+          break;
+        }
+      }
+    }
 
     const VkSwapchainCreateInfoKHR create_info = {
       .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
       .pNext = nullptr,
       .flags = 0,
       .surface = surface_,
-      .minImageCount = 2,
-      .imageFormat = VK_FORMAT_R8G8B8A8_UNORM,
-      .imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR,
+      .minImageCount = capabilities.minImageCount,
+      .imageFormat = surface_format_.format,
+      .imageColorSpace = surface_format_.colorSpace,
       .imageExtent = swapchain_extent_,
       .imageArrayLayers = 1,
       .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
       .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
       .queueFamilyIndexCount = 0,
       .pQueueFamilyIndices = nullptr,
-      .preTransform = VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR,
+      .preTransform = capabilities.currentTransform,
       .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
       .presentMode = VK_PRESENT_MODE_FIFO_KHR,
       .clipped = VK_TRUE,
       .oldSwapchain = swapchain_,
     };
 
-    if (vkCreateSwapchainKHR(device_, &create_info, nullptr, &swapchain_))
+    result = vkCreateSwapchainKHR(device_, &create_info, nullptr, &swapchain_);
+    if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create swapchain");
   }
 
@@ -545,14 +578,13 @@ namespace core
       .flags = 0,
       .image = swapchain_images_[index],
       .viewType = VK_IMAGE_VIEW_TYPE_2D,
-      .format = VK_FORMAT_R8G8B8A8_UNORM,
+      .format = surface_format_.format,
       .components = components,
       .subresourceRange = subresource_range,
     };
 
     VkResult result = vkCreateImageView(device_, &image_view_create_info, nullptr,
                                         &swapchain_image_views_[index]);
-
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create image view");
   }

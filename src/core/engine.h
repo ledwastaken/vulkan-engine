@@ -62,6 +62,7 @@ namespace core
     VkPhysicalDeviceFeatures enabled_features_ = {};
     VkDevice device_ = VK_NULL_HANDLE;
     VkExtent2D swapchain_extent_;
+    VkSurfaceFormatKHR surface_format_;
     VkSwapchainKHR swapchain_ = VK_NULL_HANDLE;
     std::vector<VkImage> swapchain_images_;
     std::vector<VkImageView> swapchain_image_views_;
