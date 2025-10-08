@@ -7,6 +7,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
+#include "core/asset-manager.h"
 #include "gfx/skybox-pipeline.h"
 #include "render/deferred-renderer.h"
 
@@ -52,16 +53,19 @@ namespace core
 
   void Engine::quit()
   {
+    auto& asset_manager = AssetManager::get_singleton();
     auto& skybox_pipeline = gfx::SkyboxPipeline::get_singleton();
     auto& deferred_renderer = render::DeferredRenderer::get_singleton();
 
     vkDeviceWaitIdle(device_);
 
+    asset_manager.free();
     skybox_pipeline.free();
     deferred_renderer.free();
 
     vkDestroySemaphore(device_, image_available_semaphore_, nullptr);
     vkDestroySemaphore(device_, render_finished_semaphore_, nullptr);
+    vkDestroyFence(device_, transfer_fence_, nullptr);
     vkDestroyFence(device_, in_flight_fence_, nullptr);
 
     vkFreeCommandBuffers(device_, transfer_command_pool_, 1, &transfer_command_buffer_);
@@ -103,7 +107,15 @@ namespace core
   void Engine::transfer_image(VkImage image, VkOffset3D offset, VkExtent3D extent,
                               VkBuffer buffer) const
   {
-    VkResult result = vkResetCommandBuffer(transfer_command_buffer_, 0);
+    VkResult result = vkWaitForFences(device_, 1, &transfer_fence_, VK_TRUE, UINT64_MAX);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to wait for fence");
+
+    result = vkResetFences(device_, 1, &transfer_fence_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to reset fence");
+
+    result = vkResetCommandBuffer(transfer_command_buffer_, 0);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to reset command buffer");
 
@@ -121,7 +133,7 @@ namespace core
     const VkImageSubresourceLayers image_subresource_layers = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
       .mipLevel = 0,
-      .baseArrayLayer = 1,
+      .baseArrayLayer = 0,
       .layerCount = 1,
     };
 
@@ -158,13 +170,13 @@ namespace core
     VkQueue transfer_queue;
     vkGetDeviceQueue(device_, transfer_queue_family_, 0, &transfer_queue);
 
-    result = vkQueueSubmit(transfer_queue, 1, &submit_info, VK_NULL_HANDLE);
+    result = vkQueueSubmit(transfer_queue, 1, &submit_info, transfer_fence_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to submit to queue");
 
-    result = vkQueueWaitIdle(transfer_queue);
+    result = vkWaitForFences(device_, 1, &transfer_fence_, VK_TRUE, UINT64_MAX);
     if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to wait idle");
+      throw std::runtime_error("failed to wait for transfer completion");
   }
 
   void Engine::create_window()
@@ -461,6 +473,9 @@ namespace core
     };
 
     if (vkCreateFence(device_, &create_info, nullptr, &in_flight_fence_) != VK_SUCCESS)
+      throw std::runtime_error("failed to create fence");
+
+    if (vkCreateFence(device_, &create_info, nullptr, &transfer_fence_) != VK_SUCCESS)
       throw std::runtime_error("failed to create fence");
   }
 

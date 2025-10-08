@@ -24,6 +24,8 @@ namespace gfx
               const types::Matrix4& projection);
     void free();
 
+    void set_skybox_image(VkImage skybox_image);
+
   private:
     void create_pipeline_layout();
     void create_pipeline_cache();
@@ -37,6 +39,8 @@ namespace gfx
     VkPipeline pipeline_ = VK_NULL_HANDLE;
     VkBuffer vertex_buffer_ = VK_NULL_HANDLE;
     VkDeviceMemory vertex_buffer_memory_ = VK_NULL_HANDLE;
+
+    VkImage skybox_image_ = VK_NULL_HANDLE;
   };
 } // namespace gfx
 

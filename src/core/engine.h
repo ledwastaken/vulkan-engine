@@ -76,6 +76,7 @@ namespace core
     std::vector<VkCommandBuffer> graphics_command_buffers_;
     VkCommandBuffer transfer_command_buffer_;
     VkFence in_flight_fence_ = VK_NULL_HANDLE;
+    VkFence transfer_fence_ = VK_NULL_HANDLE;
     VkSemaphore image_available_semaphore_ = VK_NULL_HANDLE;
     VkSemaphore render_finished_semaphore_ = VK_NULL_HANDLE;
   };
