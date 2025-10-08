@@ -25,6 +25,9 @@ namespace core
     void quit();
 
     uint32_t find_memory_type(uint32_t required_memory_type, VkMemoryPropertyFlags flags);
+    void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
+                                 VkImageLayout new_layout) const;
+
     SDL_Window* get_window() const;
     VkDevice get_device() const;
     VkExtent2D get_swapchain_extent() const;
@@ -70,7 +73,7 @@ namespace core
     VkCommandPool graphics_command_pool_ = VK_NULL_HANDLE;
     VkCommandPool transfer_command_pool_ = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> graphics_command_buffers_;
-    std::vector<VkCommandBuffer> transfer_command_buffers_;
+    VkCommandBuffer transfer_command_buffer_;
     VkFence in_flight_fence_ = VK_NULL_HANDLE;
     VkSemaphore image_available_semaphore_ = VK_NULL_HANDLE;
     VkSemaphore render_finished_semaphore_ = VK_NULL_HANDLE;

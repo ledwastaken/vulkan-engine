@@ -64,8 +64,7 @@ namespace core
     vkDestroySemaphore(device_, render_finished_semaphore_, nullptr);
     vkDestroyFence(device_, in_flight_fence_, nullptr);
 
-    vkFreeCommandBuffers(device_, transfer_command_pool_, transfer_command_buffers_.size(),
-                         transfer_command_buffers_.data());
+    vkFreeCommandBuffers(device_, transfer_command_pool_, 1, &transfer_command_buffer_);
     vkFreeCommandBuffers(device_, graphics_command_pool_, graphics_command_buffers_.size(),
                          graphics_command_buffers_.data());
 
@@ -99,6 +98,100 @@ namespace core
       }
 
     throw std::runtime_error("no suitable memory type found");
+  }
+
+  void Engine::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
+                                       VkImageLayout new_layout) const
+  {
+    VkResult result = vkResetCommandBuffer(transfer_command_buffer_, 0);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to reset command buffer");
+
+    const VkCommandBufferBeginInfo command_buffer_begin_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .pInheritanceInfo = nullptr,
+    };
+
+    result = vkBeginCommandBuffer(transfer_command_buffer_, &command_buffer_begin_info);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to begin command buffer");
+
+    VkAccessFlags src_access;
+    VkAccessFlags dst_access;
+    VkPipelineStageFlags src_stage;
+    VkPipelineStageFlags dst_stage;
+
+    if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED
+        && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+    {
+      src_access = 0;
+      dst_access = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+      src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+      dst_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+             && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+    {
+      src_access = VK_ACCESS_TRANSFER_WRITE_BIT;
+      dst_access = VK_ACCESS_SHADER_READ_BIT;
+
+      src_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+      dst_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else
+      throw std::invalid_argument("unsupported layout transition!");
+
+    const VkImageSubresourceRange subresource_range = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    };
+
+    const VkImageMemoryBarrier image_memory_barrier = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .pNext = nullptr,
+      .srcAccessMask = src_access,
+      .dstAccessMask = dst_access,
+      .oldLayout = old_layout,
+      .newLayout = new_layout,
+      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .image = image,
+      .subresourceRange = subresource_range,
+    };
+
+    vkCmdPipelineBarrier(transfer_command_buffer_, src_stage, dst_stage, 0, 0, nullptr, 0, nullptr,
+                         1, &image_memory_barrier);
+
+    vkEndCommandBuffer(transfer_command_buffer_);
+
+    const VkSubmitInfo submit_info = {
+      .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      .pNext = nullptr,
+      .waitSemaphoreCount = 0,
+      .pWaitSemaphores = nullptr,
+      .pWaitDstStageMask = nullptr,
+      .commandBufferCount = 1,
+      .pCommandBuffers = &transfer_command_buffer_,
+      .signalSemaphoreCount = 0,
+      .pSignalSemaphores = nullptr,
+    };
+
+    VkQueue transfer_queue;
+    vkGetDeviceQueue(device_, transfer_queue_family_, 0, &transfer_queue);
+
+    result = vkQueueSubmit(transfer_queue, 1, &submit_info, VK_NULL_HANDLE);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to submit to queue");
+
+    result = vkQueueWaitIdle(transfer_queue);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to wait idle");
   }
 
   void Engine::create_window()
@@ -381,9 +474,7 @@ namespace core
       .commandBufferCount = 1,
     };
 
-    transfer_command_buffers_.resize(1);
-    result = vkAllocateCommandBuffers(device_, &graphics_allocate_info,
-                                      graphics_command_buffers_.data());
+    result = vkAllocateCommandBuffers(device_, &graphics_allocate_info, &transfer_command_buffer_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to allocate command buffers");
   }
