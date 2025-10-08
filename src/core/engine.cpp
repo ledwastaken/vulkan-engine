@@ -100,8 +100,8 @@ namespace core
     throw std::runtime_error("no suitable memory type found");
   }
 
-  void Engine::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
-                                       VkImageLayout new_layout) const
+  void Engine::transfer_image(VkImage image, VkOffset3D offset, VkExtent3D extent,
+                              VkBuffer buffer) const
   {
     VkResult result = vkResetCommandBuffer(transfer_command_buffer_, 0);
     if (result != VK_SUCCESS)
@@ -118,55 +118,28 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to begin command buffer");
 
-    VkAccessFlags src_access;
-    VkAccessFlags dst_access;
-    VkPipelineStageFlags src_stage;
-    VkPipelineStageFlags dst_stage;
-
-    if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED
-        && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-    {
-      src_access = 0;
-      dst_access = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-      src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-      dst_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    }
-    else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-             && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-    {
-      src_access = VK_ACCESS_TRANSFER_WRITE_BIT;
-      dst_access = VK_ACCESS_SHADER_READ_BIT;
-
-      src_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-      dst_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    }
-    else
-      throw std::invalid_argument("unsupported layout transition!");
-
-    const VkImageSubresourceRange subresource_range = {
+    const VkImageSubresourceLayers image_subresource_layers = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .baseMipLevel = 0,
-      .levelCount = 1,
-      .baseArrayLayer = 0,
+      .mipLevel = 0,
+      .baseArrayLayer = 1,
       .layerCount = 1,
     };
 
-    const VkImageMemoryBarrier image_memory_barrier = {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-      .pNext = nullptr,
-      .srcAccessMask = src_access,
-      .dstAccessMask = dst_access,
-      .oldLayout = old_layout,
-      .newLayout = new_layout,
-      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .image = image,
-      .subresourceRange = subresource_range,
+    const VkBufferImageCopy region = {
+      .bufferOffset = 0,
+      .bufferRowLength = 0,
+      .bufferImageHeight = 0,
+      .imageSubresource = image_subresource_layers,
+      .imageOffset = offset,
+      .imageExtent = extent,
     };
 
-    vkCmdPipelineBarrier(transfer_command_buffer_, src_stage, dst_stage, 0, 0, nullptr, 0, nullptr,
-                         1, &image_memory_barrier);
+    transition_image_layout(image, surface_format_.format, VK_IMAGE_LAYOUT_UNDEFINED,
+                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    vkCmdCopyBufferToImage(transfer_command_buffer_, buffer, image,
+                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    transition_image_layout(image, surface_format_.format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     vkEndCommandBuffer(transfer_command_buffer_);
 
@@ -692,6 +665,60 @@ namespace core
 
     create_swapchain();
     create_swapchain_resources();
+  }
+
+  void Engine::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
+                                       VkImageLayout new_layout) const
+  {
+    VkAccessFlags src_access;
+    VkAccessFlags dst_access;
+    VkPipelineStageFlags src_stage;
+    VkPipelineStageFlags dst_stage;
+
+    if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED
+        && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+    {
+      src_access = 0;
+      dst_access = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+      src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+      dst_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+             && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+    {
+      src_access = VK_ACCESS_TRANSFER_WRITE_BIT;
+      dst_access = VK_ACCESS_SHADER_READ_BIT;
+
+      src_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+      dst_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else
+      throw std::invalid_argument("unsupported layout transition!");
+
+    const VkImageSubresourceRange subresource_range = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    };
+
+    const VkImageMemoryBarrier image_memory_barrier = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .pNext = nullptr,
+      .srcAccessMask = src_access,
+      .dstAccessMask = dst_access,
+      .oldLayout = old_layout,
+      .newLayout = new_layout,
+      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .image = image,
+      .subresourceRange = subresource_range,
+    };
+
+    vkCmdPipelineBarrier(transfer_command_buffer_, src_stage, dst_stage, 0, 0, nullptr, 0, nullptr,
+                         1, &image_memory_barrier);
   }
 
   void Engine::render()

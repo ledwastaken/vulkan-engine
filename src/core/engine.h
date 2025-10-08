@@ -25,8 +25,7 @@ namespace core
     void quit();
 
     uint32_t find_memory_type(uint32_t required_memory_type, VkMemoryPropertyFlags flags);
-    void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
-                                 VkImageLayout new_layout) const;
+    void transfer_image(VkImage image, VkOffset3D offset, VkExtent3D extent, VkBuffer buffer) const;
 
     SDL_Window* get_window() const;
     VkDevice get_device() const;
@@ -53,6 +52,8 @@ namespace core
     int calculate_device_properties_score(VkPhysicalDeviceProperties properties);
     void create_image_view(size_t index);
     void replace_swapchain();
+    void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
+                                 VkImageLayout new_layout) const;
 
     void render();
 
