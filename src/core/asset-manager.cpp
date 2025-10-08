@@ -86,7 +86,7 @@ namespace core
       .pNext = nullptr,
       .flags = 0,
       .imageType = VK_IMAGE_TYPE_2D,
-      .format = VK_FORMAT_R8G8B8A8_SRGB,
+      .format = engine.get_surface_format().format,
       .extent = image_extent,
       .mipLevels = 1,
       .arrayLayers = 1,
@@ -121,7 +121,13 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to bind buffer memory");
 
-    // FIXME: Transfer data
+    const VkOffset3D offset = {
+      .x = 0,
+      .y = 0,
+      .z = 0,
+    };
+
+    engine.transfer_image(image_data->image, offset, image_extent, staging_buffer);
 
     vkDestroyBuffer(device, staging_buffer, nullptr);
     vkFreeMemory(device, staging_memory, nullptr);
