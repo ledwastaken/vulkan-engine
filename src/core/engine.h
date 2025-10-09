@@ -24,6 +24,8 @@ namespace core
     void loop();
     void quit();
 
+    void create_image(const VkImageCreateInfo& image_create_info, VkMemoryPropertyFlags properties,
+                      VkImage& image, VkDeviceMemory& memory);
     uint32_t find_memory_type(uint32_t required_memory_type, VkMemoryPropertyFlags flags);
     void transfer_image(VkImage image, VkOffset3D offset, VkExtent3D extent, VkBuffer buffer) const;
 

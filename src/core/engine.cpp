@@ -87,6 +87,33 @@ namespace core
     SDL_Quit();
   }
 
+  void Engine::create_image(const VkImageCreateInfo& image_create_info,
+                            VkMemoryPropertyFlags properties, VkImage& image,
+                            VkDeviceMemory& memory)
+  {
+    VkResult result = vkCreateImage(device_, &image_create_info, nullptr, &image);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create image");
+
+    VkMemoryRequirements memory_requirements;
+    vkGetImageMemoryRequirements(device_, image, &memory_requirements);
+
+    const VkMemoryAllocateInfo image_allocate_info = {
+      .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+      .pNext = nullptr,
+      .allocationSize = memory_requirements.size,
+      .memoryTypeIndex = find_memory_type(memory_requirements.memoryTypeBits, properties),
+    };
+
+    result = vkAllocateMemory(device_, &image_allocate_info, nullptr, &memory);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to allocate device memory");
+
+    result = vkBindImageMemory(device_, image, memory, 0);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to bind buffer memory");
+  }
+
   uint32_t Engine::find_memory_type(uint32_t required_memory_type, VkMemoryPropertyFlags flags)
   {
     VkPhysicalDeviceMemoryProperties device_memory_properties;
