@@ -40,12 +40,6 @@ static const std::vector<uint32_t> indices = { 0, 1, 2, 2, 3, 0 };
 
 void init(Scene& scene)
 {
-  auto& asset_manager = AssetManager::get_singleton();
-  auto& skybox_pipeline = SkyboxPipeline::get_singleton();
-
-  auto image_data = asset_manager.load_image("assets/texture/grid-texture.jpg", "grid");
-  skybox_pipeline.set_skybox_image(image_data->image);
-
   auto mesh = new Mesh();
   mesh->load_mesh_data(vertices, indices);
   mesh->set_parent(&scene);

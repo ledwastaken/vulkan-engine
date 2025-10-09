@@ -9,6 +9,7 @@ namespace gfx
   void SkyboxPipeline::init()
   {
     create_pipeline_layout();
+    create_descriptor_set();
     create_pipeline_cache();
 
     create_shader_module("shaders/skybox/skybox.vert.spv", &vertex_shader_);
@@ -20,10 +21,32 @@ namespace gfx
   }
 
   void SkyboxPipeline::draw(VkImageView image_view, VkCommandBuffer command_buffer,
-                            const types::Matrix4& view, const types::Matrix4& projection)
+                            const types::Matrix4& view, const types::Matrix4& projection,
+                            const SkyboxData& skybox_data)
   {
     auto& engine = core::Engine::get_singleton();
     auto extent = engine.get_swapchain_extent();
+
+    const VkDescriptorImageInfo descriptor_image_info = {
+      .sampler = skybox_data.sampler,
+      .imageView = skybox_data.image_view,
+      .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    };
+
+    const VkWriteDescriptorSet write_descriptor_set = {
+      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+      .pNext = nullptr,
+      .dstSet = descriptor_set_,
+      .dstBinding = 0,
+      .dstArrayElement = 0,
+      .descriptorCount = 1,
+      .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+      .pImageInfo = &descriptor_image_info,
+      .pBufferInfo = nullptr,
+      .pTexelBufferView = nullptr,
+    };
+
+    vkUpdateDescriptorSets(engine.get_device(), 1, &write_descriptor_set, 0, nullptr);
 
     const VkClearValue clear_value = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
 
@@ -60,6 +83,9 @@ namespace gfx
 
     vkCmdBeginRendering(command_buffer, &rendering_info);
     vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
+
+    vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 0, 1,
+                            &descriptor_set_, 0, nullptr);
 
     const VkViewport viewport{
       .x = 0.0f,
@@ -105,12 +131,36 @@ namespace gfx
     vkDestroyShaderModule(device, vertex_shader_, nullptr);
 
     vkDestroyPipelineCache(device, pipeline_cache_, nullptr);
+    vkFreeDescriptorSets(device, descriptor_pool_, 1, &descriptor_set_);
+    vkDestroyDescriptorPool(device, descriptor_pool_, nullptr);
     vkDestroyPipelineLayout(device, pipeline_layout_, nullptr);
+    vkDestroyDescriptorSetLayout(device, descriptor_set_layout_, nullptr);
   }
 
   void SkyboxPipeline::create_pipeline_layout()
   {
     auto& engine = core::Engine::get_singleton();
+
+    const VkDescriptorSetLayoutBinding layout_binding = {
+      .binding = 0,
+      .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+      .descriptorCount = 1,
+      .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+      .pImmutableSamplers = nullptr,
+    };
+
+    const VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .bindingCount = 1,
+      .pBindings = &layout_binding,
+    };
+
+    VkResult result = vkCreateDescriptorSetLayout(
+        engine.get_device(), &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create descriptor set layout");
 
     const VkPushConstantRange push_constants = {
       .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
@@ -122,16 +172,53 @@ namespace gfx
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
-      .setLayoutCount = 0,
-      .pSetLayouts = nullptr,
+      .setLayoutCount = 1,
+      .pSetLayouts = &descriptor_set_layout_,
       .pushConstantRangeCount = 1,
       .pPushConstantRanges = &push_constants,
     };
 
-    VkResult result = vkCreatePipelineLayout(engine.get_device(), &pipeline_layout_create_info,
-                                             nullptr, &pipeline_layout_);
+    result = vkCreatePipelineLayout(engine.get_device(), &pipeline_layout_create_info, nullptr,
+                                    &pipeline_layout_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create pipeline layout");
+  }
+
+  void SkyboxPipeline::create_descriptor_set()
+  {
+    auto& engine = core::Engine::get_singleton();
+
+    const VkDescriptorPoolSize pool_size = {
+      .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+      .descriptorCount = 1,
+    };
+
+    const VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .maxSets = 1,
+      .poolSizeCount = 1,
+      .pPoolSizes = &pool_size,
+    };
+
+    VkResult result = vkCreateDescriptorPool(engine.get_device(), &descriptor_pool_create_info,
+                                             nullptr, &descriptor_pool_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create descriptor pool");
+
+    const VkDescriptorSetAllocateInfo descriptor_set_allocate_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+      .pNext = nullptr,
+      .descriptorPool = descriptor_pool_,
+      .descriptorSetCount = 1,
+      .pSetLayouts = &descriptor_set_layout_,
+    };
+
+    result = vkAllocateDescriptorSets(engine.get_device(), &descriptor_set_allocate_info,
+                                      &descriptor_set_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to allocate descriptor set");
   }
 
   void SkyboxPipeline::create_pipeline_cache()

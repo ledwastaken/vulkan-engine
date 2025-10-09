@@ -8,6 +8,13 @@
 
 namespace gfx
 {
+  struct SkyboxData
+  {
+    VkImage image;
+    VkImageView image_view;
+    VkSampler sampler;
+  };
+
   class SkyboxPipeline
     : public misc::Singleton<SkyboxPipeline>
     , public Pipeline
@@ -21,26 +28,26 @@ namespace gfx
   public:
     void init();
     void draw(VkImageView image_view, VkCommandBuffer command_buffer, const types::Matrix4& view,
-              const types::Matrix4& projection);
+              const types::Matrix4& projection, const SkyboxData& skybox_data);
     void free();
-
-    void set_skybox_image(VkImage skybox_image);
 
   private:
     void create_pipeline_layout();
+    void create_descriptor_set();
     void create_pipeline_cache();
     void create_graphics_pipeline();
     void create_vertex_buffer();
 
+    VkDescriptorSetLayout descriptor_set_layout_ = VK_NULL_HANDLE;
     VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
+    VkDescriptorPool descriptor_pool_ = VK_NULL_HANDLE;
+    VkDescriptorSet descriptor_set_ = VK_NULL_HANDLE;
     VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
     VkShaderModule vertex_shader_ = VK_NULL_HANDLE;
     VkShaderModule fragment_shader_ = VK_NULL_HANDLE;
     VkPipeline pipeline_ = VK_NULL_HANDLE;
     VkBuffer vertex_buffer_ = VK_NULL_HANDLE;
     VkDeviceMemory vertex_buffer_memory_ = VK_NULL_HANDLE;
-
-    VkImage skybox_image_ = VK_NULL_HANDLE;
   };
 } // namespace gfx
 

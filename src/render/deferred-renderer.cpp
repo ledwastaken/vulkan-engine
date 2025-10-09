@@ -47,11 +47,21 @@ namespace render
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to begin command buffer recording");
 
+    if (scene->get_skybox_image())
+    {
+      auto& skybox_renderer = gfx::SkyboxPipeline::get_singleton();
+
+      const gfx::SkyboxData skybox_data = {
+        .image = scene->get_skybox_image(),
+        .image_view = scene->get_skybox_image_view(),
+        .sampler = scene->get_skybox_sampler(),
+      };
+
+      skybox_renderer.draw(image_view, command_buffer, view, projection, skybox_data);
+    }
+
     // Visitor::operator()(*scene);
     // TODO: Visit the scene tree instead
-
-    auto& skybox_renderer = gfx::SkyboxPipeline::get_singleton();
-    skybox_renderer.draw(image_view, command_buffer, view, projection);
 
     vkEndCommandBuffer(command_buffer);
   }
