@@ -47,7 +47,7 @@ namespace render
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to begin command buffer recording");
 
-    if (scene->get_skybox_image())
+    // if (scene->get_skybox_image())
     {
       auto& skybox_renderer = gfx::SkyboxPipeline::get_singleton();
 
