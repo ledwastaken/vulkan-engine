@@ -160,7 +160,7 @@ namespace core
   }
 
   void Engine::transfer_image(VkImage image, VkOffset3D offset, VkExtent3D extent,
-                              VkBuffer buffer) const
+                              uint32_t layer_count, VkBuffer buffer) const
   {
     VkResult result = vkWaitForFences(device_, 1, &transfer_fence_, VK_TRUE, UINT64_MAX);
     if (result != VK_SUCCESS)
@@ -201,11 +201,12 @@ namespace core
       .imageExtent = extent,
     };
 
-    transition_image_layout(image, surface_format_.format, VK_IMAGE_LAYOUT_UNDEFINED,
+    transition_image_layout(image, surface_format_.format, layer_count, VK_IMAGE_LAYOUT_UNDEFINED,
                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     vkCmdCopyBufferToImage(transfer_command_buffer_, buffer, image,
                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-    transition_image_layout(image, surface_format_.format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    transition_image_layout(image, surface_format_.format, layer_count,
+                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     vkEndCommandBuffer(transfer_command_buffer_);
@@ -737,8 +738,8 @@ namespace core
     create_swapchain_resources();
   }
 
-  void Engine::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
-                                       VkImageLayout new_layout) const
+  void Engine::transition_image_layout(VkImage image, VkFormat format, uint32_t layer_count,
+                                       VkImageLayout old_layout, VkImageLayout new_layout) const
   {
     VkAccessFlags src_access;
     VkAccessFlags dst_access;
@@ -771,7 +772,7 @@ namespace core
       .baseMipLevel = 0,
       .levelCount = 1,
       .baseArrayLayer = 0,
-      .layerCount = 1,
+      .layerCount = layer_count,
     };
 
     const VkImageMemoryBarrier image_memory_barrier = {

@@ -130,7 +130,7 @@ namespace scene
       .z = 0,
     };
 
-    engine.transfer_image(skybox_image_, offset, image_extent, staging_buffer);
+    engine.transfer_image(skybox_image_, offset, image_extent, 6, staging_buffer);
 
     vkDestroyBuffer(engine.get_device(), staging_buffer, nullptr);
     vkFreeMemory(engine.get_device(), staging_memory, nullptr);

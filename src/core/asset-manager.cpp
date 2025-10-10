@@ -127,7 +127,7 @@ namespace core
       .z = 0,
     };
 
-    engine.transfer_image(image_data->image, offset, image_extent, staging_buffer);
+    engine.transfer_image(image_data->image, offset, image_extent, 1, staging_buffer);
 
     vkDestroyBuffer(device, staging_buffer, nullptr);
     vkFreeMemory(device, staging_memory, nullptr);
