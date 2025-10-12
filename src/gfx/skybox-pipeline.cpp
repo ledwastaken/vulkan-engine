@@ -36,7 +36,7 @@ namespace gfx
     const VkWriteDescriptorSet write_descriptor_set = {
       .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
       .pNext = nullptr,
-      .dstSet = descriptor_set_,
+      .dstSet = descriptor_sets_[engine.get_current_frame()],
       .dstBinding = 0,
       .dstArrayElement = 0,
       .descriptorCount = 1,
@@ -85,7 +85,7 @@ namespace gfx
     vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
 
     vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 0, 1,
-                            &descriptor_set_, 0, nullptr);
+                            &descriptor_sets_[engine.get_current_frame()], 0, nullptr);
 
     const VkViewport viewport{
       .x = 0.0f,
@@ -131,7 +131,7 @@ namespace gfx
     vkDestroyShaderModule(device, vertex_shader_, nullptr);
 
     vkDestroyPipelineCache(device, pipeline_cache_, nullptr);
-    vkFreeDescriptorSets(device, descriptor_pool_, 1, &descriptor_set_);
+    vkFreeDescriptorSets(device, descriptor_pool_, 1, descriptor_sets_.data());
     vkDestroyDescriptorPool(device, descriptor_pool_, nullptr);
     vkDestroyPipelineLayout(device, pipeline_layout_, nullptr);
     vkDestroyDescriptorSetLayout(device, descriptor_set_layout_, nullptr);
@@ -190,14 +190,14 @@ namespace gfx
 
     const VkDescriptorPoolSize pool_size = {
       .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-      .descriptorCount = 1,
+      .descriptorCount = MAX_FRAMES_IN_FLIGHT,
     };
 
     const VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
-      .maxSets = 1,
+      .maxSets = MAX_FRAMES_IN_FLIGHT,
       .poolSizeCount = 1,
       .pPoolSizes = &pool_size,
     };
@@ -207,16 +207,19 @@ namespace gfx
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create descriptor pool");
 
+    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptor_set_layout_);
+
     const VkDescriptorSetAllocateInfo descriptor_set_allocate_info = {
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
       .pNext = nullptr,
       .descriptorPool = descriptor_pool_,
-      .descriptorSetCount = 1,
-      .pSetLayouts = &descriptor_set_layout_,
+      .descriptorSetCount = MAX_FRAMES_IN_FLIGHT,
+      .pSetLayouts = layouts.data(),
     };
 
+    descriptor_sets_.resize(MAX_FRAMES_IN_FLIGHT);
     result = vkAllocateDescriptorSets(engine.get_device(), &descriptor_set_allocate_info,
-                                      &descriptor_set_);
+                                      descriptor_sets_.data());
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to allocate descriptor set");
   }

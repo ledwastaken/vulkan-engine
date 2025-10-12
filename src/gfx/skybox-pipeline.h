@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include <ktx.h>
 
 #include "gfx/pipeline.h"
@@ -41,7 +43,7 @@ namespace gfx
     VkDescriptorSetLayout descriptor_set_layout_ = VK_NULL_HANDLE;
     VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
     VkDescriptorPool descriptor_pool_ = VK_NULL_HANDLE;
-    VkDescriptorSet descriptor_set_ = VK_NULL_HANDLE;
+    std::vector<VkDescriptorSet> descriptor_sets_;
     VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
     VkShaderModule vertex_shader_ = VK_NULL_HANDLE;
     VkShaderModule fragment_shader_ = VK_NULL_HANDLE;
