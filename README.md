@@ -1,11 +1,6 @@
-# PBR Material Renderer
+# Vulkan rendering engine
 
-A lightweight PBR material renderer engine built with Vulkan and SDL2.
-
-<p align="left" width="100%">
-    <img width="40%" src="assets/example1.png"> 
-    <img width="40%" src="assets/example2.png"> 
-</p>
+A lightweight rendering engine built with Vulkan and SDL3.
 
 ## Getting Started
 
