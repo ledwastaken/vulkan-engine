@@ -63,10 +63,14 @@ namespace core
     skybox_pipeline.free();
     deferred_renderer.free();
 
-    vkDestroySemaphore(device_, image_available_semaphore_, nullptr);
-    vkDestroySemaphore(device_, render_finished_semaphore_, nullptr);
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+      vkDestroySemaphore(device_, image_available_semaphores_[i], nullptr);
+      vkDestroySemaphore(device_, render_finished_semaphores_[i], nullptr);
+      vkDestroyFence(device_, in_flight_fences_[i], nullptr);
+    }
+
     vkDestroyFence(device_, transfer_fence_, nullptr);
-    vkDestroyFence(device_, in_flight_fence_, nullptr);
 
     vkFreeCommandBuffers(device_, transfer_command_pool_, 1, &transfer_command_buffer_);
     vkFreeCommandBuffers(device_, graphics_command_pool_, graphics_command_buffers_.size(),
@@ -528,8 +532,10 @@ namespace core
       .flags = VK_FENCE_CREATE_SIGNALED_BIT,
     };
 
-    if (vkCreateFence(device_, &create_info, nullptr, &in_flight_fence_) != VK_SUCCESS)
-      throw std::runtime_error("failed to create fence");
+    in_flight_fences_.resize(MAX_FRAMES_IN_FLIGHT);
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+      if (vkCreateFence(device_, &create_info, nullptr, &in_flight_fences_[i]) != VK_SUCCESS)
+        throw std::runtime_error("failed to create fence");
 
     if (vkCreateFence(device_, &create_info, nullptr, &transfer_fence_) != VK_SUCCESS)
       throw std::runtime_error("failed to create fence");
@@ -543,14 +549,19 @@ namespace core
       .flags = 0,
     };
 
-    VkResult result =
-        vkCreateSemaphore(device_, &create_info, nullptr, &image_available_semaphore_);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to create semaphore");
+    image_available_semaphores_.resize(MAX_FRAMES_IN_FLIGHT);
+    render_finished_semaphores_.resize(MAX_FRAMES_IN_FLIGHT);
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+      VkResult result =
+          vkCreateSemaphore(device_, &create_info, nullptr, &image_available_semaphores_[i]);
+      if (result != VK_SUCCESS)
+        throw std::runtime_error("failed to create semaphore");
 
-    result = vkCreateSemaphore(device_, &create_info, nullptr, &render_finished_semaphore_);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to create semaphore");
+      result = vkCreateSemaphore(device_, &create_info, nullptr, &render_finished_semaphores_[i]);
+      if (result != VK_SUCCESS)
+        throw std::runtime_error("failed to create semaphore");
+    }
   }
 
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)
@@ -795,12 +806,14 @@ namespace core
   void Engine::render()
   {
     uint32_t image_index;
-    VkResult result = vkWaitForFences(device_, 1, &in_flight_fence_, VK_TRUE, UINT64_MAX);
+    VkResult result =
+        vkWaitForFences(device_, 1, &in_flight_fences_[current_frame_], VK_TRUE, UINT64_MAX);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to wait for fences");
 
-    result = vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, image_available_semaphore_,
-                                   VK_NULL_HANDLE, &image_index);
+    result = vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX,
+                                   image_available_semaphores_[current_frame_], VK_NULL_HANDLE,
+                                   &image_index);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
       replace_swapchain();
@@ -809,7 +822,7 @@ namespace core
     else if (result != VK_SUCCESS)
       throw std::runtime_error("failed to acquire next image");
 
-    result = vkResetFences(device_, 1, &in_flight_fence_);
+    result = vkResetFences(device_, 1, &in_flight_fences_[current_frame_]);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to reset fences");
 
@@ -827,18 +840,18 @@ namespace core
       .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
       .pNext = nullptr,
       .waitSemaphoreCount = 1,
-      .pWaitSemaphores = &image_available_semaphore_,
+      .pWaitSemaphores = &image_available_semaphores_[current_frame_],
       .pWaitDstStageMask = wait_stages,
       .commandBufferCount = 1,
       .pCommandBuffers = &graphics_command_buffers_[image_index],
       .signalSemaphoreCount = 1,
-      .pSignalSemaphores = &render_finished_semaphore_,
+      .pSignalSemaphores = &render_finished_semaphores_[current_frame_],
     };
 
     VkQueue graphics_queue;
     vkGetDeviceQueue(device_, graphics_queue_family_, 0, &graphics_queue);
 
-    result = vkQueueSubmit(graphics_queue, 1, &submit_info, in_flight_fence_);
+    result = vkQueueSubmit(graphics_queue, 1, &submit_info, in_flight_fences_[current_frame_]);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to submit");
 
@@ -846,7 +859,7 @@ namespace core
       .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
       .pNext = nullptr,
       .waitSemaphoreCount = 1,
-      .pWaitSemaphores = &render_finished_semaphore_,
+      .pWaitSemaphores = &render_finished_semaphores_[current_frame_],
       .swapchainCount = 1,
       .pSwapchains = &swapchain_,
       .pImageIndices = &image_index,
@@ -861,5 +874,7 @@ namespace core
       replace_swapchain();
     else if (result != VK_SUCCESS)
       throw std::runtime_error("failed to present");
+
+    current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
   }
 } // namespace core
