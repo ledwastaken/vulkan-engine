@@ -38,6 +38,7 @@ namespace core
     VkDevice get_device() const;
     VkExtent2D get_swapchain_extent() const;
     VkSurfaceFormatKHR get_surface_format() const;
+    uint32_t get_current_frame() const;
 
   private:
     void create_window();
