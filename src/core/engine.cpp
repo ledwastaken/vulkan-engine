@@ -830,7 +830,24 @@ namespace core
     auto image_view = swapchain_image_views_[image_index];
     auto command_buffer = graphics_command_buffers_[image_index];
 
+    const VkCommandBufferBeginInfo command_buffer_begin_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .pInheritanceInfo = nullptr,
+    };
+
+    result = vkResetCommandBuffer(command_buffer, 0);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to reset command buffer");
+
+    result = vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to begin command buffer recording");
+
     deferred_renderer.draw(image_view, command_buffer);
+
+    vkEndCommandBuffer(command_buffer);
 
     const VkPipelineStageFlags wait_stages[] = {
       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
