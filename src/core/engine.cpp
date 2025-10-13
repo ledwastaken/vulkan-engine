@@ -8,6 +8,7 @@
 #include <SDL3/SDL_vulkan.h>
 
 #include "core/asset-manager.h"
+#include "gfx/pbr-pipeline.h"
 #include "gfx/skybox-pipeline.h"
 #include "render/deferred-renderer.h"
 
@@ -26,9 +27,11 @@ namespace core
     create_fences();
     create_semaphores();
 
+    auto& pbr_pipeline = gfx::PhysicallyBasedRenderPipeline::get_singleton();
     auto& skybox_pipeline = gfx::SkyboxPipeline::get_singleton();
     auto& deferred_renderer = render::DeferredRenderer::get_singleton();
 
+    pbr_pipeline.init();
     skybox_pipeline.init();
     deferred_renderer.init();
   }
@@ -54,6 +57,7 @@ namespace core
   void Engine::quit()
   {
     auto& asset_manager = AssetManager::get_singleton();
+    auto& pbr_pipeline = gfx::PhysicallyBasedRenderPipeline::get_singleton();
     auto& skybox_pipeline = gfx::SkyboxPipeline::get_singleton();
     auto& deferred_renderer = render::DeferredRenderer::get_singleton();
 
@@ -61,6 +65,7 @@ namespace core
 
     asset_manager.free();
     skybox_pipeline.free();
+    pbr_pipeline.free();
     deferred_renderer.free();
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)

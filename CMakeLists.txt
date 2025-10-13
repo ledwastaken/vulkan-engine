@@ -11,6 +11,7 @@ add_executable(main
   src/core/engine.cpp
   src/core/stb_impl.cpp
 
+  src/gfx/pbr-pipeline.cpp
   src/gfx/pipeline.cpp
   src/gfx/skybox-pipeline.cpp
 
