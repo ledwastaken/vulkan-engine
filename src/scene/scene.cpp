@@ -16,6 +16,8 @@ namespace scene
     {
       auto& engine = core::Engine::get_singleton();
 
+      vkDeviceWaitIdle(engine.get_device());
+
       vkDestroySampler(engine.get_device(), skybox_sampler_, nullptr);
       vkDestroyImageView(engine.get_device(), skybox_image_view_, nullptr);
       vkDestroyImage(engine.get_device(), skybox_image_, nullptr);
