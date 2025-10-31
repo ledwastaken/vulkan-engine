@@ -49,7 +49,7 @@ void init(Scene& scene)
   mesh->set_parent(&scene);
 
   auto camera = new Camera();
-  camera->cframe = CFrame(Vector3(10, 2, 10), Vector3());
+  camera->cframe = CFrame(Vector3(0, 0, 2), Vector3());
   camera->set_parent(&scene);
 
   scene.current_camera = camera;

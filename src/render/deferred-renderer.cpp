@@ -4,8 +4,9 @@
 
 #include "core/engine.h"
 #include "core/scene-manager.h"
+#include "gfx/pbr-pipeline.h"
 #include "gfx/skybox-pipeline.h"
-#include "types/matrix4.h"
+#include "scene/mesh.h"
 
 namespace render
 {
@@ -33,24 +34,35 @@ namespace render
     auto projection = types::Matrix4::perpective(camera.field_of_view, ratio, 0.1f, 100.0f);
 
     // if (scene->get_skybox_image())
-    {
-      auto& skybox_renderer = gfx::SkyboxPipeline::get_singleton();
+    // {
+    //   auto& skybox_renderer = gfx::SkyboxPipeline::get_singleton();
 
-      const gfx::SkyboxData skybox_data = {
-        .image = scene->get_skybox_image(),
-        .image_view = scene->get_skybox_image_view(),
-        .sampler = scene->get_skybox_sampler(),
-      };
+    //   const gfx::SkyboxData skybox_data = {
+    //     .image = scene->get_skybox_image(),
+    //     .image_view = scene->get_skybox_image_view(),
+    //     .sampler = scene->get_skybox_sampler(),
+    //   };
 
-      skybox_renderer.draw(image_view, command_buffer, view, projection, skybox_data);
-    }
+    //   skybox_renderer.draw(image_view, command_buffer, view, projection, skybox_data);
+    // }
 
-    // Visitor::operator()(*scene);
-    // TODO: Visit the scene tree instead
+    image_view_ = image_view;
+    command_buffer_ = command_buffer;
+    view_ = view;
+    projection_ = projection;
+
+    Visitor::operator()(*scene);
   }
 
   void DeferredRenderer::free()
   {
     // FIXME
+  }
+
+  void DeferredRenderer::operator()(scene::Mesh& mesh)
+  {
+    auto& pbr_pipeline = gfx::PhysicallyBasedRenderPipeline::get_singleton();
+
+    pbr_pipeline.draw(image_view_, command_buffer_, view_, projection_, mesh.get_index_buffer());
   }
 } // namespace render
