@@ -63,6 +63,6 @@ namespace render
   {
     auto& pbr_pipeline = gfx::PhysicallyBasedRenderPipeline::get_singleton();
 
-    pbr_pipeline.draw(image_view_, command_buffer_, view_, projection_, mesh.get_index_buffer());
+    pbr_pipeline.draw(image_view_, command_buffer_, view_, projection_, mesh);
   }
 } // namespace render

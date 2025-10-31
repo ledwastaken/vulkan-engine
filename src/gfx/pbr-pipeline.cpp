@@ -14,13 +14,76 @@ namespace gfx
     create_shader_module("shaders/pbr/pbr.frag.spv", &fragment_shader_);
 
     create_graphics_pipeline();
+    create_uniform_buffer();
   }
 
   void PhysicallyBasedRenderPipeline::draw(VkImageView image_view, VkCommandBuffer command_buffer,
                                            const types::Matrix4& view,
-                                           const types::Matrix4& projection, VkBuffer index_buffer)
+                                           const types::Matrix4& projection, scene::Mesh& mesh)
   {
-    // FIXME
+    auto& engine = core::Engine::get_singleton();
+    auto extent = engine.get_swapchain_extent();
+
+    const VkClearValue clear_value = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
+
+    const VkRenderingAttachmentInfo color_attachment = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .pNext = nullptr,
+      .imageView = image_view,
+      .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .resolveMode = VK_RESOLVE_MODE_NONE,
+      .resolveImageView = VK_NULL_HANDLE,
+      .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .clearValue = clear_value,
+    };
+
+    const VkRect2D render_area = {
+      .offset = { 0, 0 },
+      .extent = extent,
+    };
+
+    const VkRenderingInfo rendering_info = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .renderArea = render_area,
+      .layerCount = 1,
+      .viewMask = 0,
+      .colorAttachmentCount = 1,
+      .pColorAttachments = &color_attachment,
+      .pDepthAttachment = nullptr,
+      .pStencilAttachment = nullptr,
+    };
+
+    vkCmdBeginRendering(command_buffer, &rendering_info);
+    vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
+
+    vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 0, 1,
+                            &descriptor_sets_[engine.get_current_frame()], 0, nullptr);
+
+    const VkViewport viewport{
+      .x = 0.0f,
+      .y = 0.0f,
+      .width = static_cast<float>(extent.width),
+      .height = static_cast<float>(extent.height),
+      .minDepth = 0.0f,
+      .maxDepth = 1.0f,
+    };
+
+    const VkRect2D scissor = {
+      .offset = { 0, 0 },
+      .extent = extent,
+    };
+
+    vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+    vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+    VkDeviceSize offset = 0;
+    vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
+    vkCmdEndRendering(command_buffer);
   }
 
   void PhysicallyBasedRenderPipeline::free()
@@ -33,6 +96,10 @@ namespace gfx
     vkDestroyShaderModule(engine.get_device(), vertex_shader_, nullptr);
 
     vkDestroyPipelineCache(engine.get_device(), pipeline_cache_, nullptr);
+
+    vkDestroyBuffer(engine.get_device(), uniform_buffer_, nullptr);
+    vkFreeMemory(engine.get_device(), uniform_buffer_memory_, nullptr);
+
     vkFreeDescriptorSets(engine.get_device(), descriptor_pool_, 1, descriptor_sets_.data());
     vkDestroyDescriptorPool(engine.get_device(), descriptor_pool_, nullptr);
     vkDestroyPipelineLayout(engine.get_device(), pipeline_layout_, nullptr);
@@ -336,5 +403,25 @@ namespace gfx
         vkCreateGraphicsPipelines(device, pipeline_cache_, 1, &create_info, nullptr, &pipeline_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create graphics pipeline");
+  }
+
+  void PhysicallyBasedRenderPipeline::create_uniform_buffer()
+  {
+    auto& engine = core::Engine::get_singleton();
+
+    const VkBufferCreateInfo buffer_create_info = {
+      .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .size = 192,
+      .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+      .queueFamilyIndexCount = 0,
+      .pQueueFamilyIndices = nullptr,
+    };
+
+    engine.create_buffer(buffer_create_info,
+                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                         uniform_buffer_, uniform_buffer_memory_);
   }
 } // namespace gfx
