@@ -81,6 +81,8 @@ namespace gfx
     vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
     VkDeviceSize offset = 0;
+    VkBuffer vertex_buffer = mesh.get_vertex_buffer();
+    vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
     vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
     vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
     vkCmdEndRendering(command_buffer);
