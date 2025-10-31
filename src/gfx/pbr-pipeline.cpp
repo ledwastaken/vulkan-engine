@@ -97,8 +97,11 @@ namespace gfx
 
     vkDestroyPipelineCache(engine.get_device(), pipeline_cache_, nullptr);
 
-    vkDestroyBuffer(engine.get_device(), uniform_buffer_, nullptr);
-    vkFreeMemory(engine.get_device(), uniform_buffer_memory_, nullptr);
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+      vkDestroyBuffer(engine.get_device(), uniform_buffers_[i], nullptr);
+      vkFreeMemory(engine.get_device(), uniform_buffers_memory_[i], nullptr);
+    }
 
     vkFreeDescriptorSets(engine.get_device(), descriptor_pool_, 1, descriptor_sets_.data());
     vkDestroyDescriptorPool(engine.get_device(), descriptor_pool_, nullptr);
@@ -408,20 +411,49 @@ namespace gfx
   void PhysicallyBasedRenderPipeline::create_uniform_buffer()
   {
     auto& engine = core::Engine::get_singleton();
+    VkDeviceSize buffer_size = 192;
 
-    const VkBufferCreateInfo buffer_create_info = {
-      .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .size = 192,
-      .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-      .queueFamilyIndexCount = 0,
-      .pQueueFamilyIndices = nullptr,
-    };
+    uniform_buffers_.resize(MAX_FRAMES_IN_FLIGHT);
+    uniform_buffers_memory_.resize(MAX_FRAMES_IN_FLIGHT);
 
-    engine.create_buffer(buffer_create_info,
-                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                         uniform_buffer_, uniform_buffer_memory_);
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+      const VkBufferCreateInfo buffer_create_info = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .size = buffer_size,
+        .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = nullptr,
+      };
+
+      engine.create_buffer(buffer_create_info,
+                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                               | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                           uniform_buffers_[i], uniform_buffers_memory_[i]);
+
+      const VkDescriptorBufferInfo descriptor_buffer_info = {
+        .buffer = uniform_buffers_[i],
+        .offset = 0,
+        .range = buffer_size,
+      };
+
+      const VkWriteDescriptorSet write_descriptor_set = {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = descriptor_sets_[i],
+        .dstBinding = 0,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pImageInfo = nullptr,
+        .pBufferInfo = &descriptor_buffer_info,
+        .pTexelBufferView = nullptr,
+      };
+
+      vkUpdateDescriptorSets(engine.get_device(), 1, &write_descriptor_set, 0, nullptr);
+    }
   }
 } // namespace gfx

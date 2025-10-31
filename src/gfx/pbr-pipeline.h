@@ -40,7 +40,7 @@ namespace gfx
     VkShaderModule vertex_shader_ = VK_NULL_HANDLE;
     VkShaderModule fragment_shader_ = VK_NULL_HANDLE;
     VkPipeline pipeline_ = VK_NULL_HANDLE;
-    VkBuffer uniform_buffer_ = VK_NULL_HANDLE;
-    VkDeviceMemory uniform_buffer_memory_ = VK_NULL_HANDLE;
+    std::vector<VkBuffer> uniform_buffers_;
+    std::vector<VkDeviceMemory> uniform_buffers_memory_;
   };
 } // namespace gfx
