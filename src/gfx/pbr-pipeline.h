@@ -42,5 +42,6 @@ namespace gfx
     VkPipeline pipeline_ = VK_NULL_HANDLE;
     std::vector<VkBuffer> uniform_buffers_;
     std::vector<VkDeviceMemory> uniform_buffers_memory_;
+    std::vector<void*> uniform_buffers_data_;
   };
 } // namespace gfx

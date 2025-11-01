@@ -40,16 +40,16 @@ static const std::vector<uint32_t> indices = { 0, 1, 2, 2, 3, 0 };
 
 void init(Scene& scene)
 {
-  scene.load_skybox("assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg",
-                    "assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg",
-                    "assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg");
+  // scene.load_skybox("assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg",
+  //                   "assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg",
+  //                   "assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg");
 
   auto mesh = new Mesh();
   mesh->load_mesh_data(vertices, indices);
   mesh->set_parent(&scene);
 
   auto camera = new Camera();
-  camera->cframe = CFrame(Vector3(0, 0, 2), Vector3());
+  camera->cframe = CFrame(Vector3(0, 0, 3), Vector3());
   camera->set_parent(&scene);
 
   scene.current_camera = camera;

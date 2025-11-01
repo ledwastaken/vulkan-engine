@@ -1,5 +1,7 @@
 #include "gfx/pbr-pipeline.h"
 
+#include <cstring>
+
 #include "core/engine.h"
 
 namespace gfx
@@ -60,6 +62,13 @@ namespace gfx
     vkCmdBeginRendering(command_buffer, &rendering_info);
     vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
 
+    std::memcpy(uniform_buffers_data_[engine.get_current_frame()], mesh.cframe.to_matrix().data(),
+                16 * sizeof(float));
+    std::memcpy(uniform_buffers_data_[engine.get_current_frame()] + 64, view.data(),
+                16 * sizeof(float));
+    std::memcpy(uniform_buffers_data_[engine.get_current_frame()] + 128, projection.data(),
+                16 * sizeof(float));
+
     vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 0, 1,
                             &descriptor_sets_[engine.get_current_frame()], 0, nullptr);
 
@@ -101,6 +110,7 @@ namespace gfx
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
+      vkUnmapMemory(engine.get_device(), uniform_buffers_memory_[i]);
       vkDestroyBuffer(engine.get_device(), uniform_buffers_[i], nullptr);
       vkFreeMemory(engine.get_device(), uniform_buffers_memory_[i], nullptr);
     }
@@ -288,7 +298,7 @@ namespace gfx
       .depthClampEnable = VK_FALSE,
       .rasterizerDiscardEnable = VK_FALSE,
       .polygonMode = VK_POLYGON_MODE_FILL,
-      .cullMode = VK_CULL_MODE_BACK_BIT,
+      .cullMode = VK_CULL_MODE_NONE,
       .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
       .depthBiasEnable = VK_FALSE,
       .depthBiasConstantFactor = 0.0f,
@@ -417,6 +427,7 @@ namespace gfx
 
     uniform_buffers_.resize(MAX_FRAMES_IN_FLIGHT);
     uniform_buffers_memory_.resize(MAX_FRAMES_IN_FLIGHT);
+    uniform_buffers_data_.resize(MAX_FRAMES_IN_FLIGHT);
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -435,6 +446,10 @@ namespace gfx
                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
                                | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                            uniform_buffers_[i], uniform_buffers_memory_[i]);
+
+      VkDeviceSize offset = 0;
+      vkMapMemory(engine.get_device(), uniform_buffers_memory_[i], offset, buffer_size, 0,
+                  &uniform_buffers_data_[i]);
 
       const VkDescriptorBufferInfo descriptor_buffer_info = {
         .buffer = uniform_buffers_[i],
