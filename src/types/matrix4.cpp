@@ -23,17 +23,12 @@ namespace types
 
   Matrix4 Matrix4::frustum(float l, float r, float b, float t, float n, float f)
   {
-    float v0 = (2 * n);
-    float v1 = (r - l);
-    float v2 = (t - b);
-    float v3 = (f - n);
-
     // clang-format off
     float data[16] = {
-        v0 / v1,        0,              0,               0,
-        0,              -v0 / v2,       0,               0,
-        (r + l) / v1,   (t + b) / v2,   -(f + n) / v3,   -1,
-        0,              0,              -v0 * f / v3,    0
+      (2 * n) / (r - l),  0,                   0,                    0,
+      0,                  -(2 * n) / (t - b),  0,                    0,
+      (r + l) / (r - l),  (t + b) / (t - b),   f / (n - f),         -1,
+      0,                  0,                   (f * n) / (n - f),    0
     };
     // clang-format on
 
