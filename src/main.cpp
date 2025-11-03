@@ -6,37 +6,12 @@
 #include "core/engine.h"
 #include "core/scene-manager.h"
 #include "gfx/skybox-pipeline.h"
-#include "scene/mesh.h"
+#include "scene/cube.h"
 
 using namespace core;
 using namespace gfx;
 using namespace scene;
 using namespace types;
-
-static const std::vector<Vertex> vertices = {
-  {
-      .position = { -1.0f, 1.0f, 0.0f },
-      .normal = { 0.0f, 0.0f, 1.0f },
-      .uv = { 0.0f, 0.0f },
-  },
-  {
-      .position = { -1.0f, -1.0f, 0.0f },
-      .normal = { 0.0f, 0.0f, 1.0f },
-      .uv = { 0.0f, 0.0f },
-  },
-  {
-      .position = { 1.0f, -1.0f, 0.0f },
-      .normal = { 0.0f, 0.0f, 1.0f },
-      .uv = { 0.0f, 0.0f },
-  },
-  {
-      .position = { 1.0f, 1.0f, 0.0f },
-      .normal = { 0.0f, 0.0f, 1.0f },
-      .uv = { 0.0f, 0.0f },
-  },
-};
-
-static const std::vector<uint32_t> indices = { 0, 1, 2, 2, 3, 0 };
 
 void init(Scene& scene)
 {
@@ -44,12 +19,12 @@ void init(Scene& scene)
   //                   "assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg",
   //                   "assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg");
 
-  auto mesh = new Mesh();
-  mesh->load_mesh_data(vertices, indices);
+  auto mesh = new Cube(1.0f);
+  mesh->cframe = CFrame(Vector3(0, 0, 0));
   mesh->set_parent(&scene);
 
   auto camera = new Camera();
-  camera->cframe = CFrame(Vector3(0, 0, 3), Vector3());
+  camera->cframe = CFrame(Vector3(4, 4, 4), Vector3(0, 0, 0));
   camera->set_parent(&scene);
 
   scene.current_camera = camera;

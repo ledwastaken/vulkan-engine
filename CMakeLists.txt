@@ -17,6 +17,7 @@ add_executable(main
 
   src/render/deferred-renderer.cpp
 
+  src/scene/cube.cpp
   src/scene/instance.cpp
   src/scene/mesh.cpp
   src/scene/scene.cpp

@@ -1,5 +1,7 @@
 #include "render/deferred-renderer.h"
 
+#include <cmath>
+
 #include <SDL3/SDL.h>
 
 #include "core/engine.h"
@@ -62,6 +64,11 @@ namespace render
   void DeferredRenderer::operator()(scene::Mesh& mesh)
   {
     auto& pbr_pipeline = gfx::PhysicallyBasedRenderPipeline::get_singleton();
+
+    static float k = 0.0f;
+    k += 0.01f;
+
+    mesh.cframe = types::CFrame(types::Vector3(), types::Vector3(std::cos(k), std::sin(k * 0.3f), std::sin(k)));
 
     pbr_pipeline.draw(image_view_, command_buffer_, view_, projection_, mesh);
   }
