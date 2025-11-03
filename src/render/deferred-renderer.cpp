@@ -33,7 +33,7 @@ namespace render
     float ratio = static_cast<float>(width) / static_cast<float>(height);
     auto& camera = *scene->current_camera;
     auto view = camera.cframe.invert().to_matrix();
-    auto projection = types::Matrix4::perpective(camera.field_of_view, ratio, 0.1f, 100.0f);
+    auto projection = types::Matrix4::perspective(camera.field_of_view, ratio, 0.1f, 10.0f);
 
     // if (scene->get_skybox_image())
     // {

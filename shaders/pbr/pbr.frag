@@ -13,10 +13,12 @@ void main(void)
   vec3 lightDir   = normalize(lightPos - fragPos);
   vec3 viewDir    = normalize(viewPos - fragPos);
 
+  vec3 ambient = vec3(0.1, 0.1, 0.1);
+
   float diff = max(dot(normal, lightDir), 0.0);
   vec3 diffuse = diff * lightColor;
 
-  vec3 color = diffuse;
+  vec3 color = ambient + diffuse;
 
   fragColor = vec4(color, 1.0);
 }

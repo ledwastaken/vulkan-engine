@@ -12,7 +12,7 @@ namespace types
 
     static Matrix4 identity();
     static Matrix4 frustum(float l, float r, float b, float t, float n, float f);
-    static Matrix4 perpective(float fov, float ratio, float near, float far);
+    static Matrix4 perspective(float fov, float ratio, float near, float far);
 
     const float* data() const;
     float* data();

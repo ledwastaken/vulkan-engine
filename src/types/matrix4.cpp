@@ -25,17 +25,17 @@ namespace types
   {
     // clang-format off
     float data[16] = {
-      (2 * n) / (r - l), 0,                  0,                      0,
-      0,                 -(2 * n) / (t - b), 0,                      0,
-      (r + l) / (r - l), (t + b) / (t - b),  -(f + n) / (f - n),     -1,
-      0,                 0,                  -(2 * f * n) / (f - n), 0
+      (2 * n) / (r - l), 0,                  0,                  0,
+      0,                 -(2 * n) / (t - b), 0,                  0,
+      (r + l) / (r - l), (t + b) / (t - b),  -f / (f - n),       -1,
+      0,                 0,                  -(f * n) / (f - n), 0
     };
     // clang-format on
 
     return Matrix4(data);
   }
 
-  Matrix4 Matrix4::perpective(float fov, float ratio, float near, float far)
+  Matrix4 Matrix4::perspective(float fov, float ratio, float near, float far)
   {
     float top = std::tan(fov * 0.5f) * near;
     float bottom = -top;
