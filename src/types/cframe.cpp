@@ -9,26 +9,22 @@ namespace types
   CFrame::CFrame(const Vector3& pos, const Vector3& look_at)
     : pos_(pos)
   {
-    // Z-axis points FORWARD (toward look_at for a model transform)
-    // For a view matrix, you'll invert this CFrame later
-    auto z_axis = (pos - look_at).unit();
+    auto f = (look_at - pos).unit();
 
-    // Choose an up vector, avoiding singularity when z_axis is parallel to world up
-    auto up = std::abs(z_axis.dot(Vector3(0, 1, 0))) > 0.999f ? Vector3(1, 0, 0) : Vector3(0, 1, 0);
+    auto up = Vector3(0, 1, 0);
 
-    // Build orthonormal basis using cross products
-    auto x_axis = z_axis.cross(up).unit();
-    auto y_axis = z_axis.cross(x_axis); // Already unit length
+    auto s = f.cross(up).unit();
+    auto u = s.cross(f);
 
-    r00_ = x_axis.x;
-    r01_ = x_axis.y;
-    r02_ = x_axis.z;
-    r10_ = y_axis.x;
-    r11_ = y_axis.y;
-    r12_ = y_axis.z;
-    r20_ = z_axis.x;
-    r21_ = z_axis.y;
-    r22_ = z_axis.z;
+    r00_ = s.x;
+    r01_ = s.y;
+    r02_ = s.z;
+    r10_ = u.x;
+    r11_ = u.y;
+    r12_ = u.z;
+    r20_ = -f.x;
+    r21_ = -f.y;
+    r22_ = -f.z;
   }
 
   CFrame::CFrame(const Vector3& pos, float r00, float r01, float r02, float r10, float r11,
@@ -49,9 +45,9 @@ namespace types
   {
     // clang-format off
     const float data[] = {
-      r00_,   r10_,   r20_,   0.0f,
-      r01_,   r11_,   r21_,   0.0f,
-      r02_,   r12_,   r22_,   0.0f,
+      r00_,   r01_,   r02_,   0.0f,
+      r10_,   r11_,   r12_,   0.0f,
+      r20_,   r21_,   r22_,   0.0f,
       pos_.x, pos_.y, pos_.z, 1.0f,
     };
     // clang-format on
