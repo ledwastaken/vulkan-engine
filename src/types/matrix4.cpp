@@ -25,10 +25,10 @@ namespace types
   {
     // clang-format off
     float data[16] = {
-      (2 * n) / (r - l),  0,                   0,                    0,
-      0,                  -(2 * n) / (t - b),  0,                    0,
-      (r + l) / (r - l),  (t + b) / (t - b),   f / (n - f),         -1,
-      0,                  0,                   (f * n) / (n - f),    0
+      (2 * n) / (r - l), 0,                  0,                      0,
+      0,                 -(2 * n) / (t - b), 0,                      0,
+      (r + l) / (r - l), (t + b) / (t - b),  -(f + n) / (f - n),     -1,
+      0,                 0,                  -(2 * f * n) / (f - n), 0
     };
     // clang-format on
 
