@@ -15,9 +15,11 @@ layout (set = 0, binding = 0) uniform ubo {
 
 void main(void)
 {
-  vec4 worldPos = view * model * vec4(vertexPosition, 1.0);
-  gl_Position = projection * worldPos;
+  vec4 worldPos = model * vec4(vertexPosition, 1.0);
+
   normal = mat3(model) * vertexNormal;
-  viewPos = -transpose(mat3(view)) * view[3].xyz;
   fragPos = worldPos.xyz;
+  viewPos = -transpose(mat3(view)) * view[3].xyz;
+
+  gl_Position = projection * view * worldPos;
 }
