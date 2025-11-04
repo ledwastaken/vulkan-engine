@@ -53,3 +53,46 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     -fsanitize=leak
   )
 endif()
+
+# Find glslc compiler
+find_program(GLSLC glslc HINTS 
+    $ENV{VULKAN_SDK}/Bin
+    $ENV{VULKAN_SDK}/bin
+)
+
+if(NOT GLSLC)
+    message(FATAL_ERROR "glslc not found!")
+endif()
+
+# Define your shader files
+set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
+set(SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders)
+
+file(MAKE_DIRECTORY ${SHADER_BINARY_DIR})
+
+# List of shaders
+set(SHADERS
+    ${SHADER_SOURCE_DIR}/pbr/pbr.vert
+    ${SHADER_SOURCE_DIR}/pbr/pbr.frag
+)
+
+# Compile each shader
+foreach(SHADER ${SHADERS})
+    get_filename_component(SHADER_NAME ${SHADER} NAME)
+    set(SHADER_OUTPUT ${SHADER_BINARY_DIR}/${SHADER_NAME}.spv)
+    
+    add_custom_command(
+        OUTPUT ${SHADER_OUTPUT}
+        COMMAND ${GLSLC} ${SHADER} -o ${SHADER_OUTPUT}
+        DEPENDS ${SHADER}
+        COMMENT "Compiling ${SHADER_NAME}"
+    )
+    
+    list(APPEND SPIRV_BINARY_FILES ${SHADER_OUTPUT})
+endforeach()
+
+# Create a custom target that depends on all shaders
+add_custom_target(shaders DEPENDS ${SPIRV_BINARY_FILES})
+
+# Make your executable depend on the shaders target
+add_dependencies(main shaders)
