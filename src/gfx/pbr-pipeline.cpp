@@ -1,6 +1,7 @@
 #include "gfx/pbr-pipeline.h"
 
 #include <cstring>
+#include <string>
 
 #include "core/engine.h"
 
@@ -12,8 +13,8 @@ namespace gfx
     create_descriptor_set();
     create_pipeline_cache();
 
-    create_shader_module("shaders/pbr/pbr.vert.spv", &vertex_shader_);
-    create_shader_module("shaders/pbr/pbr.frag.spv", &fragment_shader_);
+    create_shader_module("pbr.vert.spv", &vertex_shader_);
+    create_shader_module("pbr.frag.spv", &fragment_shader_);
 
     create_graphics_pipeline();
     create_uniform_buffer();

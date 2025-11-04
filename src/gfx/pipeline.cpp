@@ -2,16 +2,21 @@
 
 #include <fstream>
 #include <vector>
+#include <iostream>
 
 #include "core/engine.h"
 
+#ifndef SHADER_DIR
+#  define SHADER_DIR "shaders/"
+#endif
+
 namespace gfx
 {
-  void Pipeline::create_shader_module(const char* path, VkShaderModule* shader_module)
+  void Pipeline::create_shader_module(const char* filename, VkShaderModule* shader_module)
   {
     auto& engine = core::Engine::get_singleton();
 
-    std::ifstream file(path, std::ios::ate | std::ios::binary);
+    std::ifstream file(std::string(SHADER_DIR) + filename, std::ios::ate | std::ios::binary);
 
     if (!file.is_open())
       throw std::runtime_error("failed to open file");

@@ -12,8 +12,8 @@ namespace gfx
     create_descriptor_set();
     create_pipeline_cache();
 
-    create_shader_module("shaders/skybox/skybox.vert.spv", &vertex_shader_);
-    create_shader_module("shaders/skybox/skybox.frag.spv", &fragment_shader_);
+    create_shader_module("skybox.vert.spv", &vertex_shader_);
+    create_shader_module("skybox.frag.spv", &fragment_shader_);
 
     create_graphics_pipeline();
 
