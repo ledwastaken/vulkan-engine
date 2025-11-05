@@ -4,6 +4,9 @@
 #include <vector>
 
 #include <SDL3/SDL.h>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_vulkan.h>
 #include <vulkan/vulkan.h>
 
 #include "misc/singleton.h"
@@ -51,6 +54,7 @@ namespace core
     void allocate_command_buffers();
     void create_fences();
     void create_semaphores();
+    void init_imgui();
 
     void choose_physical_device(std::vector<VkPhysicalDevice> physical_devices);
     bool required_queue_families_not_spported(VkPhysicalDevice device);
@@ -66,6 +70,7 @@ namespace core
     void render();
 
     SDL_Window* window_;
+    ImGuiContext* context_;
     VkInstance instance_ = VK_NULL_HANDLE;
     VkSurfaceKHR surface_ = VK_NULL_HANDLE;
     VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
@@ -76,6 +81,7 @@ namespace core
     VkDevice device_ = VK_NULL_HANDLE;
     VkExtent2D swapchain_extent_;
     VkSurfaceFormatKHR surface_format_;
+    uint32_t min_image_count_ = 0;
     VkSwapchainKHR swapchain_ = VK_NULL_HANDLE;
     std::vector<VkImage> swapchain_images_;
     std::vector<VkImageView> swapchain_image_views_;
@@ -87,6 +93,7 @@ namespace core
     VkFence transfer_fence_ = VK_NULL_HANDLE;
     std::vector<VkSemaphore> image_available_semaphores_;
     std::vector<VkSemaphore> render_finished_semaphores_;
+    VkDescriptorPool imgui_descriptor_pool_ = VK_NULL_HANDLE;
     uint32_t current_frame_ = 0;
   };
 } // namespace core

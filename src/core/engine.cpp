@@ -27,6 +27,8 @@ namespace core
     create_fences();
     create_semaphores();
 
+    init_imgui();
+
     auto& pbr_pipeline = gfx::PhysicallyBasedRenderPipeline::get_singleton();
     auto& skybox_pipeline = gfx::SkyboxPipeline::get_singleton();
     auto& deferred_renderer = render::DeferredRenderer::get_singleton();
@@ -67,6 +69,11 @@ namespace core
     skybox_pipeline.free();
     pbr_pipeline.free();
     deferred_renderer.free();
+
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext(context_);
+    vkDestroyDescriptorPool(device_, imgui_descriptor_pool_, nullptr);
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -394,6 +401,8 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to retrieve physical device surface capbilities");
 
+    min_image_count_ = capabilities.minImageCount;
+
     uint32_t format_count = 0;
     result =
         vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_, surface_, &format_count, nullptr);
@@ -567,6 +576,88 @@ namespace core
       if (result != VK_SUCCESS)
         throw std::runtime_error("failed to create semaphore");
     }
+  }
+
+  void Engine::init_imgui()
+  {
+    context_ = ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+    io.IniFilename = nullptr;
+    io.LogFilename = nullptr;
+
+    if (!ImGui_ImplSDL3_InitForVulkan(window_))
+      throw std::runtime_error("failed to init imgui");
+
+    VkQueue graphics_queue;
+    vkGetDeviceQueue(device_, graphics_queue_family_, 0, &graphics_queue);
+
+    uint32_t image_count = 0;
+    VkResult result = vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, nullptr);
+
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to retrieve swpachain image count");
+
+    const VkDescriptorPoolSize pool_sizes[] = {
+      { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+      { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+      { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+      { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+      { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+      { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+      { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+      { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+      { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+      { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+      { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 },
+    };
+
+    const VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+      .maxSets = 1000 * IM_ARRAYSIZE(pool_sizes),
+      .poolSizeCount = static_cast<uint32_t>(IM_ARRAYSIZE(pool_sizes)),
+      .pPoolSizes = pool_sizes,
+    };
+
+    result = vkCreateDescriptorPool(device_, &descriptor_pool_create_info, nullptr,
+                                    &imgui_descriptor_pool_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create descriptor pool");
+
+    const VkPipelineRenderingCreateInfoKHR rendering_create_info = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+      .pNext = nullptr,
+      .viewMask = 0,
+      .colorAttachmentCount = 1,
+      .pColorAttachmentFormats = &surface_format_.format,
+      .depthAttachmentFormat = VK_FORMAT_UNDEFINED,
+      .stencilAttachmentFormat = VK_FORMAT_UNDEFINED,
+    };
+
+    ImGui_ImplVulkan_InitInfo init_info = {
+      .Instance = instance_,
+      .PhysicalDevice = physical_device_,
+      .Device = device_,
+      .QueueFamily = graphics_queue_family_,
+      .Queue = graphics_queue,
+      .DescriptorPool = imgui_descriptor_pool_,
+      .RenderPass = VK_NULL_HANDLE,
+      .MinImageCount = min_image_count_,
+      .ImageCount = image_count,
+      .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
+      .PipelineCache = VK_NULL_HANDLE,
+      .Subpass = 0,
+      .UseDynamicRendering = true,
+      .PipelineRenderingCreateInfo = rendering_create_info,
+      .Allocator = nullptr,
+      .CheckVkResultFn = nullptr,
+    };
+
+    if (!ImGui_ImplVulkan_Init(&init_info))
+      throw std::runtime_error("failed to init imgui");
   }
 
   void Engine::choose_physical_device(std::vector<VkPhysicalDevice> devices)
