@@ -15,9 +15,9 @@ using namespace types;
 
 void init(Scene& scene)
 {
-  scene.load_skybox("assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg",
-                    "assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg",
-                    "assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg");
+  scene.load_skybox("assets/texture/skybox/right.jpg", "assets/texture/skybox/left.jpg",
+                    "assets/texture/skybox/top.jpg", "assets/texture/skybox/bottom.jpg",
+                    "assets/texture/skybox/front.jpg", "assets/texture/skybox/back.jpg");
 
   auto mesh = new Cube(1.0f);
   mesh->cframe = CFrame(Vector3(0, 0, 0));

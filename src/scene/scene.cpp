@@ -102,7 +102,7 @@ namespace scene
       .pNext = nullptr,
       .flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
       .imageType = VK_IMAGE_TYPE_2D,
-      .format = engine.get_surface_format().format,
+      .format = VK_FORMAT_R8G8B8A8_SRGB,
       .extent = image_extent,
       .mipLevels = 1,
       .arrayLayers = 6,
@@ -158,7 +158,7 @@ namespace scene
       .flags = 0,
       .image = skybox_image_,
       .viewType = VK_IMAGE_VIEW_TYPE_CUBE,
-      .format = engine.get_surface_format().format,
+      .format = VK_FORMAT_R8G8B8A8_SRGB,
       .components = components,
       .subresourceRange = subresource_range,
     };
