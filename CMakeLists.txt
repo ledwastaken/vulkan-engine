@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.21.2)
 project(vulkan-engine)
 
 find_package(PkgConfig REQUIRED)
+find_package(imgui REQUIRED)
 find_program(GLSLC glslc)
 
 pkg_check_modules(VULKAN REQUIRED vulkan)
@@ -35,6 +36,8 @@ add_executable(main
   src/types/vector3.cpp
 
   src/main.cpp
+
+  ${IMGUI_SOURCES}
 )
 
 target_include_directories(main PRIVATE
@@ -44,6 +47,7 @@ target_include_directories(main PRIVATE
 target_link_libraries(main PUBLIC
   ${VULKAN_LIBRARIES}
   ${SDL3_LIBRARIES}
+  imgui
 )
 
 target_compile_options(main PRIVATE

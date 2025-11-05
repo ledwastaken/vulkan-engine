@@ -17,6 +17,7 @@
               cmake
               pkg-config
               sdl3
+              (imgui.override { IMGUI_BUILD_VULKAN_BINDING = true; IMGUI_BUILD_SDL3_BINDING = true; })
               stb
               vulkan-headers
               vulkan-loader
