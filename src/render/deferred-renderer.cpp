@@ -36,24 +36,24 @@ namespace render
     auto projection = types::Matrix4::perspective(camera.field_of_view, ratio, 0.1f, 10.0f);
 
     // if (scene->get_skybox_image())
-    // {
-    //   auto& skybox_renderer = gfx::SkyboxPipeline::get_singleton();
+    {
+      auto& skybox_renderer = gfx::SkyboxPipeline::get_singleton();
 
-    //   const gfx::SkyboxData skybox_data = {
-    //     .image = scene->get_skybox_image(),
-    //     .image_view = scene->get_skybox_image_view(),
-    //     .sampler = scene->get_skybox_sampler(),
-    //   };
+      const gfx::SkyboxData skybox_data = {
+        .image = scene->get_skybox_image(),
+        .image_view = scene->get_skybox_image_view(),
+        .sampler = scene->get_skybox_sampler(),
+      };
 
-    //   skybox_renderer.draw(image_view, command_buffer, view, projection, skybox_data);
-    // }
+      skybox_renderer.draw(image_view, command_buffer, view, projection, skybox_data);
+    }
 
     image_view_ = image_view;
     command_buffer_ = command_buffer;
     view_ = view;
     projection_ = projection;
 
-    Visitor::operator()(*scene);
+    // Visitor::operator()(*scene);
   }
 
   void DeferredRenderer::free()

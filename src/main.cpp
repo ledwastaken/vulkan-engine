@@ -15,16 +15,16 @@ using namespace types;
 
 void init(Scene& scene)
 {
-  // scene.load_skybox("assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg",
-  //                   "assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg",
-  //                   "assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg");
+  scene.load_skybox("assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg",
+                    "assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg",
+                    "assets/texture/grid-texture.jpg", "assets/texture/grid-texture.jpg");
 
   auto mesh = new Cube(1.0f);
   mesh->cframe = CFrame(Vector3(0, 0, 0));
   mesh->set_parent(&scene);
 
   auto camera = new Camera();
-  camera->cframe = CFrame(Vector3(4, 4, 4), Vector3(0, 0, 0));
+  camera->cframe = CFrame(Vector3(-8, 4, -4), Vector3(0, 0, 0));
   camera->set_parent(&scene);
 
   scene.current_camera = camera;

@@ -535,7 +535,7 @@ namespace core
       .commandBufferCount = 1,
     };
 
-    result = vkAllocateCommandBuffers(device_, &graphics_allocate_info, &transfer_command_buffer_);
+    result = vkAllocateCommandBuffers(device_, &transfer_allocate_info, &transfer_command_buffer_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to allocate command buffers");
   }
@@ -971,7 +971,6 @@ namespace core
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
-    ImGui::ShowDemoWindow();
 
     deferred_renderer.draw(image_view, command_buffer);
 
