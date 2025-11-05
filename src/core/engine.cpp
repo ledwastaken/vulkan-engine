@@ -207,7 +207,7 @@ namespace core
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
       .mipLevel = 0,
       .baseArrayLayer = 0,
-      .layerCount = 1,
+      .layerCount = layer_count,
     };
 
     const VkBufferImageCopy region = {
