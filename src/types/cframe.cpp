@@ -1,5 +1,7 @@
 #include "types/cframe.h"
 
+#include <cmath>
+
 namespace types
 {
   CFrame::CFrame(const Vector3& pos)
@@ -41,6 +43,21 @@ namespace types
     , r22_(r22)
   {}
 
+  CFrame CFrame::from_axis_angle(const Vector3& axis, float angle)
+  {
+    float c = std::cos(angle);
+    float s = std::sin(angle);
+    float t = 1.0f - c;
+
+    float x = axis.x / axis.magnitude();
+    float y = axis.y / axis.magnitude();
+    float z = axis.z / axis.magnitude();
+
+    return CFrame(Vector3(), x * x * t + c, x * y * t + z * s, x * z * t - y * s, x * y * t - z * s,
+                  y * y * t + c, y * z * t + x * s, x * z * t + y * s, y * z * t - x * s,
+                  z * z * t + c);
+  }
+
   Matrix4 CFrame::to_matrix() const
   {
     // clang-format off
@@ -69,6 +86,13 @@ namespace types
     return CFrame(pos_ + vec, r00_, r01_, r02_, r10_, r11_, r12_, r20_, r21_, r22_);
   }
 
+  CFrame CFrame::operator+=(const Vector3& vec)
+  {
+    pos_ += vec;
+
+    return *this;
+  }
+
   Vector3 CFrame::operator*(const Vector3& vec) const
   {
     float x = vec.x * r00_ + vec.y * r10_ + vec.z * r20_ + pos_.x;
@@ -77,6 +101,36 @@ namespace types
 
     return Vector3(x, y, z);
   }
+
+  CFrame CFrame::operator*(const CFrame& cf) const
+  {
+    auto res = CFrame(Vector3(), r00_ * cf.r00_ + r10_ * cf.r01_ + r20_ * cf.r02_,
+                      r01_ * cf.r00_ + r11_ * cf.r01_ + r21_ * cf.r02_,
+                      r02_ * cf.r00_ + r12_ * cf.r01_ + r22_ * cf.r02_,
+                      r00_ * cf.r10_ + r10_ * cf.r11_ + r20_ * cf.r12_,
+                      r01_ * cf.r10_ + r11_ * cf.r11_ + r21_ * cf.r12_,
+                      r02_ * cf.r10_ + r12_ * cf.r11_ + r22_ * cf.r12_,
+                      r00_ * cf.r20_ + r10_ * cf.r21_ + r20_ * cf.r22_,
+                      r01_ * cf.r20_ + r11_ * cf.r21_ + r21_ * cf.r22_,
+                      r02_ * cf.r20_ + r12_ * cf.r21_ + r22_ * cf.r22_);
+
+    res.pos_ = Vector3(r00_ * cf.pos_.x + r10_ * cf.pos_.y + r20_ * cf.pos_.z + pos_.x,
+                       r01_ * cf.pos_.x + r11_ * cf.pos_.y + r21_ * cf.pos_.z + pos_.y,
+                       r02_ * cf.pos_.x + r12_ * cf.pos_.y + r22_ * cf.pos_.z + pos_.z);
+
+    return res;
+  }
+
+  CFrame CFrame::operator*=(const CFrame& cf)
+  {
+    *this = operator*(cf);
+    return *this;
+  }
+
+  Vector3 CFrame::get_position() const { return pos_; }
+  Vector3 CFrame::get_right_vector() const { return Vector3(r00_, r01_, r02_); }
+  Vector3 CFrame::get_up_vector() const { return Vector3(r10_, r11_, r12_); }
+  Vector3 CFrame::get_look_vector() const { return -Vector3(r20_, r21_, r22_); }
 
   std::ostream& operator<<(std::ostream& out, const CFrame& cframe)
   {

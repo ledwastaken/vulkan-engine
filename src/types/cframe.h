@@ -16,11 +16,21 @@ namespace types
     CFrame(const Vector3& pos, float r00, float r01, float r02, float r10, float r11, float r12,
            float r20, float r21, float r22);
 
+    static CFrame from_axis_angle(const Vector3& axis, float angle);
+
     Matrix4 to_matrix() const;
     CFrame invert() const;
 
     CFrame operator+(const Vector3& vec) const;
+    CFrame operator+=(const Vector3& vec);
     Vector3 operator*(const Vector3& vec) const;
+    CFrame operator*(const CFrame& cf) const;
+    CFrame operator*=(const CFrame& cf);
+
+    Vector3 get_position() const;
+    Vector3 get_right_vector() const;
+    Vector3 get_up_vector() const;
+    Vector3 get_look_vector() const;
 
     const float* data() const;
     float* data();
