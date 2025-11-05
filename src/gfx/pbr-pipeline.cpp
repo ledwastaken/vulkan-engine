@@ -175,7 +175,7 @@ namespace gfx
     const VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
       .pNext = nullptr,
-      .flags = 0,
+      .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
       .maxSets = MAX_FRAMES_IN_FLIGHT,
       .poolSizeCount = 1,
       .pPoolSizes = &pool_size,
