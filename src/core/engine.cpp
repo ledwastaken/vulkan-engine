@@ -50,6 +50,8 @@ namespace core
           running = false;
         else if (event.type == SDL_EVENT_WINDOW_RESIZED)
           replace_swapchain();
+
+        ImGui_ImplSDL3_ProcessEvent(&event);
       }
 
       render();
@@ -966,7 +968,42 @@ namespace core
                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr,
                          1, &image_memory_barrier1);
 
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+    ImGui::ShowDemoWindow();
+
     deferred_renderer.draw(image_view, command_buffer);
+
+    ImGui::Render();
+
+    const VkRenderingAttachmentInfo color_attachment = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .pNext = nullptr,
+      .imageView = image_view,
+      .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .resolveMode = VK_RESOLVE_MODE_NONE,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .clearValue = {}
+    };
+
+    const VkRenderingInfo rendering_info = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .renderArea = { { 0, 0 }, { swapchain_extent_.width, swapchain_extent_.height } },
+      .layerCount = 1,
+      .viewMask = 0,
+      .colorAttachmentCount = 1,
+      .pColorAttachments = &color_attachment,
+      .pDepthAttachment = nullptr,
+      .pStencilAttachment = nullptr
+    };
+
+    vkCmdBeginRendering(command_buffer, &rendering_info);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), command_buffer);
+    vkCmdEndRendering(command_buffer);
 
     const VkImageMemoryBarrier image_memory_barrier2 = {
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
