@@ -21,6 +21,7 @@ add_executable(main
   src/gfx/csg-pipeline.cpp
   src/gfx/pipeline.cpp
   src/gfx/skybox-pipeline.cpp
+  src/gfx/volume-capture-pipeline.cpp
 
   src/render/renderer.cpp
 
@@ -74,6 +75,8 @@ set(SHADERS
   ${SHADER_SOURCE_DIR}/csg.frag
   ${SHADER_SOURCE_DIR}/skybox.vert
   ${SHADER_SOURCE_DIR}/skybox.frag
+  ${SHADER_SOURCE_DIR}/volume-capture.frag
+  ${SHADER_SOURCE_DIR}/volume-capture.frag
 )
 
 foreach(SHADER ${SHADERS})
