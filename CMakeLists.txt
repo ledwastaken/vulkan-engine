@@ -18,10 +18,10 @@ add_executable(main
   src/core/engine.cpp
   src/core/stb_impl.cpp
 
+  src/gfx/back-face-pipeline.cpp
   src/gfx/csg-pipeline.cpp
   src/gfx/pipeline.cpp
   src/gfx/skybox-pipeline.cpp
-  src/gfx/volume-capture-pipeline.cpp
 
   src/render/renderer.cpp
 
@@ -71,12 +71,12 @@ set(SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 file(MAKE_DIRECTORY ${SHADER_BINARY_DIR})
 
 set(SHADERS
+  ${SHADER_SOURCE_DIR}/back-face.frag
+  ${SHADER_SOURCE_DIR}/back-face.frag
   ${SHADER_SOURCE_DIR}/csg.vert
   ${SHADER_SOURCE_DIR}/csg.frag
   ${SHADER_SOURCE_DIR}/skybox.vert
   ${SHADER_SOURCE_DIR}/skybox.frag
-  ${SHADER_SOURCE_DIR}/volume-capture.frag
-  ${SHADER_SOURCE_DIR}/volume-capture.frag
 )
 
 foreach(SHADER ${SHADERS})

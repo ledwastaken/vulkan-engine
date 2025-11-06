@@ -1,27 +1,29 @@
-#include "gfx/volume-capture-pipeline.h"
+#include "gfx/back-face-pipeline.h"
 
 #include "core/engine.h"
 
 namespace gfx
 {
-  void VolumeCapturePipeline::init()
+  void BackFacePipeline::init()
   {
     create_pipeline_layout();
+    create_descriptor_set();
     create_pipeline_cache();
 
-    create_shader_module("volume-capture.vert.spv", &vertex_shader_);
-    create_shader_module("volume-capture.frag.spv", &fragment_shader_);
+    create_shader_module("back-face.vert.spv", &vertex_shader_);
+    create_shader_module("back-face.frag.spv", &fragment_shader_);
 
     create_graphics_pipeline();
+    create_uniform_buffer();
   }
 
-  void VolumeCapturePipeline::draw(VkImage position_cubemap, VkCommandBuffer command_buffer,
-                                   scene::Mesh& mesh)
+  void BackFacePipeline::draw(VkImage position_cubemap, VkCommandBuffer command_buffer,
+                              scene::Mesh& mesh)
   {
     // FIXME
   }
 
-  void VolumeCapturePipeline::free()
+  void BackFacePipeline::free()
   {
     auto& engine = core::Engine::get_singleton();
 
@@ -35,33 +37,88 @@ namespace gfx
     vkDestroyPipelineLayout(engine.get_device(), pipeline_layout_, nullptr);
   }
 
-  void VolumeCapturePipeline::create_pipeline_layout()
+  void BackFacePipeline::create_pipeline_layout()
   {
     auto& engine = core::Engine::get_singleton();
 
-    const VkPushConstantRange push_constant_range = {
+    const VkDescriptorSetLayoutBinding layout_binding = {
+      .binding = 0,
+      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .descriptorCount = 1,
       .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-      .offset = 0,
-      .size = 128,
+      .pImmutableSamplers = nullptr,
     };
+
+    const VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .bindingCount = 1,
+      .pBindings = &layout_binding,
+    };
+
+    VkResult result = vkCreateDescriptorSetLayout(
+        engine.get_device(), &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create descriptor set layout");
 
     const VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
       .setLayoutCount = 1,
-      .pSetLayouts = nullptr,
+      .pSetLayouts = &descriptor_set_layout_,
       .pushConstantRangeCount = 0,
-      .pPushConstantRanges = &push_constant_range,
+      .pPushConstantRanges = nullptr,
     };
 
-    VkResult result = vkCreatePipelineLayout(engine.get_device(), &pipeline_layout_create_info,
-                                             nullptr, &pipeline_layout_);
+    result = vkCreatePipelineLayout(engine.get_device(), &pipeline_layout_create_info, nullptr,
+                                    &pipeline_layout_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create pipeline layout");
   }
 
-  void VolumeCapturePipeline::create_pipeline_cache()
+  void BackFacePipeline::create_descriptor_set()
+  {
+    auto& engine = core::Engine::get_singleton();
+
+    const VkDescriptorPoolSize pool_size = {
+      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .descriptorCount = MAX_FRAMES_IN_FLIGHT,
+    };
+
+    const VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+      .maxSets = MAX_FRAMES_IN_FLIGHT,
+      .poolSizeCount = 1,
+      .pPoolSizes = &pool_size,
+    };
+
+    VkResult result = vkCreateDescriptorPool(engine.get_device(), &descriptor_pool_create_info,
+                                             nullptr, &descriptor_pool_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create descriptor pool");
+
+    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptor_set_layout_);
+
+    const VkDescriptorSetAllocateInfo descriptor_set_allocate_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+      .pNext = nullptr,
+      .descriptorPool = descriptor_pool_,
+      .descriptorSetCount = MAX_FRAMES_IN_FLIGHT,
+      .pSetLayouts = layouts.data(),
+    };
+
+    descriptor_sets_.resize(MAX_FRAMES_IN_FLIGHT);
+    result = vkAllocateDescriptorSets(engine.get_device(), &descriptor_set_allocate_info,
+                                      descriptor_sets_.data());
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to allocate descriptor set");
+  }
+
+  void BackFacePipeline::create_pipeline_cache()
   {
     auto& engine = core::Engine::get_singleton();
     auto device = engine.get_device();
@@ -79,7 +136,7 @@ namespace gfx
       throw std::runtime_error("failed to create pipeline cache");
   }
 
-  void VolumeCapturePipeline::create_graphics_pipeline()
+  void BackFacePipeline::create_graphics_pipeline()
   {
     auto& engine = core::Engine::get_singleton();
     auto device = engine.get_device();
@@ -277,5 +334,59 @@ namespace gfx
         vkCreateGraphicsPipelines(device, pipeline_cache_, 1, &create_info, nullptr, &pipeline_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create graphics pipeline");
+  }
+
+  void BackFacePipeline::create_uniform_buffer()
+  {
+    auto& engine = core::Engine::get_singleton();
+    VkDeviceSize buffer_size = 192;
+
+    uniform_buffers_.resize(MAX_FRAMES_IN_FLIGHT);
+    uniform_buffers_memory_.resize(MAX_FRAMES_IN_FLIGHT);
+    uniform_buffers_data_.resize(MAX_FRAMES_IN_FLIGHT);
+
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+      const VkBufferCreateInfo buffer_create_info = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .size = buffer_size,
+        .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = nullptr,
+      };
+
+      engine.create_buffer(buffer_create_info,
+                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                               | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                           uniform_buffers_[i], uniform_buffers_memory_[i]);
+
+      VkDeviceSize offset = 0;
+      vkMapMemory(engine.get_device(), uniform_buffers_memory_[i], offset, buffer_size, 0,
+                  &uniform_buffers_data_[i]);
+
+      const VkDescriptorBufferInfo descriptor_buffer_info = {
+        .buffer = uniform_buffers_[i],
+        .offset = 0,
+        .range = buffer_size,
+      };
+
+      const VkWriteDescriptorSet write_descriptor_set = {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = descriptor_sets_[i],
+        .dstBinding = 0,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pImageInfo = nullptr,
+        .pBufferInfo = &descriptor_buffer_info,
+        .pTexelBufferView = nullptr,
+      };
+
+      vkUpdateDescriptorSets(engine.get_device(), 1, &write_descriptor_set, 0, nullptr);
+    }
   }
 } // namespace gfx
