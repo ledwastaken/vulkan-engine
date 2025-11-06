@@ -4,11 +4,15 @@
 
 #include "core/engine.h"
 
+using namespace core;
+
 namespace scene
 {
+  Mesh::Mesh() { create_depth_image(); }
+
   Mesh::~Mesh()
   {
-    auto& engine = core::Engine::get_singleton();
+    auto& engine = Engine::get_singleton();
 
     if (vertex_buffer_ != VK_NULL_HANDLE)
       vkDestroyBuffer(engine.get_device(), vertex_buffer_, nullptr);
@@ -21,6 +25,13 @@ namespace scene
 
     if (index_buffer_memory_ != VK_NULL_HANDLE)
       vkFreeMemory(engine.get_device(), index_buffer_memory_, nullptr);
+
+    vkDeviceWaitIdle(engine.get_device());
+
+    vkDestroySampler(engine.get_device(), depth_sampler_, nullptr);
+    vkDestroyImageView(engine.get_device(), depth_image_view_, nullptr);
+    vkDestroyImage(engine.get_device(), depth_image_, nullptr);
+    vkFreeMemory(engine.get_device(), depth_image_memory_, nullptr);
   }
 
   void Mesh::load_mesh_data(const std::vector<Vertex>& vertices,
@@ -32,7 +43,7 @@ namespace scene
 
   void Mesh::reset()
   {
-    auto& engine = core::Engine::get_singleton();
+    auto& engine = Engine::get_singleton();
 
     if (vertex_buffer_ != VK_NULL_HANDLE)
       vkDestroyBuffer(engine.get_device(), vertex_buffer_, nullptr);
@@ -54,7 +65,7 @@ namespace scene
 
   void Mesh::create_vertex_buffer(const std::vector<Vertex>& vertices)
   {
-    auto& engine = core::Engine::get_singleton();
+    auto& engine = Engine::get_singleton();
     auto buffer_size = vertices.size() * sizeof(Vertex);
 
     const VkBufferCreateInfo create_info = {
@@ -110,7 +121,7 @@ namespace scene
 
   void Mesh::create_index_vertex(const std::vector<uint32_t>& indices)
   {
-    auto& engine = core::Engine::get_singleton();
+    auto& engine = Engine::get_singleton();
     auto buffer_size = indices.size() * sizeof(uint32_t);
 
     const VkBufferCreateInfo create_info = {
@@ -162,5 +173,105 @@ namespace scene
     vkUnmapMemory(engine.get_device(), index_buffer_memory_);
 
     index_count_ = indices.size();
+  }
+
+  void Mesh::create_depth_image()
+  {
+    auto& engine = Engine::get_singleton();
+
+    const VkExtent3D image_extent = {
+      .width = 1024,
+      .height = 1024,
+      .depth = 1,
+    };
+
+    const VkImageCreateInfo image_create_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
+      .imageType = VK_IMAGE_TYPE_2D,
+      .format = VK_FORMAT_D32_SFLOAT,
+      .extent = image_extent,
+      .mipLevels = 1,
+      .arrayLayers = 6,
+      .samples = VK_SAMPLE_COUNT_1_BIT,
+      .tiling = VK_IMAGE_TILING_OPTIMAL,
+      .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+      .queueFamilyIndexCount = 0,
+      .pQueueFamilyIndices = nullptr,
+      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    };
+
+    engine.create_image(image_create_info, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depth_image_,
+                        depth_image_memory_);
+
+    const VkComponentMapping components = {
+      .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+    };
+
+    const VkImageSubresourceRange subresource_range = {
+      .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 6,
+    };
+
+    const VkImageViewCreateInfo view_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .image = depth_image_,
+      .viewType = VK_IMAGE_VIEW_TYPE_CUBE,
+      .format = VK_FORMAT_D32_SFLOAT,
+      .components = components,
+      .subresourceRange = subresource_range,
+    };
+
+    VkResult result =
+        vkCreateImageView(engine.get_device(), &view_info, nullptr, &depth_image_view_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create depth image view");
+
+    const VkSamplerCreateInfo sampler_create_info = {
+      .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .magFilter = VK_FILTER_LINEAR,
+      .minFilter = VK_FILTER_LINEAR,
+      .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+      .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      .mipLodBias = 0.0f,
+      .anisotropyEnable = VK_FALSE,
+      .maxAnisotropy = 0.0f,
+      .compareEnable = VK_TRUE,
+      .compareOp = VK_COMPARE_OP_ALWAYS,
+      .minLod = 0.0f,
+      .maxLod = 0.0f,
+      .borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
+      .unnormalizedCoordinates = VK_FALSE,
+    };
+
+    result = vkCreateSampler(engine.get_device(), &sampler_create_info, nullptr, &depth_sampler_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create sampler");
+
+    const TransitionLayout transition_layout = {
+      .src_access = 0,
+      .dst_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+      .src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+      .dst_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+      .aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT,
+      .old_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    };
+
+    engine.transition_image_layout(depth_image_, VK_FORMAT_D32_SFLOAT, 6, transition_layout);
   }
 } // namespace scene

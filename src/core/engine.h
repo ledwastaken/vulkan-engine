@@ -15,6 +15,17 @@
 
 namespace core
 {
+  struct TransitionLayout
+  {
+    VkAccessFlags src_access;
+    VkAccessFlags dst_access;
+    VkPipelineStageFlags src_stage;
+    VkPipelineStageFlags dst_stage;
+    VkImageAspectFlags aspect_mask;
+    VkImageLayout old_layout;
+    VkImageLayout new_layout;
+  };
+
   class Engine : public misc::Singleton<Engine>
   {
     // Give Singleton<Engine> access to Engine’s private constructor
@@ -36,6 +47,8 @@ namespace core
     uint32_t find_memory_type(uint32_t required_memory_type, VkMemoryPropertyFlags flags) const;
     void transfer_image(VkImage image, VkOffset3D offset, VkExtent3D extent, uint32_t layer_count,
                         VkBuffer buffer) const;
+    void transition_image_layout(VkImage image, VkFormat format, uint32_t layer_count,
+                                 TransitionLayout transition_layout) const;
 
     SDL_Window* get_window() const;
     VkDevice get_device() const;
@@ -64,8 +77,8 @@ namespace core
     int calculate_device_properties_score(VkPhysicalDeviceProperties properties);
     void create_image_view(size_t index);
     void replace_swapchain();
-    void transition_image_layout(VkImage image, VkFormat format, uint32_t layer_count,
-                                 VkImageLayout old_layout, VkImageLayout new_layout) const;
+    void transition_transfer_image_layout(VkImage image, VkFormat format, uint32_t layer_count,
+                                          VkImageLayout old_layout, VkImageLayout new_layout) const;
 
     void render();
 

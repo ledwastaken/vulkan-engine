@@ -21,7 +21,7 @@ namespace scene
   class Mesh : public Object
   {
   public:
-    Mesh() = default;
+    Mesh();
 
     virtual ~Mesh();
 
@@ -39,6 +39,7 @@ namespace scene
   private:
     void create_vertex_buffer(const std::vector<Vertex>& vertices);
     void create_index_vertex(const std::vector<uint32_t>& indices);
+    void create_depth_image();;
 
     VkBuffer vertex_buffer_ = VK_NULL_HANDLE;
     VkBuffer index_buffer_ = VK_NULL_HANDLE;
@@ -46,6 +47,11 @@ namespace scene
     VkDeviceMemory index_buffer_memory_ = VK_NULL_HANDLE;
     uint32_t vertex_count_ = 0;
     uint32_t index_count_ = 0;
+
+    VkImage depth_image_ = VK_NULL_HANDLE;
+    VkImageView depth_image_view_ = VK_NULL_HANDLE;
+    VkSampler depth_sampler_ = VK_NULL_HANDLE;
+    VkDeviceMemory depth_image_memory_ = VK_NULL_HANDLE;
   };
 } // namespace scene
 

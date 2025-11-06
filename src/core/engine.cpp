@@ -219,13 +219,91 @@ namespace core
       .imageExtent = extent,
     };
 
-    transition_image_layout(image, surface_format_.format, layer_count, VK_IMAGE_LAYOUT_UNDEFINED,
-                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    transition_transfer_image_layout(image, surface_format_.format, layer_count,
+                                     VK_IMAGE_LAYOUT_UNDEFINED,
+                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     vkCmdCopyBufferToImage(transfer_command_buffer_, buffer, image,
                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-    transition_image_layout(image, surface_format_.format, layer_count,
-                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    transition_transfer_image_layout(image, surface_format_.format, layer_count,
+                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    vkEndCommandBuffer(transfer_command_buffer_);
+
+    const VkSubmitInfo submit_info = {
+      .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      .pNext = nullptr,
+      .waitSemaphoreCount = 0,
+      .pWaitSemaphores = nullptr,
+      .pWaitDstStageMask = nullptr,
+      .commandBufferCount = 1,
+      .pCommandBuffers = &transfer_command_buffer_,
+      .signalSemaphoreCount = 0,
+      .pSignalSemaphores = nullptr,
+    };
+
+    VkQueue transfer_queue;
+    vkGetDeviceQueue(device_, transfer_queue_family_, 0, &transfer_queue);
+
+    result = vkQueueSubmit(transfer_queue, 1, &submit_info, transfer_fence_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to submit to queue");
+
+    result = vkWaitForFences(device_, 1, &transfer_fence_, VK_TRUE, UINT64_MAX);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to wait for transfer completion");
+  }
+
+  void Engine::transition_image_layout(VkImage image, VkFormat format, uint32_t layer_count,
+                                       TransitionLayout transition_layout) const
+  {
+    VkResult result = vkWaitForFences(device_, 1, &transfer_fence_, VK_TRUE, UINT64_MAX);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to wait for fence");
+
+    result = vkResetFences(device_, 1, &transfer_fence_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to reset fence");
+
+    result = vkResetCommandBuffer(transfer_command_buffer_, 0);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to reset command buffer");
+
+    const VkCommandBufferBeginInfo command_buffer_begin_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .pInheritanceInfo = nullptr,
+    };
+
+    result = vkBeginCommandBuffer(transfer_command_buffer_, &command_buffer_begin_info);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to begin command buffer");
+
+    const VkImageSubresourceRange subresource_range = {
+      .aspectMask = transition_layout.aspect_mask,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = layer_count,
+    };
+
+    const VkImageMemoryBarrier image_memory_barrier = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .pNext = nullptr,
+      .srcAccessMask = transition_layout.src_access,
+      .dstAccessMask = transition_layout.dst_access,
+      .oldLayout = transition_layout.old_layout,
+      .newLayout = transition_layout.new_layout,
+      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .image = image,
+      .subresourceRange = subresource_range,
+    };
+
+    vkCmdPipelineBarrier(transfer_command_buffer_, transition_layout.src_stage,
+                         transition_layout.dst_stage, 0, 0, nullptr, 0, nullptr, 1,
+                         &image_memory_barrier);
 
     vkEndCommandBuffer(transfer_command_buffer_);
 
@@ -847,8 +925,9 @@ namespace core
     create_swapchain_resources();
   }
 
-  void Engine::transition_image_layout(VkImage image, VkFormat format, uint32_t layer_count,
-                                       VkImageLayout old_layout, VkImageLayout new_layout) const
+  void Engine::transition_transfer_image_layout(VkImage image, VkFormat format,
+                                                uint32_t layer_count, VkImageLayout old_layout,
+                                                VkImageLayout new_layout) const
   {
     VkAccessFlags src_access;
     VkAccessFlags dst_access;
