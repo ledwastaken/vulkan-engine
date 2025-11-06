@@ -21,17 +21,17 @@ void init(Scene& scene)
 
   auto mesh = new Cube(1.0f);
   mesh->cframe = CFrame(Vector3(0, 0, 0));
-  mesh->set_parent(&scene);
 
   auto substractive_mesh = new Cube(1.0f);
   substractive_mesh->cframe = CFrame(Vector3(1, 1, 1));
-  substractive_mesh->set_parent(&scene);
 
   auto camera = new Camera();
   camera->cframe = CFrame(Vector3(-8, 4, -4), Vector3(0, 0, 0));
   camera->set_parent(&scene);
 
   scene.current_camera = camera;
+  scene.mesh = mesh;
+  scene.substractive_mesh = substractive_mesh;
 }
 
 int main(int argc, char* argv[])

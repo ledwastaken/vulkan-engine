@@ -23,6 +23,12 @@ namespace scene
       vkDestroyImage(engine.get_device(), skybox_image_, nullptr);
       vkFreeMemory(engine.get_device(), skybox_image_memory_, nullptr);
     }
+
+    if (mesh)
+      delete mesh;
+
+    if (substractive_mesh)
+      delete substractive_mesh;
   }
 
   void Scene::set_parent(Instance* parent)

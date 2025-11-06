@@ -268,7 +268,17 @@ namespace render
 
     engine.clear_depth_image(depth_image_, 1);
 
-    Visitor::operator()(*scene);
+    // Visitor::operator()(*scene);
+
+    auto& csg_pipeline = gfx::CSGPipeline::get_singleton();
+
+    if (scene->mesh)
+      csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_,
+                        *scene->mesh);
+
+    if (scene->substractive_mesh)
+      csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_,
+                        *scene->substractive_mesh);
   }
 
   void Renderer::free()
