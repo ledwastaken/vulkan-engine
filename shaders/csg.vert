@@ -7,8 +7,11 @@ layout (location = 0) out vec3 normal;
 layout (location = 1) out vec3 fragPos;
 layout (location = 2) out vec3 viewPos;
 
-layout (set = 0, binding = 0) uniform ubo {
+layout(push_constant) uniform PushConstants {
   mat4 model;
+};
+
+layout (set = 0, binding = 0) uniform ubo {
   mat4 view;
   mat4 projection;
 };

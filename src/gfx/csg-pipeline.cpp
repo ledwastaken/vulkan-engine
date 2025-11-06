@@ -63,11 +63,11 @@ namespace gfx
     vkCmdBeginRendering(command_buffer, &rendering_info);
     vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
 
-    std::memcpy(uniform_buffers_data_[engine.get_current_frame()], mesh.cframe.to_matrix().data(),
-                16 * sizeof(float));
-    std::memcpy(uniform_buffers_data_[engine.get_current_frame()] + 64, view.data(),
-                16 * sizeof(float));
-    std::memcpy(uniform_buffers_data_[engine.get_current_frame()] + 128, projection.data(),
+    vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+                       mesh.cframe.to_matrix().data());
+
+    std::memcpy(uniform_buffers_data_[engine.get_current_frame()], view.data(), 16 * sizeof(float));
+    std::memcpy(uniform_buffers_data_[engine.get_current_frame()] + 64, projection.data(),
                 16 * sizeof(float));
 
     vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 0, 1,
@@ -147,14 +147,20 @@ namespace gfx
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create descriptor set layout");
 
+    const VkPushConstantRange push_constant_range = {
+      .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+      .offset = 0,
+      .size = 64,
+    };
+
     const VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
       .setLayoutCount = 1,
       .pSetLayouts = &descriptor_set_layout_,
-      .pushConstantRangeCount = 0,
-      .pPushConstantRanges = nullptr,
+      .pushConstantRangeCount = 1,
+      .pPushConstantRanges = &push_constant_range,
     };
 
     result = vkCreatePipelineLayout(engine.get_device(), &pipeline_layout_create_info, nullptr,
@@ -424,7 +430,7 @@ namespace gfx
   void CSGPipeline::create_uniform_buffer()
   {
     auto& engine = core::Engine::get_singleton();
-    VkDeviceSize buffer_size = 192;
+    VkDeviceSize buffer_size = 128;
 
     uniform_buffers_.resize(MAX_FRAMES_IN_FLIGHT);
     uniform_buffers_memory_.resize(MAX_FRAMES_IN_FLIGHT);

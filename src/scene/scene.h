@@ -6,6 +6,7 @@
 
 #include "scene/camera.h"
 #include "scene/instance.h"
+#include "scene/mesh.h"
 #include "scene/visitor.h"
 
 namespace scene
@@ -28,6 +29,8 @@ namespace scene
     VkSampler get_skybox_sampler() const;
 
     Camera* current_camera = nullptr;
+    Mesh* mesh = nullptr;
+    Mesh* substractive_mesh = nullptr;
 
   private:
     VkImage skybox_image_ = VK_NULL_HANDLE;

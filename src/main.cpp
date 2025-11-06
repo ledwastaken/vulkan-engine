@@ -23,6 +23,10 @@ void init(Scene& scene)
   mesh->cframe = CFrame(Vector3(0, 0, 0));
   mesh->set_parent(&scene);
 
+  auto substractive_mesh = new Cube(1.0f);
+  substractive_mesh->cframe = CFrame(Vector3(1, 1, 1));
+  substractive_mesh->set_parent(&scene);
+
   auto camera = new Camera();
   camera->cframe = CFrame(Vector3(-8, 4, -4), Vector3(0, 0, 0));
   camera->set_parent(&scene);
