@@ -9,15 +9,15 @@
 
 namespace gfx
 {
-  class PhysicallyBasedRenderPipeline
-    : public misc::Singleton<PhysicallyBasedRenderPipeline>
+  class CSGPipeline
+    : public misc::Singleton<CSGPipeline>
     , public Pipeline
   {
     // Give Singleton access to class’s private constructor
-    friend class Singleton<PhysicallyBasedRenderPipeline>;
+    friend class Singleton<CSGPipeline>;
 
   private:
-    PhysicallyBasedRenderPipeline() = default;
+    CSGPipeline() = default;
 
   public:
     void init();

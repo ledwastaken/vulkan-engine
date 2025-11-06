@@ -1,4 +1,4 @@
-#include "gfx/pbr-pipeline.h"
+#include "gfx/csg-pipeline.h"
 
 #include <cstring>
 #include <string>
@@ -7,22 +7,22 @@
 
 namespace gfx
 {
-  void PhysicallyBasedRenderPipeline::init()
+  void CSGPipeline::init()
   {
     create_pipeline_layout();
     create_descriptor_set();
     create_pipeline_cache();
 
-    create_shader_module("pbr.vert.spv", &vertex_shader_);
-    create_shader_module("pbr.frag.spv", &fragment_shader_);
+    create_shader_module("csg.vert.spv", &vertex_shader_);
+    create_shader_module("csg.frag.spv", &fragment_shader_);
 
     create_graphics_pipeline();
     create_uniform_buffer();
   }
 
-  void PhysicallyBasedRenderPipeline::draw(VkImageView image_view, VkCommandBuffer command_buffer,
-                                           const types::Matrix4& view,
-                                           const types::Matrix4& projection, scene::Mesh& mesh)
+  void CSGPipeline::draw(VkImageView image_view, VkCommandBuffer command_buffer,
+                         const types::Matrix4& view, const types::Matrix4& projection,
+                         scene::Mesh& mesh)
   {
     auto& engine = core::Engine::get_singleton();
     auto extent = engine.get_swapchain_extent();
@@ -98,7 +98,7 @@ namespace gfx
     vkCmdEndRendering(command_buffer);
   }
 
-  void PhysicallyBasedRenderPipeline::free()
+  void CSGPipeline::free()
   {
     auto& engine = core::Engine::get_singleton();
 
@@ -122,7 +122,7 @@ namespace gfx
     vkDestroyDescriptorSetLayout(engine.get_device(), descriptor_set_layout_, nullptr);
   }
 
-  void PhysicallyBasedRenderPipeline::create_pipeline_layout()
+  void CSGPipeline::create_pipeline_layout()
   {
     auto& engine = core::Engine::get_singleton();
 
@@ -163,7 +163,7 @@ namespace gfx
       throw std::runtime_error("failed to create pipeline layout");
   }
 
-  void PhysicallyBasedRenderPipeline::create_descriptor_set()
+  void CSGPipeline::create_descriptor_set()
   {
     auto& engine = core::Engine::get_singleton();
 
@@ -203,7 +203,7 @@ namespace gfx
       throw std::runtime_error("failed to allocate descriptor set");
   }
 
-  void PhysicallyBasedRenderPipeline::create_pipeline_cache()
+  void CSGPipeline::create_pipeline_cache()
   {
     auto& engine = core::Engine::get_singleton();
     auto device = engine.get_device();
@@ -221,7 +221,7 @@ namespace gfx
       throw std::runtime_error("failed to create pipeline cache");
   }
 
-  void PhysicallyBasedRenderPipeline::create_graphics_pipeline()
+  void CSGPipeline::create_graphics_pipeline()
   {
     auto& engine = core::Engine::get_singleton();
     auto device = engine.get_device();
@@ -421,7 +421,7 @@ namespace gfx
       throw std::runtime_error("failed to create graphics pipeline");
   }
 
-  void PhysicallyBasedRenderPipeline::create_uniform_buffer()
+  void CSGPipeline::create_uniform_buffer()
   {
     auto& engine = core::Engine::get_singleton();
     VkDeviceSize buffer_size = 192;

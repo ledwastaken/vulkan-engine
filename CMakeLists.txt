@@ -18,11 +18,11 @@ add_executable(main
   src/core/engine.cpp
   src/core/stb_impl.cpp
 
-  src/gfx/pbr-pipeline.cpp
+  src/gfx/csg-pipeline.cpp
   src/gfx/pipeline.cpp
   src/gfx/skybox-pipeline.cpp
 
-  src/render/deferred-renderer.cpp
+  src/render/renderer.cpp
 
   src/scene/cube.cpp
   src/scene/instance.cpp
@@ -70,10 +70,10 @@ set(SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 file(MAKE_DIRECTORY ${SHADER_BINARY_DIR})
 
 set(SHADERS
-  ${SHADER_SOURCE_DIR}/pbr/pbr.vert
-  ${SHADER_SOURCE_DIR}/pbr/pbr.frag
-  ${SHADER_SOURCE_DIR}/skybox/skybox.vert
-  ${SHADER_SOURCE_DIR}/skybox/skybox.frag
+  ${SHADER_SOURCE_DIR}/csg.vert
+  ${SHADER_SOURCE_DIR}/csg.frag
+  ${SHADER_SOURCE_DIR}/skybox.vert
+  ${SHADER_SOURCE_DIR}/skybox.frag
 )
 
 foreach(SHADER ${SHADERS})

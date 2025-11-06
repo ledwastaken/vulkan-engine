@@ -1,4 +1,4 @@
-#include "render/deferred-renderer.h"
+#include "render/renderer.h"
 
 #include <cmath>
 
@@ -7,18 +7,18 @@
 
 #include "core/engine.h"
 #include "core/scene-manager.h"
-#include "gfx/pbr-pipeline.h"
+#include "gfx/csg-pipeline.h"
 #include "gfx/skybox-pipeline.h"
 #include "scene/mesh.h"
 
 namespace render
 {
-  void DeferredRenderer::init()
+  void Renderer::init()
   {
     // FIXME
   }
 
-  void DeferredRenderer::draw(VkImageView image_view, VkCommandBuffer command_buffer)
+  void Renderer::draw(VkImageView image_view, VkCommandBuffer command_buffer)
   {
     auto& engine = core::Engine::get_singleton();
     auto& scene_manager = core::SceneManager::get_singleton();
@@ -87,15 +87,15 @@ namespace render
     Visitor::operator()(*scene);
   }
 
-  void DeferredRenderer::free()
+  void Renderer::free()
   {
     // FIXME
   }
 
-  void DeferredRenderer::operator()(scene::Mesh& mesh)
+  void Renderer::operator()(scene::Mesh& mesh)
   {
-    auto& pbr_pipeline = gfx::PhysicallyBasedRenderPipeline::get_singleton();
+    auto& csg_pipeline = gfx::CSGPipeline::get_singleton();
 
-    pbr_pipeline.draw(image_view_, command_buffer_, view_, projection_, mesh);
+    csg_pipeline.draw(image_view_, command_buffer_, view_, projection_, mesh);
   }
 } // namespace render

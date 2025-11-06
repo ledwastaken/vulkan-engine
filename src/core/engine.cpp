@@ -8,9 +8,9 @@
 #include <SDL3/SDL_vulkan.h>
 
 #include "core/asset-manager.h"
-#include "gfx/pbr-pipeline.h"
+#include "gfx/csg-pipeline.h"
 #include "gfx/skybox-pipeline.h"
-#include "render/deferred-renderer.h"
+#include "render/renderer.h"
 
 namespace core
 {
@@ -29,13 +29,13 @@ namespace core
 
     init_imgui();
 
-    auto& pbr_pipeline = gfx::PhysicallyBasedRenderPipeline::get_singleton();
+    auto& csg_pipeline = gfx::CSGPipeline::get_singleton();
     auto& skybox_pipeline = gfx::SkyboxPipeline::get_singleton();
-    auto& deferred_renderer = render::DeferredRenderer::get_singleton();
+    auto& renderer = render::Renderer::get_singleton();
 
-    pbr_pipeline.init();
+    csg_pipeline.init();
     skybox_pipeline.init();
-    deferred_renderer.init();
+    renderer.init();
   }
 
   void Engine::loop()
@@ -61,16 +61,16 @@ namespace core
   void Engine::quit()
   {
     auto& asset_manager = AssetManager::get_singleton();
-    auto& pbr_pipeline = gfx::PhysicallyBasedRenderPipeline::get_singleton();
+    auto& csg_pipeline = gfx::CSGPipeline::get_singleton();
     auto& skybox_pipeline = gfx::SkyboxPipeline::get_singleton();
-    auto& deferred_renderer = render::DeferredRenderer::get_singleton();
+    auto& renderer = render::Renderer::get_singleton();
 
     vkDeviceWaitIdle(device_);
 
     asset_manager.free();
     skybox_pipeline.free();
-    pbr_pipeline.free();
-    deferred_renderer.free();
+    csg_pipeline.free();
+    renderer.free();
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplSDL3_Shutdown();
@@ -924,7 +924,7 @@ namespace core
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to reset fences");
 
-    auto& deferred_renderer = render::DeferredRenderer::get_singleton();
+    auto& renderer = render::Renderer::get_singleton();
     auto image_view = swapchain_image_views_[image_index];
     auto command_buffer = graphics_command_buffers_[image_index];
 
@@ -972,7 +972,7 @@ namespace core
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
 
-    deferred_renderer.draw(image_view, command_buffer);
+    renderer.draw(image_view, command_buffer);
 
     ImGui::Render();
 

@@ -8,16 +8,15 @@
 
 namespace render
 {
-  class DeferredRenderer
-    : public misc::Singleton<DeferredRenderer>
+  class Renderer
+    : public misc::Singleton<Renderer>
     , public scene::Visitor
   {
-    // Give Singleton<DeferredRenderer> access to class’s private constructor
-    friend class Singleton<DeferredRenderer>;
+    // Give Singleton access to class’s private constructor
+    friend class Singleton<Renderer>;
 
   private:
-    /// Construct a DeferredRenderer.
-    DeferredRenderer() = default;
+    Renderer() = default;
 
   public:
     using Visitor::operator();
