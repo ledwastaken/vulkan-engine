@@ -11,11 +11,110 @@
 #include "gfx/skybox-pipeline.h"
 #include "scene/mesh.h"
 
+using namespace core;
+
 namespace render
 {
   void Renderer::init()
   {
-    // FIXME
+    auto& engine = Engine::get_singleton();
+
+    const VkExtent3D image_extent = {
+      .width = 800,
+      .height = 600,
+      .depth = 1,
+    };
+
+    const VkImageCreateInfo back_face_image_create_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .imageType = VK_IMAGE_TYPE_2D,
+      .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+      .extent = image_extent,
+      .mipLevels = 1,
+      .arrayLayers = 1,
+      .samples = VK_SAMPLE_COUNT_1_BIT,
+      .tiling = VK_IMAGE_TILING_OPTIMAL,
+      .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+      .queueFamilyIndexCount = 0,
+      .pQueueFamilyIndices = nullptr,
+      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    };
+
+    engine.create_image(back_face_image_create_info, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                        back_face_image_, back_face_image_memory_);
+
+    const VkComponentMapping components = {
+      .r = VK_COMPONENT_SWIZZLE_R,
+      .g = VK_COMPONENT_SWIZZLE_G,
+      .b = VK_COMPONENT_SWIZZLE_B,
+      .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+    };
+
+    const VkImageSubresourceRange color_subresource_range = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    };
+
+    const VkImageViewCreateInfo back_face_view_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .image = back_face_image_,
+      .viewType = VK_IMAGE_VIEW_TYPE_2D,
+      .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+      .components = components,
+      .subresourceRange = color_subresource_range,
+    };
+
+    VkResult result = vkCreateImageView(engine.get_device(), &back_face_view_info, nullptr,
+                                        &back_face_image_view_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create image view");
+
+    const VkSamplerCreateInfo back_face_sampler_create_info = {
+      .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .magFilter = VK_FILTER_LINEAR,
+      .minFilter = VK_FILTER_LINEAR,
+      .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
+      .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
+      .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
+      .mipLodBias = 0.0f,
+      .anisotropyEnable = VK_FALSE,
+      .maxAnisotropy = 0.0f,
+      .compareEnable = VK_FALSE,
+      .compareOp = VK_COMPARE_OP_NEVER,
+      .minLod = 0.0f,
+      .maxLod = 0.0f,
+      .borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
+      .unnormalizedCoordinates = VK_FALSE,
+    };
+
+    result = vkCreateSampler(engine.get_device(), &back_face_sampler_create_info, nullptr,
+                             &back_face_sampler_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create sampler");
+
+    const TransitionLayout color_transition_layout = {
+      .src_access = 0,
+      .dst_access = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+      .src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+      .dst_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      .aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .old_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .new_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+
+    engine.transition_image_layout(back_face_image_, VK_FORMAT_R32G32B32A32_SFLOAT, 1,
+                                   color_transition_layout);
   }
 
   void Renderer::draw(VkImageView image_view, VkCommandBuffer command_buffer)
@@ -89,7 +188,12 @@ namespace render
 
   void Renderer::free()
   {
-    // FIXME
+    auto& engine = Engine::get_singleton();
+
+    vkDestroySampler(engine.get_device(), back_face_sampler_, nullptr);
+    vkDestroyImageView(engine.get_device(), back_face_image_view_, nullptr);
+    vkDestroyImage(engine.get_device(), back_face_image_, nullptr);
+    vkFreeMemory(engine.get_device(), back_face_image_memory_, nullptr);
   }
 
   void Renderer::operator()(scene::Mesh& mesh)

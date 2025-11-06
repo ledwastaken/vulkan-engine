@@ -28,9 +28,15 @@ namespace render
     void operator()(scene::Mesh& mesh) override;
 
   private:
-    VkImage albedo_image_ = VK_NULL_HANDLE;
-    VkImage normal_image_ = VK_NULL_HANDLE;
+    VkImage back_face_image_ = VK_NULL_HANDLE;
+    VkImageView back_face_image_view_ = VK_NULL_HANDLE;
+    VkSampler back_face_sampler_ = VK_NULL_HANDLE;
+    VkDeviceMemory back_face_image_memory_ = VK_NULL_HANDLE;
+
     VkImage depth_image_ = VK_NULL_HANDLE;
+    VkImageView depth_image_view_ = VK_NULL_HANDLE;
+    VkSampler depth_sampler_ = VK_NULL_HANDLE;
+    VkDeviceMemory depth_image_memory_ = VK_NULL_HANDLE;
 
     VkImageView image_view_ = VK_NULL_HANDLE;
     VkCommandBuffer command_buffer_ = VK_NULL_HANDLE;
