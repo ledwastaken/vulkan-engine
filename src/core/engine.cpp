@@ -8,6 +8,7 @@
 #include <SDL3/SDL_vulkan.h>
 
 #include "core/asset-manager.h"
+#include "gfx/back-face-pipeline.h"
 #include "gfx/csg-pipeline.h"
 #include "gfx/skybox-pipeline.h"
 #include "render/renderer.h"
@@ -29,10 +30,12 @@ namespace core
 
     init_imgui();
 
+    auto& back_face_pipeline = gfx::BackFacePipeline::get_singleton();
     auto& csg_pipeline = gfx::CSGPipeline::get_singleton();
     auto& skybox_pipeline = gfx::SkyboxPipeline::get_singleton();
     auto& renderer = render::Renderer::get_singleton();
 
+    back_face_pipeline.init();
     csg_pipeline.init();
     skybox_pipeline.init();
     renderer.init();
@@ -61,6 +64,7 @@ namespace core
   void Engine::quit()
   {
     auto& asset_manager = AssetManager::get_singleton();
+    auto& back_face_pipeline = gfx::BackFacePipeline::get_singleton();
     auto& csg_pipeline = gfx::CSGPipeline::get_singleton();
     auto& skybox_pipeline = gfx::SkyboxPipeline::get_singleton();
     auto& renderer = render::Renderer::get_singleton();
@@ -70,6 +74,7 @@ namespace core
     asset_manager.free();
     skybox_pipeline.free();
     csg_pipeline.free();
+    back_face_pipeline.free();
     renderer.free();
 
     ImGui_ImplVulkan_Shutdown();

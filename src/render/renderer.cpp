@@ -7,6 +7,7 @@
 
 #include "core/engine.h"
 #include "core/scene-manager.h"
+#include "gfx/back-face-pipeline.h"
 #include "gfx/csg-pipeline.h"
 #include "gfx/skybox-pipeline.h"
 #include "scene/mesh.h"

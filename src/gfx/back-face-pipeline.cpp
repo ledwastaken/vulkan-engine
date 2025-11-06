@@ -1,5 +1,7 @@
 #include "gfx/back-face-pipeline.h"
 
+#include <cstring>
+
 #include "core/engine.h"
 
 namespace gfx
@@ -17,10 +19,82 @@ namespace gfx
     create_uniform_buffer();
   }
 
-  void BackFacePipeline::draw(VkImage position_cubemap, VkCommandBuffer command_buffer,
+  void BackFacePipeline::draw(VkImageView position_image, VkCommandBuffer command_buffer,
+                              const types::Matrix4& view, const types::Matrix4& projection,
                               scene::Mesh& mesh)
   {
-    // FIXME
+    auto& engine = core::Engine::get_singleton();
+    auto extent = engine.get_swapchain_extent();
+
+    const VkClearValue clear_value = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
+
+    const VkRenderingAttachmentInfo color_attachment = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .pNext = nullptr,
+      .imageView = position_image,
+      .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .resolveMode = VK_RESOLVE_MODE_NONE,
+      .resolveImageView = VK_NULL_HANDLE,
+      .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .clearValue = clear_value,
+    };
+
+    const VkRect2D render_area = {
+      .offset = { 0, 0 },
+      .extent = extent,
+    };
+
+    const VkRenderingInfo rendering_info = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .renderArea = render_area,
+      .layerCount = 1,
+      .viewMask = 0,
+      .colorAttachmentCount = 1,
+      .pColorAttachments = &color_attachment,
+      .pDepthAttachment = nullptr,
+      .pStencilAttachment = nullptr,
+    };
+
+    vkCmdBeginRendering(command_buffer, &rendering_info);
+    vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
+
+    std::memcpy(uniform_buffers_data_[engine.get_current_frame()], mesh.cframe.to_matrix().data(),
+                16 * sizeof(float));
+    std::memcpy(uniform_buffers_data_[engine.get_current_frame()] + 64, view.data(),
+                16 * sizeof(float));
+    std::memcpy(uniform_buffers_data_[engine.get_current_frame()] + 128, projection.data(),
+                16 * sizeof(float));
+
+    vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 0, 1,
+                            &descriptor_sets_[engine.get_current_frame()], 0, nullptr);
+
+    const VkViewport viewport{
+      .x = 0.0f,
+      .y = 0.0f,
+      .width = static_cast<float>(extent.width),
+      .height = static_cast<float>(extent.height),
+      .minDepth = 0.0f,
+      .maxDepth = 1.0f,
+    };
+
+    const VkRect2D scissor = {
+      .offset = { 0, 0 },
+      .extent = extent,
+    };
+
+    vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+    vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+    VkDeviceSize offset = 0;
+    VkBuffer vertex_buffer = mesh.get_vertex_buffer();
+    vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+    vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
+    vkCmdEndRendering(command_buffer);
   }
 
   void BackFacePipeline::free()
@@ -34,7 +108,17 @@ namespace gfx
 
     vkDestroyPipelineCache(engine.get_device(), pipeline_cache_, nullptr);
 
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+      vkUnmapMemory(engine.get_device(), uniform_buffers_memory_[i]);
+      vkDestroyBuffer(engine.get_device(), uniform_buffers_[i], nullptr);
+      vkFreeMemory(engine.get_device(), uniform_buffers_memory_[i], nullptr);
+    }
+
+    vkFreeDescriptorSets(engine.get_device(), descriptor_pool_, 1, descriptor_sets_.data());
+    vkDestroyDescriptorPool(engine.get_device(), descriptor_pool_, nullptr);
     vkDestroyPipelineLayout(engine.get_device(), pipeline_layout_, nullptr);
+    vkDestroyDescriptorSetLayout(engine.get_device(), descriptor_set_layout_, nullptr);
   }
 
   void BackFacePipeline::create_pipeline_layout()
@@ -214,7 +298,7 @@ namespace gfx
       .depthClampEnable = VK_FALSE,
       .rasterizerDiscardEnable = VK_FALSE,
       .polygonMode = VK_POLYGON_MODE_FILL,
-      .cullMode = VK_CULL_MODE_FRONT_BIT,
+      .cullMode = VK_CULL_MODE_BACK_BIT,
       .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
       .depthBiasEnable = VK_FALSE,
       .depthBiasConstantFactor = 0.0f,
@@ -296,7 +380,7 @@ namespace gfx
       .maxDepthBounds = 1.0f,
     };
 
-    const VkFormat color_attachments[] = { engine.get_surface_format().format };
+    const VkFormat color_attachments[] = { VK_FORMAT_R32G32B32_SFLOAT };
 
     const VkPipelineRenderingCreateInfo pipeline_rendering_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
