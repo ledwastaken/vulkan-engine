@@ -49,6 +49,7 @@ namespace core
                         VkBuffer buffer) const;
     void transition_image_layout(VkImage image, VkFormat format, uint32_t layer_count,
                                  TransitionLayout transition_layout) const;
+    void clear_depth_image(VkImage depth_image, uint32_t layer_count) const;
 
     SDL_Window* get_window() const;
     VkDevice get_device() const;

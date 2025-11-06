@@ -336,6 +336,105 @@ namespace core
       throw std::runtime_error("failed to wait for transfer completion");
   }
 
+  void Engine::clear_depth_image(VkImage depth_image, uint32_t layer_count) const
+  {
+    VkResult result = vkWaitForFences(device_, 1, &transfer_fence_, VK_TRUE, UINT64_MAX);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to wait for fence");
+
+    result = vkResetFences(device_, 1, &transfer_fence_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to reset fence");
+
+    result = vkResetCommandBuffer(transfer_command_buffer_, 0);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to reset command buffer");
+
+    const VkCommandBufferBeginInfo command_buffer_begin_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .pInheritanceInfo = nullptr,
+    };
+
+    result = vkBeginCommandBuffer(transfer_command_buffer_, &command_buffer_begin_info);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to begin command buffer");
+
+    const VkImageSubresourceRange subresource_range = {
+      .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = layer_count,
+    };
+
+    const VkImageMemoryBarrier image_memory_barrier = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .pNext = nullptr,
+      .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+      .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .image = depth_image,
+      .subresourceRange = subresource_range,
+    };
+
+    vkCmdPipelineBarrier(transfer_command_buffer_, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                         VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1,
+                         &image_memory_barrier);
+
+    VkClearDepthStencilValue clear_value = { 1.0f, 0 };
+
+    vkCmdClearDepthStencilImage(transfer_command_buffer_, depth_image,
+                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear_value, 1,
+                                &subresource_range);
+
+    const VkImageMemoryBarrier back_image_memory_barrier = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .pNext = nullptr,
+      .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+      .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      .newLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .image = depth_image,
+      .subresourceRange = subresource_range,
+    };
+
+    vkCmdPipelineBarrier(transfer_command_buffer_, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                         VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1,
+                         &back_image_memory_barrier);
+
+    vkEndCommandBuffer(transfer_command_buffer_);
+
+    const VkSubmitInfo submit_info = {
+      .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      .pNext = nullptr,
+      .waitSemaphoreCount = 0,
+      .pWaitSemaphores = nullptr,
+      .pWaitDstStageMask = nullptr,
+      .commandBufferCount = 1,
+      .pCommandBuffers = &transfer_command_buffer_,
+      .signalSemaphoreCount = 0,
+      .pSignalSemaphores = nullptr,
+    };
+
+    VkQueue transfer_queue;
+    vkGetDeviceQueue(device_, transfer_queue_family_, 0, &transfer_queue);
+
+    result = vkQueueSubmit(transfer_queue, 1, &submit_info, transfer_fence_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to submit to queue");
+
+    result = vkWaitForFences(device_, 1, &transfer_fence_, VK_TRUE, UINT64_MAX);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to wait for transfer completion");
+  }
+
   void Engine::create_window()
   {
     if (!SDL_Init(SDL_INIT_VIDEO))

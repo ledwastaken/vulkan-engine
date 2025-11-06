@@ -55,7 +55,7 @@ namespace render
       .arrayLayers = 1,
       .samples = VK_SAMPLE_COUNT_1_BIT,
       .tiling = VK_IMAGE_TILING_OPTIMAL,
-      .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+      .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
       .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
       .queueFamilyIndexCount = 0,
       .pQueueFamilyIndices = nullptr,
@@ -266,6 +266,8 @@ namespace render
     view_ = view;
     projection_ = projection;
 
+    engine.clear_depth_image(depth_image_, 1);
+
     Visitor::operator()(*scene);
   }
 
@@ -288,6 +290,6 @@ namespace render
   {
     auto& csg_pipeline = gfx::CSGPipeline::get_singleton();
 
-    csg_pipeline.draw(image_view_, command_buffer_, view_, projection_, mesh);
+    csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_, mesh);
   }
 } // namespace render

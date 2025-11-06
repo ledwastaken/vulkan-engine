@@ -20,15 +20,14 @@ namespace gfx
     create_uniform_buffer();
   }
 
-  void CSGPipeline::draw(VkImageView image_view, VkCommandBuffer command_buffer,
-                         const types::Matrix4& view, const types::Matrix4& projection,
-                         scene::Mesh& mesh)
+  void CSGPipeline::draw(VkImageView image_view, VkImageView depth_view,
+                         VkCommandBuffer command_buffer, const types::Matrix4& view,
+                         const types::Matrix4& projection, scene::Mesh& mesh)
   {
     auto& engine = core::Engine::get_singleton();
     auto extent = engine.get_swapchain_extent();
 
     const VkClearValue clear_value = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
-
     const VkRenderingAttachmentInfo color_attachment = {
       .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
       .pNext = nullptr,
@@ -40,6 +39,20 @@ namespace gfx
       .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
       .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
       .clearValue = clear_value,
+    };
+
+    const VkClearValue depth_clear_value = { { 1.0f } };
+    const VkRenderingAttachmentInfo depth_attachment = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .pNext = nullptr,
+      .imageView = depth_view,
+      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .resolveMode = VK_RESOLVE_MODE_NONE,
+      .resolveImageView = VK_NULL_HANDLE,
+      .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .clearValue = depth_clear_value,
     };
 
     const VkRect2D render_area = {
@@ -56,7 +69,7 @@ namespace gfx
       .viewMask = 0,
       .colorAttachmentCount = 1,
       .pColorAttachments = &color_attachment,
-      .pDepthAttachment = nullptr,
+      .pDepthAttachment = &depth_attachment,
       .pStencilAttachment = nullptr,
     };
 

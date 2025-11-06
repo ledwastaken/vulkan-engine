@@ -21,8 +21,8 @@ namespace gfx
 
   public:
     void init();
-    void draw(VkImageView image_view, VkCommandBuffer command_buffer, const types::Matrix4& view,
-              const types::Matrix4& projection, scene::Mesh& mesh);
+    void draw(VkImageView image_view, VkImageView depth_view, VkCommandBuffer command_buffer,
+              const types::Matrix4& view, const types::Matrix4& projection, scene::Mesh& mesh);
     void free();
 
   private:
