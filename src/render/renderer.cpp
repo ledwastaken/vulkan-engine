@@ -31,7 +31,7 @@ namespace render
       .pNext = nullptr,
       .flags = 0,
       .imageType = VK_IMAGE_TYPE_2D,
-      .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+      .format = VK_FORMAT_R32G32B32_SFLOAT,
       .extent = image_extent,
       .mipLevels = 1,
       .arrayLayers = 1,
@@ -103,7 +103,7 @@ namespace render
       .flags = 0,
       .image = back_face_image_,
       .viewType = VK_IMAGE_VIEW_TYPE_2D,
-      .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+      .format = VK_FORMAT_R32G32B32_SFLOAT,
       .components = color_components,
       .subresourceRange = color_subresource_range,
     };
@@ -266,11 +266,19 @@ namespace render
     view_ = view;
     projection_ = projection;
 
-    engine.clear_depth_image(depth_image_, 1);
-
     // Visitor::operator()(*scene);
 
     auto& csg_pipeline = gfx::CSGPipeline::get_singleton();
+    auto& back_face_pipeline = gfx::BackFacePipeline::get_singleton();
+
+    clear_depth();
+
+    if (scene->substractive_mesh)
+      back_face_pipeline.draw(back_face_image_view_, depth_image_view_, command_buffer_, view_,
+                              projection_, *scene->substractive_mesh);
+
+    clear_depth();
+    transition_image_layout_to_shader_read();
 
     if (scene->mesh)
       csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_,
@@ -279,6 +287,8 @@ namespace render
     if (scene->substractive_mesh)
       csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_,
                         *scene->substractive_mesh);
+
+    transition_image_layout_to_color_attachment();
   }
 
   void Renderer::free()
@@ -298,8 +308,114 @@ namespace render
 
   void Renderer::operator()(scene::Mesh& mesh)
   {
-    auto& csg_pipeline = gfx::CSGPipeline::get_singleton();
+    // auto& csg_pipeline = gfx::CSGPipeline::get_singleton();
 
-    csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_, mesh);
+    // csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_, mesh);
+  }
+
+  void Renderer::clear_depth() const
+  {
+    const VkImageSubresourceRange subresource_range = {
+      .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    };
+
+    const VkImageMemoryBarrier image_memory_barrier = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .pNext = nullptr,
+      .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+      .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .image = depth_image_,
+      .subresourceRange = subresource_range,
+    };
+
+    vkCmdPipelineBarrier(command_buffer_, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                         VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1,
+                         &image_memory_barrier);
+
+    VkClearDepthStencilValue clear_value = { 1.0f, 0 };
+
+    vkCmdClearDepthStencilImage(command_buffer_, depth_image_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                &clear_value, 1, &subresource_range);
+
+    const VkImageMemoryBarrier back_image_memory_barrier = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .pNext = nullptr,
+      .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+      .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      .newLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .image = depth_image_,
+      .subresourceRange = subresource_range,
+    };
+
+    vkCmdPipelineBarrier(command_buffer_, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                         VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1,
+                         &back_image_memory_barrier);
+  }
+
+  void Renderer::transition_image_layout_to_shader_read() const
+  {
+    const VkImageSubresourceRange subresource_range = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    };
+
+    const VkImageMemoryBarrier image_memory_barrier = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .pNext = nullptr,
+      .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+      .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .image = back_face_image_,
+      .subresourceRange = subresource_range,
+    };
+
+    vkCmdPipelineBarrier(command_buffer_, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1,
+                         &image_memory_barrier);
+  }
+
+  void Renderer::transition_image_layout_to_color_attachment() const
+  {
+    const VkImageSubresourceRange subresource_range = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    };
+
+    const VkImageMemoryBarrier image_memory_barrier = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .pNext = nullptr,
+      .srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
+      .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .image = back_face_image_,
+      .subresourceRange = subresource_range,
+    };
+
+    vkCmdPipelineBarrier(command_buffer_, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr,
+                         1, &image_memory_barrier);
   }
 } // namespace render

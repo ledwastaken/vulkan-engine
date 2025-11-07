@@ -28,6 +28,10 @@ namespace render
     void operator()(scene::Mesh& mesh) override;
 
   private:
+    void clear_depth() const;
+    void transition_image_layout_to_shader_read() const;
+    void transition_image_layout_to_color_attachment() const;
+
     VkImage back_face_image_ = VK_NULL_HANDLE;
     VkImageView back_face_image_view_ = VK_NULL_HANDLE;
     VkSampler back_face_sampler_ = VK_NULL_HANDLE;
