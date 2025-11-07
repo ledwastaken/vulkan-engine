@@ -18,7 +18,6 @@ add_executable(main
   src/core/engine.cpp
   src/core/stb_impl.cpp
 
-  src/gfx/back-face-pipeline.cpp
   src/gfx/csg-pipeline.cpp
   src/gfx/pipeline.cpp
   src/gfx/skybox-pipeline.cpp
@@ -71,8 +70,6 @@ set(SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 file(MAKE_DIRECTORY ${SHADER_BINARY_DIR})
 
 set(SHADERS
-  ${SHADER_SOURCE_DIR}/back-face.vert
-  ${SHADER_SOURCE_DIR}/back-face.frag
   ${SHADER_SOURCE_DIR}/csg.vert
   ${SHADER_SOURCE_DIR}/csg.frag
   ${SHADER_SOURCE_DIR}/skybox.vert

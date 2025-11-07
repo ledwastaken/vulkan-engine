@@ -7,7 +7,6 @@
 
 #include "core/engine.h"
 #include "core/scene-manager.h"
-#include "gfx/back-face-pipeline.h"
 #include "gfx/csg-pipeline.h"
 #include "gfx/skybox-pipeline.h"
 #include "scene/mesh.h"
@@ -181,7 +180,6 @@ namespace render
     // Visitor::operator()(*scene);
 
     auto& csg_pipeline = gfx::CSGPipeline::get_singleton();
-    auto& back_face_pipeline = gfx::BackFacePipeline::get_singleton();
 
     clear_depth();
 
