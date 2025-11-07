@@ -26,24 +26,6 @@ namespace render
       .depth = 1,
     };
 
-    const VkImageCreateInfo back_face_image_create_info = {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .imageType = VK_IMAGE_TYPE_2D,
-      .format = VK_FORMAT_R32G32B32_SFLOAT,
-      .extent = image_extent,
-      .mipLevels = 1,
-      .arrayLayers = 1,
-      .samples = VK_SAMPLE_COUNT_1_BIT,
-      .tiling = VK_IMAGE_TILING_OPTIMAL,
-      .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-      .queueFamilyIndexCount = 0,
-      .pQueueFamilyIndices = nullptr,
-      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-    };
-
     const VkImageCreateInfo depth_image_create_info = {
       .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
       .pNext = nullptr,
@@ -62,17 +44,8 @@ namespace render
       .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
 
-    engine.create_image(back_face_image_create_info, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                        back_face_image_, back_face_image_memory_);
     engine.create_image(depth_image_create_info, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depth_image_,
                         depth_image_memory_);
-
-    const VkComponentMapping color_components = {
-      .r = VK_COMPONENT_SWIZZLE_R,
-      .g = VK_COMPONENT_SWIZZLE_G,
-      .b = VK_COMPONENT_SWIZZLE_B,
-      .a = VK_COMPONENT_SWIZZLE_IDENTITY,
-    };
 
     const VkComponentMapping depth_components = {
       .r = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -81,31 +54,12 @@ namespace render
       .a = VK_COMPONENT_SWIZZLE_IDENTITY,
     };
 
-    const VkImageSubresourceRange color_subresource_range = {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .baseMipLevel = 0,
-      .levelCount = 1,
-      .baseArrayLayer = 0,
-      .layerCount = 1,
-    };
-
     const VkImageSubresourceRange depth_subresource_range = {
       .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
       .baseMipLevel = 0,
       .levelCount = 1,
       .baseArrayLayer = 0,
       .layerCount = 1,
-    };
-
-    const VkImageViewCreateInfo back_face_view_info = {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .image = back_face_image_,
-      .viewType = VK_IMAGE_VIEW_TYPE_2D,
-      .format = VK_FORMAT_R32G32B32_SFLOAT,
-      .components = color_components,
-      .subresourceRange = color_subresource_range,
     };
 
     const VkImageViewCreateInfo depth_view_info = {
@@ -119,35 +73,10 @@ namespace render
       .subresourceRange = depth_subresource_range,
     };
 
-    VkResult result = vkCreateImageView(engine.get_device(), &back_face_view_info, nullptr,
-                                        &back_face_image_view_);
+    VkResult result =
+        vkCreateImageView(engine.get_device(), &depth_view_info, nullptr, &depth_image_view_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create image view");
-
-    result = vkCreateImageView(engine.get_device(), &depth_view_info, nullptr, &depth_image_view_);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to create image view");
-
-    const VkSamplerCreateInfo back_face_sampler_create_info = {
-      .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .magFilter = VK_FILTER_LINEAR,
-      .minFilter = VK_FILTER_LINEAR,
-      .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
-      .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
-      .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
-      .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
-      .mipLodBias = 0.0f,
-      .anisotropyEnable = VK_FALSE,
-      .maxAnisotropy = 0.0f,
-      .compareEnable = VK_FALSE,
-      .compareOp = VK_COMPARE_OP_NEVER,
-      .minLod = 0.0f,
-      .maxLod = 0.0f,
-      .borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
-      .unnormalizedCoordinates = VK_FALSE,
-    };
 
     const VkSamplerCreateInfo depth_sampler_create_info = {
       .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -170,22 +99,7 @@ namespace render
       .unnormalizedCoordinates = VK_FALSE,
     };
 
-    result = vkCreateSampler(engine.get_device(), &back_face_sampler_create_info, nullptr,
-                             &back_face_sampler_);
-    if (result != VK_SUCCESS)
-      throw std::runtime_error("failed to create sampler");
-
-    const TransitionLayout color_transition_layout = {
-      .src_access = 0,
-      .dst_access = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-      .src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-      .dst_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-      .aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .old_layout = VK_IMAGE_LAYOUT_UNDEFINED,
-      .new_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    };
-
-    const TransitionLayout depth_transition_layout = {
+    const TransitionLayout transition_layout = {
       .src_access = 0,
       .dst_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
       .src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
@@ -195,9 +109,7 @@ namespace render
       .new_layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
     };
 
-    engine.transition_image_layout(back_face_image_, VK_FORMAT_R32G32B32A32_SFLOAT, 1,
-                                   color_transition_layout);
-    engine.transition_image_layout(depth_image_, VK_FORMAT_D32_SFLOAT, 1, depth_transition_layout);
+    engine.transition_image_layout(depth_image_, VK_FORMAT_D32_SFLOAT, 1, transition_layout);
   }
 
   void Renderer::draw(VkImageView image_view, VkCommandBuffer command_buffer)
@@ -273,13 +185,6 @@ namespace render
 
     clear_depth();
 
-    if (scene->substractive_mesh)
-      back_face_pipeline.draw(back_face_image_view_, depth_image_view_, command_buffer_, view_,
-                              projection_, *scene->substractive_mesh);
-
-    clear_depth();
-    transition_image_layout_to_shader_read();
-
     if (scene->mesh)
       csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_,
                         *scene->mesh);
@@ -287,18 +192,11 @@ namespace render
     if (scene->substractive_mesh)
       csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_,
                         *scene->substractive_mesh);
-
-    transition_image_layout_to_color_attachment();
   }
 
   void Renderer::free()
   {
     auto& engine = Engine::get_singleton();
-
-    vkDestroySampler(engine.get_device(), back_face_sampler_, nullptr);
-    vkDestroyImageView(engine.get_device(), back_face_image_view_, nullptr);
-    vkDestroyImage(engine.get_device(), back_face_image_, nullptr);
-    vkFreeMemory(engine.get_device(), back_face_image_memory_, nullptr);
 
     vkDestroySampler(engine.get_device(), depth_sampler_, nullptr);
     vkDestroyImageView(engine.get_device(), depth_image_view_, nullptr);
@@ -361,61 +259,5 @@ namespace render
     vkCmdPipelineBarrier(command_buffer_, VK_PIPELINE_STAGE_TRANSFER_BIT,
                          VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1,
                          &back_image_memory_barrier);
-  }
-
-  void Renderer::transition_image_layout_to_shader_read() const
-  {
-    const VkImageSubresourceRange subresource_range = {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .baseMipLevel = 0,
-      .levelCount = 1,
-      .baseArrayLayer = 0,
-      .layerCount = 1,
-    };
-
-    const VkImageMemoryBarrier image_memory_barrier = {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-      .pNext = nullptr,
-      .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-      .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-      .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .image = back_face_image_,
-      .subresourceRange = subresource_range,
-    };
-
-    vkCmdPipelineBarrier(command_buffer_, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1,
-                         &image_memory_barrier);
-  }
-
-  void Renderer::transition_image_layout_to_color_attachment() const
-  {
-    const VkImageSubresourceRange subresource_range = {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .baseMipLevel = 0,
-      .levelCount = 1,
-      .baseArrayLayer = 0,
-      .layerCount = 1,
-    };
-
-    const VkImageMemoryBarrier image_memory_barrier = {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-      .pNext = nullptr,
-      .srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
-      .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-      .oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-      .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .image = back_face_image_,
-      .subresourceRange = subresource_range,
-    };
-
-    vkCmdPipelineBarrier(command_buffer_, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr,
-                         1, &image_memory_barrier);
   }
 } // namespace render
