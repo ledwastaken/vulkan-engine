@@ -7,7 +7,7 @@ layout (location = 0) out vec4 fragColor;
 
 void main(void)
 {
-  vec3 lightPos   = vec3(10.0, 20.0, -4.0);
+  vec3 lightPos   = vec3(-10.0, 20.0, -4.0);
   vec3 lightColor = vec3(1.0, 1.0, 1.0);
   vec3 albedo     = vec3(0.9, 0.1, 0.1);
 
