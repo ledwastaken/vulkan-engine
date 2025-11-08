@@ -27,6 +27,7 @@ namespace scene
 
     virtual void load_mesh_data(const std::vector<Vertex>& vertices,
                                 const std::vector<uint32_t>& indices);
+    virtual void load_mesh_from_file(const std::string& path);
     virtual void reset();
 
     void accept(Visitor& visitor) override;

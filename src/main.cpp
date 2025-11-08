@@ -19,11 +19,13 @@ void init(Scene& scene)
                     "assets/texture/skybox/top.jpg", "assets/texture/skybox/bottom.jpg",
                     "assets/texture/skybox/front.jpg", "assets/texture/skybox/back.jpg");
 
-  auto mesh = new Cube(1.0f);
+  auto mesh = new Mesh();
+  mesh->load_mesh_from_file("assets/geometry/cube.obj");
   mesh->cframe = CFrame(Vector3(0, 0, 0));
 
-  auto substractive_mesh = new Cube(1.0f);
-  substractive_mesh->cframe = CFrame(Vector3(1, 1, 1));
+  auto substractive_mesh = new Mesh();
+  substractive_mesh->load_mesh_from_file("assets/geometry/cylinder.obj");
+  substractive_mesh->cframe = CFrame(Vector3(0, 0, 0));
 
   auto camera = new Camera();
   camera->cframe = CFrame(Vector3(-8, 4, -4), Vector3(0, 0, 0));
