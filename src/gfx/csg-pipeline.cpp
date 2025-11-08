@@ -47,7 +47,7 @@ namespace gfx
       .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
       .pNext = nullptr,
       .imageView = depth_view,
-      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
       .resolveMode = VK_RESOLVE_MODE_NONE,
       .resolveImageView = VK_NULL_HANDLE,
       .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
@@ -71,7 +71,7 @@ namespace gfx
       .colorAttachmentCount = 1,
       .pColorAttachments = &color_attachment,
       .pDepthAttachment = &depth_attachment,
-      .pStencilAttachment = nullptr,
+      .pStencilAttachment = &depth_attachment,
     };
 
     vkCmdBeginRendering(command_buffer, &rendering_info);
@@ -420,8 +420,8 @@ namespace gfx
       .viewMask = 0,
       .colorAttachmentCount = 1,
       .pColorAttachmentFormats = color_attachments,
-      .depthAttachmentFormat = VK_FORMAT_D32_SFLOAT,
-      .stencilAttachmentFormat = VK_FORMAT_UNDEFINED,
+      .depthAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
+      .stencilAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
     };
 
     const VkGraphicsPipelineCreateInfo create_info = {

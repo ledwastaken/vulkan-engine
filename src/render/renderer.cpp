@@ -30,7 +30,7 @@ namespace render
       .pNext = nullptr,
       .flags = 0,
       .imageType = VK_IMAGE_TYPE_2D,
-      .format = VK_FORMAT_D32_SFLOAT,
+      .format = VK_FORMAT_D32_SFLOAT_S8_UINT,
       .extent = image_extent,
       .mipLevels = 1,
       .arrayLayers = 1,
@@ -54,7 +54,7 @@ namespace render
     };
 
     const VkImageSubresourceRange depth_subresource_range = {
-      .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+      .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
       .baseMipLevel = 0,
       .levelCount = 1,
       .baseArrayLayer = 0,
@@ -67,7 +67,7 @@ namespace render
       .flags = 0,
       .image = depth_image_,
       .viewType = VK_IMAGE_VIEW_TYPE_2D,
-      .format = VK_FORMAT_D32_SFLOAT,
+      .format = VK_FORMAT_D32_SFLOAT_S8_UINT,
       .components = depth_components,
       .subresourceRange = depth_subresource_range,
     };
@@ -77,38 +77,17 @@ namespace render
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create image view");
 
-    const VkSamplerCreateInfo depth_sampler_create_info = {
-      .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .magFilter = VK_FILTER_LINEAR,
-      .minFilter = VK_FILTER_LINEAR,
-      .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
-      .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
-      .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
-      .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
-      .mipLodBias = 0.0f,
-      .anisotropyEnable = VK_FALSE,
-      .maxAnisotropy = 0.0f,
-      .compareEnable = VK_TRUE,
-      .compareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
-      .minLod = 0.0f,
-      .maxLod = 0.0f,
-      .borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
-      .unnormalizedCoordinates = VK_FALSE,
-    };
-
     const TransitionLayout transition_layout = {
       .src_access = 0,
       .dst_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
       .src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
       .dst_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-      .aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT,
+      .aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
       .old_layout = VK_IMAGE_LAYOUT_UNDEFINED,
-      .new_layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
     };
 
-    engine.transition_image_layout(depth_image_, VK_FORMAT_D32_SFLOAT, 1, transition_layout);
+    engine.transition_image_layout(depth_image_, VK_FORMAT_D32_SFLOAT_S8_UINT, 1, transition_layout);
   }
 
   void Renderer::draw(VkImageView image_view, VkCommandBuffer command_buffer)
@@ -208,7 +187,7 @@ namespace render
   void Renderer::clear_depth() const
   {
     const VkImageSubresourceRange subresource_range = {
-      .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+      .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
       .baseMipLevel = 0,
       .levelCount = 1,
       .baseArrayLayer = 0,
@@ -220,7 +199,7 @@ namespace render
       .pNext = nullptr,
       .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
       .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-      .oldLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
       .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
       .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -243,7 +222,7 @@ namespace render
       .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
       .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
       .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      .newLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
       .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
       .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
       .image = depth_image_,
