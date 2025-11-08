@@ -22,7 +22,8 @@ namespace gfx
   public:
     void init();
     void draw(VkImageView image_view, VkImageView depth_view, VkCommandBuffer command_buffer,
-              const types::Matrix4& view, const types::Matrix4& projection, scene::Mesh& mesh);
+              const types::Matrix4& view, const types::Matrix4& projection, scene::Mesh& mesh,
+              scene::Mesh& substractive_mesh);
     void free();
 
   private:
@@ -40,6 +41,7 @@ namespace gfx
     VkShaderModule vertex_shader_ = VK_NULL_HANDLE;
     VkShaderModule fragment_shader_ = VK_NULL_HANDLE;
     VkPipeline pipeline_ = VK_NULL_HANDLE;
+    VkPipeline back_face_pipeline_ = VK_NULL_HANDLE;
     std::vector<VkBuffer> uniform_buffers_;
     std::vector<VkDeviceMemory> uniform_buffers_memory_;
     std::vector<void*> uniform_buffers_data_;

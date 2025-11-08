@@ -183,13 +183,9 @@ namespace render
 
     clear_depth();
 
-    if (scene->mesh)
+    if (scene->mesh && scene->substractive_mesh)
       csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_,
-                        *scene->mesh);
-
-    if (scene->substractive_mesh)
-      csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_,
-                        *scene->substractive_mesh);
+                        *scene->mesh, *scene->substractive_mesh);
   }
 
   void Renderer::free()

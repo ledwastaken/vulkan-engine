@@ -22,7 +22,8 @@ namespace gfx
 
   void CSGPipeline::draw(VkImageView image_view, VkImageView depth_view,
                          VkCommandBuffer command_buffer, const types::Matrix4& view,
-                         const types::Matrix4& projection, scene::Mesh& mesh)
+                         const types::Matrix4& projection, scene::Mesh& mesh,
+                         scene::Mesh& substractive_mesh)
   {
     auto& engine = core::Engine::get_singleton();
     auto extent = engine.get_swapchain_extent();
@@ -108,6 +109,16 @@ namespace gfx
     vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
     vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
     vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
+
+    vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, back_face_pipeline_);
+    vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+                       substractive_mesh.cframe.to_matrix().data());
+    vertex_buffer = substractive_mesh.get_vertex_buffer();
+    vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+    vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
+                         VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+
     vkCmdEndRendering(command_buffer);
   }
 
@@ -116,6 +127,7 @@ namespace gfx
     auto& engine = core::Engine::get_singleton();
 
     vkDestroyPipeline(engine.get_device(), pipeline_, nullptr);
+    vkDestroyPipeline(engine.get_device(), back_face_pipeline_, nullptr);
 
     vkDestroyShaderModule(engine.get_device(), fragment_shader_, nullptr);
     vkDestroyShaderModule(engine.get_device(), vertex_shader_, nullptr);
@@ -415,7 +427,7 @@ namespace gfx
     const VkGraphicsPipelineCreateInfo create_info = {
       .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
       .pNext = &pipeline_rendering_create_info,
-      .flags = 0,
+      .flags = VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT,
       .stageCount = 2,
       .pStages = shader_stage_infos,
       .pVertexInputState = &vertex_input_state,
@@ -436,6 +448,49 @@ namespace gfx
 
     VkResult result =
         vkCreateGraphicsPipelines(device, pipeline_cache_, 1, &create_info, nullptr, &pipeline_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create graphics pipeline");
+
+    const VkPipelineRasterizationStateCreateInfo back_face_rasterization_state = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .depthClampEnable = VK_FALSE,
+      .rasterizerDiscardEnable = VK_FALSE,
+      .polygonMode = VK_POLYGON_MODE_FILL,
+      .cullMode = VK_CULL_MODE_FRONT_BIT,
+      .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+      .depthBiasEnable = VK_FALSE,
+      .depthBiasConstantFactor = 0.0f,
+      .depthBiasClamp = 0.0f,
+      .depthBiasSlopeFactor = 0.0f,
+      .lineWidth = 1.0f,
+    };
+
+    const VkGraphicsPipelineCreateInfo back_face_pipeline_create_info = {
+      .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+      .pNext = &pipeline_rendering_create_info,
+      .flags = VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT,
+      .stageCount = 2,
+      .pStages = shader_stage_infos,
+      .pVertexInputState = &vertex_input_state,
+      .pInputAssemblyState = &input_assembly_state,
+      .pTessellationState = nullptr,
+      .pViewportState = &viewport_state,
+      .pRasterizationState = &back_face_rasterization_state,
+      .pMultisampleState = &multisample_state,
+      .pDepthStencilState = &depth_stencil_state,
+      .pColorBlendState = &color_blend_state,
+      .pDynamicState = &dynamic_state,
+      .layout = pipeline_layout_,
+      .renderPass = VK_NULL_HANDLE,
+      .subpass = 0,
+      .basePipelineHandle = pipeline_,
+      .basePipelineIndex = -1,
+    };
+
+    result = vkCreateGraphicsPipelines(device, pipeline_cache_, 1, &back_face_pipeline_create_info,
+                                       nullptr, &back_face_pipeline_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create graphics pipeline");
   }
