@@ -40,8 +40,9 @@ namespace gfx
     VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
     VkShaderModule vertex_shader_ = VK_NULL_HANDLE;
     VkShaderModule fragment_shader_ = VK_NULL_HANDLE;
+    VkShaderModule depth_shader_ = VK_NULL_HANDLE;
     VkPipeline pipeline_ = VK_NULL_HANDLE;
-    VkPipeline back_face_pipeline_ = VK_NULL_HANDLE;
+    VkPipeline depth_pipeline_ = VK_NULL_HANDLE;
     std::vector<VkBuffer> uniform_buffers_;
     std::vector<VkDeviceMemory> uniform_buffers_memory_;
     std::vector<void*> uniform_buffers_data_;
