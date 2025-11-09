@@ -9,6 +9,7 @@ layout (location = 2) out vec3 viewPos;
 
 layout(push_constant) uniform PushConstants {
   mat4 model;
+  int sign;
 };
 
 layout (set = 0, binding = 0) uniform ubo {
@@ -20,7 +21,7 @@ void main(void)
 {
   vec4 worldPos = model * vec4(vertexPosition, 1.0);
 
-  normal = mat3(model) * vertexNormal;
+  normal = mat3(model) * sign * vertexNormal;
   fragPos = worldPos.xyz;
   viewPos = -transpose(mat3(view)) * view[3].xyz;
 
