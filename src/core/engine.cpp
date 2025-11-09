@@ -4,8 +4,8 @@
 #include <iostream>
 #include <set>
 
-#include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
+#include <imgui_impl_vulkan.h>
 
 #include "core/asset-manager.h"
 #include "gfx/csg-pipeline.h"
@@ -499,7 +499,7 @@ namespace core
       throw std::runtime_error("failed to enumerate physical devices");
 
     const char* required_extensions[] = {
-      "VK_KHR_swapchain",
+      VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
 
     choose_physical_device(physical_devices);
@@ -542,7 +542,7 @@ namespace core
       .dynamicRendering = VK_TRUE,
     };
 
-    const VkPhysicalDeviceFeatures2 device_features2 = {
+    VkPhysicalDeviceFeatures2 device_features2 = {
       .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
       .pNext = &dynamic_rendering_features,
       .features = enabled_features_,
@@ -556,7 +556,7 @@ namespace core
       .pQueueCreateInfos = queue_create_infos.data(),
       .enabledLayerCount = 0,
       .ppEnabledLayerNames = nullptr,
-      .enabledExtensionCount = 1,
+      .enabledExtensionCount = sizeof(required_extensions) / sizeof(required_extensions[0]),
       .ppEnabledExtensionNames = required_extensions,
       .pEnabledFeatures = nullptr,
     };
@@ -564,7 +564,7 @@ namespace core
     result = vkCreateDevice(physical_device_, &deviceCreateInfo, nullptr, &device_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create logical device");
-  }
+  } // namespace core
 
   void Engine::create_swapchain()
   {
