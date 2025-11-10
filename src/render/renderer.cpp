@@ -87,7 +87,8 @@ namespace render
       .new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
     };
 
-    engine.transition_image_layout(depth_image_, VK_FORMAT_D32_SFLOAT_S8_UINT, 1, transition_layout);
+    engine.transition_image_layout(depth_image_, VK_FORMAT_D32_SFLOAT_S8_UINT, 1,
+                                   transition_layout);
   }
 
   void Renderer::draw(VkImageView image_view, VkCommandBuffer command_buffer)
@@ -166,17 +167,18 @@ namespace render
     static float y = 0.0f;
     static float z = 0.0f;
 
-    ImGui::Begin("Position");
+    ImGui::Begin("##Test");
     ImGui::DragFloat("X", &x, 0.1f, -5.0f, 5.0f);
     ImGui::DragFloat("Y", &y, 0.1f, -5.0f, 5.0f);
     ImGui::DragFloat("Z", &z, 0.1f, -5.0f, 5.0f);
-    ImGui::End();
 
     scene->substractive_mesh->cframe = types::CFrame(types::Vector3(x, y, z));
 
     if (scene->mesh && scene->substractive_mesh)
       csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_,
                         *scene->mesh, *scene->substractive_mesh);
+
+    ImGui::End();
   }
 
   void Renderer::free()

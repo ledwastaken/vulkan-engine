@@ -104,6 +104,40 @@ namespace gfx
 
     vkCmdBeginRendering(command_buffer, &rendering_info);
 
+    static bool active = false;
+    ImGui::Checkbox("Active", &active);
+    if (!active)
+    {
+      vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
+      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+                         mesh.cframe.to_matrix().data());
+
+      int one = 1;
+      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 32,
+                         &one);
+
+      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
+      vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
+      vkCmdSetDepthWriteEnable(command_buffer, VK_TRUE);
+      vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
+      vkCmdSetStencilTestEnable(command_buffer, VK_FALSE);
+
+      vertex_buffer = mesh.get_vertex_buffer();
+      vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
+      vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
+
+      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+                         substractive_mesh.cframe.to_matrix().data());
+      vertex_buffer = substractive_mesh.get_vertex_buffer();
+      vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
+                           VK_INDEX_TYPE_UINT32);
+      vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+
+      vkCmdEndRendering(command_buffer);
+    }
+
     // Render cube's depth
     vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
     vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
