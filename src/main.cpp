@@ -24,7 +24,7 @@ void init(Scene& scene)
   mesh->cframe = CFrame(Vector3(0, 0, 0));
 
   auto substractive_mesh = new Mesh();
-  substractive_mesh->load_mesh_from_file("assets/geometry/cylinder.obj");
+  substractive_mesh->load_mesh_from_file("assets/geometry/sphere.obj");
   substractive_mesh->cframe = CFrame(Vector3(0, 0, 0));
 
   auto camera = new Camera();
