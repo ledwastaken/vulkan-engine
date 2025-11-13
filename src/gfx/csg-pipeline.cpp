@@ -197,18 +197,87 @@ namespace gfx
 
       vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
 
+      vkCmdEndRendering(command_buffer);
+
+      const VkRenderingAttachmentInfo stencil_attachment = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .pNext = nullptr,
+        .imageView = depth_view,
+        .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        .resolveMode = VK_RESOLVE_MODE_NONE,
+        .resolveImageView = VK_NULL_HANDLE,
+        .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .clearValue = depth_clear_value,
+      };
+
+      const VkRenderingInfo rendering_info = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .renderArea = render_area,
+        .layerCount = 1,
+        .viewMask = 0,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &color_attachment,
+        .pDepthAttachment = &depth_attachment,
+        .pStencilAttachment = &stencil_attachment,
+      };
+
+      vkCmdBeginRendering(command_buffer, &rendering_info);
+
+      vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
+
+      // Render cube back faces's depth
+      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+                         mesh.cframe.to_matrix().data());
+
+      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
+      vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
+      vkCmdSetDepthWriteEnable(command_buffer, VK_TRUE);
+      vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
+      vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
+                        VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL);
+      vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 1);
+
+      vertex_buffer = mesh.get_vertex_buffer();
+      vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
+      vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
+
+      // Render sphere back faces's depth
+      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+                         substractive_mesh.cframe.to_matrix().data());
+
+      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
+      vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
+      vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
+      vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
+      vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
+                        VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_COMPARE_OP_ALWAYS);
+      vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 42);
+
+      vertex_buffer = substractive_mesh.get_vertex_buffer();
+      vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
+                           VK_INDEX_TYPE_UINT32);
+      vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+
+      // CSG final Rendering
+
       // Draw cube
       vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
       vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
                          mesh.cframe.to_matrix().data());
 
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT); // Render back faces
+      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT); // Render front faces
       vkCmdSetDepthTestEnable(command_buffer, VK_FALSE);
       vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
       vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
       vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-                        VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_NOT_EQUAL);
-      vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 1);
+                        VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL);
+      vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 0);
 
       vertex_buffer = mesh.get_vertex_buffer();
       vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
