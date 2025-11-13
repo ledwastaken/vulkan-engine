@@ -119,7 +119,7 @@ namespace gfx
                            mesh.cframe.to_matrix().data());
 
         int one = 1;
-        vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 32,
+        vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
                            &one);
 
         vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
@@ -151,7 +151,7 @@ namespace gfx
                          mesh.cframe.to_matrix().data());
 
       int one = 1;
-      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 32,
+      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
                          &one);
 
       vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
@@ -290,7 +290,7 @@ namespace gfx
                          substractive_mesh.cframe.to_matrix().data());
 
       int minus_one = -1;
-      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 32,
+      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
                          &minus_one);
 
       vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT); // Render back faces
@@ -362,10 +362,12 @@ namespace gfx
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create descriptor set layout");
 
-    const VkPushConstantRange push_constant_range = {
-      .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-      .offset = 0,
-      .size = 92,
+    const VkPushConstantRange push_constant_ranges[] = {
+      {
+          .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+          .offset = 0,
+          .size = 68,
+      },
     };
 
     const VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
@@ -375,7 +377,7 @@ namespace gfx
       .setLayoutCount = 1,
       .pSetLayouts = &descriptor_set_layout_,
       .pushConstantRangeCount = 1,
-      .pPushConstantRanges = &push_constant_range,
+      .pPushConstantRanges = push_constant_ranges,
     };
 
     result = vkCreatePipelineLayout(engine.get_device(), &pipeline_layout_create_info, nullptr,
