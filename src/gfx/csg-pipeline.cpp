@@ -102,6 +102,9 @@ namespace gfx
       .pStencilAttachment = &depth_attachment,
     };
 
+    vkCmdSetStencilWriteMask(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 0xFF);
+    vkCmdSetStencilCompareMask(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 0xFF);
+
     vkCmdBeginRendering(command_buffer, &rendering_info);
 
     static bool active = false;
@@ -151,8 +154,7 @@ namespace gfx
                          mesh.cframe.to_matrix().data());
 
       int one = 1;
-      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
-                         &one);
+      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4, &one);
 
       vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
       vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
