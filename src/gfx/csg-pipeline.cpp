@@ -142,6 +142,7 @@ namespace gfx
         vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
 
         vkCmdEndRendering(command_buffer);
+        return;
       }
 
       // Render cube's depth
