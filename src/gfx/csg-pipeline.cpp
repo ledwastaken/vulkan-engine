@@ -148,7 +148,6 @@ namespace gfx
         return;
       }
 
-      // Render cube's depth
       vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
       vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
                          mesh.cframe.to_matrix().data());
@@ -167,13 +166,11 @@ namespace gfx
       vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
       vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
 
-      // Mark cylinder interior in stencil by rendering back faces
-      // This marks where we're INSIDE the cylinder
       vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
       vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
                          substractive_mesh.cframe.to_matrix().data());
 
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT); // Render back faces
+      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
       vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
       vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
       vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
@@ -188,9 +185,7 @@ namespace gfx
                            VK_INDEX_TYPE_UINT32);
       vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
 
-      // Clear stencil where cylinder front faces are in front
-      // This removes the "interior" marking where cylinder is in front of the cube
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT); // Render front faces
+      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
       vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
       vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
       vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
@@ -232,7 +227,6 @@ namespace gfx
 
       vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
 
-      // Render cube back faces's depth
       vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
                          mesh.cframe.to_matrix().data());
 
@@ -249,7 +243,6 @@ namespace gfx
       vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
       vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
 
-      // Render sphere back faces's depth
       vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
                          substractive_mesh.cframe.to_matrix().data());
 
@@ -267,14 +260,11 @@ namespace gfx
                            VK_INDEX_TYPE_UINT32);
       vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
 
-      // CSG final Rendering
-
-      // Draw cube
       vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
       vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
                          mesh.cframe.to_matrix().data());
 
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT); // Render front faces
+      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
       vkCmdSetDepthTestEnable(command_buffer, VK_FALSE);
       vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
       vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
@@ -287,7 +277,6 @@ namespace gfx
       vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
       vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
 
-      // Draw cylinder
       vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
                          substractive_mesh.cframe.to_matrix().data());
 
@@ -295,7 +284,7 @@ namespace gfx
       vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
                          &minus_one);
 
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT); // Render back faces
+      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
       vkCmdSetDepthTestEnable(command_buffer, VK_FALSE);
       vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
       vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
