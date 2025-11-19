@@ -1,6 +1,8 @@
 # Vulkan rendering engine
 
-A lightweight rendering engine built with Vulkan and SDL3.
+A lightweight rendering engine built with Vulkan and SDL3 implementing a CSG pipeline.
+
+https://github.com/user-attachments/assets/ca6927fe-880a-47c1-9554-0857188c5186
 
 ## Getting Started
 
