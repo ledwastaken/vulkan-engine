@@ -33,10 +33,12 @@ namespace gfx
     void create_graphics_pipeline();
     void create_uniform_buffer();
 
-    VkDescriptorSetLayout descriptor_set_layout_ = VK_NULL_HANDLE;
+    VkDescriptorSetLayout ubo_descriptor_set_layout_ = VK_NULL_HANDLE;
+    VkDescriptorSetLayout textures_descriptor_set_layout_ = VK_NULL_HANDLE;
     VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
     VkDescriptorPool descriptor_pool_ = VK_NULL_HANDLE;
-    std::vector<VkDescriptorSet> descriptor_sets_;
+    std::vector<VkDescriptorSet> ubo_descriptor_sets_;
+    std::vector<VkDescriptorSet> textures_descriptor_sets_;
     VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
     VkShaderModule vertex_shader_ = VK_NULL_HANDLE;
     VkShaderModule fragment_shader_ = VK_NULL_HANDLE;

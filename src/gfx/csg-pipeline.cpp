@@ -33,8 +33,10 @@ namespace gfx
     std::memcpy(uniform_buffers_data_[engine.get_current_frame()] + 64, projection.data(),
                 16 * sizeof(float));
 
+    // TODO: Update and bind textures descriptor sets
+
     vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 0, 1,
-                            &descriptor_sets_[engine.get_current_frame()], 0, nullptr);
+                            &ubo_descriptor_sets_[engine.get_current_frame()], 0, nullptr);
 
     const VkViewport viewport{
       .x = 0.0f,
@@ -322,17 +324,20 @@ namespace gfx
       vkFreeMemory(engine.get_device(), uniform_buffers_memory_[i], nullptr);
     }
 
-    vkFreeDescriptorSets(engine.get_device(), descriptor_pool_, 1, descriptor_sets_.data());
+    vkFreeDescriptorSets(engine.get_device(), descriptor_pool_, 1, ubo_descriptor_sets_.data());
+    vkFreeDescriptorSets(engine.get_device(), descriptor_pool_, 1,
+                         textures_descriptor_sets_.data());
     vkDestroyDescriptorPool(engine.get_device(), descriptor_pool_, nullptr);
     vkDestroyPipelineLayout(engine.get_device(), pipeline_layout_, nullptr);
-    vkDestroyDescriptorSetLayout(engine.get_device(), descriptor_set_layout_, nullptr);
+    vkDestroyDescriptorSetLayout(engine.get_device(), ubo_descriptor_set_layout_, nullptr);
+    vkDestroyDescriptorSetLayout(engine.get_device(), textures_descriptor_set_layout_, nullptr);
   }
 
   void CSGPipeline::create_pipeline_layout()
   {
     auto& engine = core::Engine::get_singleton();
 
-    const VkDescriptorSetLayoutBinding layout_binding = {
+    const VkDescriptorSetLayoutBinding ubo_layout_binding = {
       .binding = 0,
       .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
       .descriptorCount = 1,
@@ -340,16 +345,46 @@ namespace gfx
       .pImmutableSamplers = nullptr,
     };
 
-    const VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {
+    const VkDescriptorSetLayoutCreateInfo ubo_descriptor_set_layout_info = {
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
       .bindingCount = 1,
-      .pBindings = &layout_binding,
+      .pBindings = &ubo_layout_binding,
+    };
+
+    const VkDescriptorSetLayoutBinding texture_layout_bindings[] = {
+      {
+          .binding = 0,
+          .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+          .descriptorCount = 1,
+          .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+          .pImmutableSamplers = nullptr,
+      },
+      {
+          .binding = 1,
+          .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+          .descriptorCount = 1,
+          .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+          .pImmutableSamplers = nullptr,
+      },
+    };
+
+    const VkDescriptorSetLayoutCreateInfo textures_descriptor_set_layout_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .bindingCount = 2,
+      .pBindings = texture_layout_bindings,
     };
 
     VkResult result = vkCreateDescriptorSetLayout(
-        engine.get_device(), &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout_);
+        engine.get_device(), &ubo_descriptor_set_layout_info, nullptr, &ubo_descriptor_set_layout_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create descriptor set layout");
+
+    result = vkCreateDescriptorSetLayout(engine.get_device(), &textures_descriptor_set_layout_info,
+                                         nullptr, &textures_descriptor_set_layout_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create descriptor set layout");
 
@@ -365,8 +400,8 @@ namespace gfx
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
-      .setLayoutCount = 1,
-      .pSetLayouts = &descriptor_set_layout_,
+      .setLayoutCount = 2,
+      .pSetLayouts = &ubo_descriptor_set_layout_,
       .pushConstantRangeCount = 1,
       .pPushConstantRanges = push_constant_ranges,
     };
@@ -381,18 +416,24 @@ namespace gfx
   {
     auto& engine = core::Engine::get_singleton();
 
-    const VkDescriptorPoolSize pool_size = {
-      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-      .descriptorCount = MAX_FRAMES_IN_FLIGHT,
+    const VkDescriptorPoolSize pool_sizes[] = {
+      {
+          .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          .descriptorCount = MAX_FRAMES_IN_FLIGHT,
+      },
+      {
+          .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+          .descriptorCount = MAX_FRAMES_IN_FLIGHT * 2,
+      },
     };
 
     const VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
       .pNext = nullptr,
       .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-      .maxSets = MAX_FRAMES_IN_FLIGHT,
-      .poolSizeCount = 1,
-      .pPoolSizes = &pool_size,
+      .maxSets = MAX_FRAMES_IN_FLIGHT * 2,
+      .poolSizeCount = 2,
+      .pPoolSizes = pool_sizes,
     };
 
     VkResult result = vkCreateDescriptorPool(engine.get_device(), &descriptor_pool_create_info,
@@ -400,19 +441,36 @@ namespace gfx
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create descriptor pool");
 
-    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptor_set_layout_);
+    std::vector<VkDescriptorSetLayout> ubo_layouts(MAX_FRAMES_IN_FLIGHT,
+                                                   ubo_descriptor_set_layout_);
+    std::vector<VkDescriptorSetLayout> textures_layouts(MAX_FRAMES_IN_FLIGHT,
+                                                        textures_descriptor_set_layout_);
 
-    const VkDescriptorSetAllocateInfo descriptor_set_allocate_info = {
+    const VkDescriptorSetAllocateInfo ubo_descriptor_set_info = {
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
       .pNext = nullptr,
       .descriptorPool = descriptor_pool_,
       .descriptorSetCount = MAX_FRAMES_IN_FLIGHT,
-      .pSetLayouts = layouts.data(),
+      .pSetLayouts = ubo_layouts.data(),
     };
 
-    descriptor_sets_.resize(MAX_FRAMES_IN_FLIGHT);
-    result = vkAllocateDescriptorSets(engine.get_device(), &descriptor_set_allocate_info,
-                                      descriptor_sets_.data());
+    const VkDescriptorSetAllocateInfo textures_descriptor_set_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+      .pNext = nullptr,
+      .descriptorPool = descriptor_pool_,
+      .descriptorSetCount = MAX_FRAMES_IN_FLIGHT,
+      .pSetLayouts = textures_layouts.data(),
+    };
+
+    ubo_descriptor_sets_.resize(MAX_FRAMES_IN_FLIGHT);
+    result = vkAllocateDescriptorSets(engine.get_device(), &ubo_descriptor_set_info,
+                                      ubo_descriptor_sets_.data());
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to allocate descriptor set");
+
+    textures_descriptor_sets_.resize(MAX_FRAMES_IN_FLIGHT);
+    result = vkAllocateDescriptorSets(engine.get_device(), &textures_descriptor_set_info,
+                                      textures_descriptor_sets_.data());
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to allocate descriptor set");
   }
@@ -732,7 +790,7 @@ namespace gfx
       const VkWriteDescriptorSet write_descriptor_set = {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
-        .dstSet = descriptor_sets_[i],
+        .dstSet = ubo_descriptor_sets_[i],
         .dstBinding = 0,
         .dstArrayElement = 0,
         .descriptorCount = 1,

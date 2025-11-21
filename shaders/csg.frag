@@ -3,6 +3,9 @@ layout (location = 0) in vec3 normal;
 layout (location = 1) in vec3 fragPos;
 layout (location = 2) in vec3 viewPos;
 
+layout(set = 1, binding = 0) uniform sampler2D rayEnter;
+layout(set = 1, binding = 1) uniform sampler2D rayExit;
+
 layout (location = 0) out vec4 fragColor;
 
 void main(void)
