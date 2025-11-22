@@ -967,4 +967,9 @@ namespace gfx
       vkUpdateDescriptorSets(engine.get_device(), 2, write_descriptor, 0, nullptr);
     }
   }
+
+  void CSGPipeline::render_depth(scene::Mesh& mesh)
+  {
+    // FIXME
+  }
 } // namespace gfx
