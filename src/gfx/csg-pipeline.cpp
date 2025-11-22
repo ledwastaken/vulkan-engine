@@ -21,6 +21,7 @@ namespace gfx
     create_uniform_buffer();
     create_depth_image(ray_enter_image_, ray_enter_view_, ray_enter_sampler_, ray_enter_memory_);
     create_depth_image(ray_leave_image_, ray_leave_view_, ray_leave_sampler_, ray_leave_memory_);
+    bind_depth_images();
   }
 
   void CSGPipeline::draw(VkImageView image_view, VkImageView depth_view,
@@ -880,6 +881,31 @@ namespace gfx
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create image view");
 
+    const VkSamplerCreateInfo sampler_info = {
+      .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .magFilter = VK_FILTER_NEAREST,
+      .minFilter = VK_FILTER_NEAREST,
+      .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      .mipLodBias = 0.0f,
+      .anisotropyEnable = VK_FALSE,
+      .maxAnisotropy = 0.0f,
+      .compareEnable = VK_FALSE,
+      .compareOp = VK_COMPARE_OP_NEVER,
+      .minLod = 0.0f,
+      .maxLod = 0.0f,
+      .borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
+      .unnormalizedCoordinates = VK_FALSE,
+    };
+
+    result = vkCreateSampler(engine.get_device(), &sampler_info, nullptr, &sampler);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create sampler");
+
     const core::TransitionLayout transition_layout = {
       .src_access = 0,
       .dst_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
@@ -891,5 +917,54 @@ namespace gfx
     };
 
     engine.transition_image_layout(image, VK_FORMAT_D32_SFLOAT, 1, transition_layout);
+  }
+
+  void CSGPipeline::bind_depth_images()
+  {
+    auto& engine = core::Engine::get_singleton();
+
+    const VkDescriptorImageInfo ray_enter_image_info = {
+      .sampler = ray_enter_sampler_,
+      .imageView = ray_enter_view_,
+      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+    };
+
+    const VkDescriptorImageInfo ray_leave_image_info = {
+      .sampler = ray_leave_sampler_,
+      .imageView = ray_leave_view_,
+      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+    };
+
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+      VkWriteDescriptorSet write_descriptor[] = {
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = textures_descriptor_sets_[i],
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .pImageInfo = &ray_enter_image_info,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr,
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = textures_descriptor_sets_[i],
+            .dstBinding = 1,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .pImageInfo = &ray_leave_image_info,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr,
+        },
+      };
+
+      vkUpdateDescriptorSets(engine.get_device(), 2, write_descriptor, 0, nullptr);
+    }
   }
 } // namespace gfx

@@ -34,6 +34,7 @@ namespace gfx
     void create_uniform_buffer();
     void create_depth_image(VkImage& image, VkImageView& image_view, VkSampler& sampler,
                             VkDeviceMemory& memory);
+    void bind_depth_images();
 
     VkDescriptorSetLayout ubo_descriptor_set_layout_ = VK_NULL_HANDLE;
     VkDescriptorSetLayout textures_descriptor_set_layout_ = VK_NULL_HANDLE;
