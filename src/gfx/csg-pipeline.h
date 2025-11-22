@@ -32,6 +32,8 @@ namespace gfx
     void create_pipeline_cache();
     void create_graphics_pipeline();
     void create_uniform_buffer();
+    void create_depth_image(VkImage& image, VkImageView& image_view, VkSampler& sampler,
+                            VkDeviceMemory& memory);
 
     VkDescriptorSetLayout ubo_descriptor_set_layout_ = VK_NULL_HANDLE;
     VkDescriptorSetLayout textures_descriptor_set_layout_ = VK_NULL_HANDLE;
@@ -48,5 +50,15 @@ namespace gfx
     std::vector<VkBuffer> uniform_buffers_;
     std::vector<VkDeviceMemory> uniform_buffers_memory_;
     std::vector<void*> uniform_buffers_data_;
+
+    VkImage ray_enter_image_ = VK_NULL_HANDLE;
+    VkDeviceMemory ray_enter_memory_ = VK_NULL_HANDLE;
+    VkImageView ray_enter_view_ = VK_NULL_HANDLE;
+    VkSampler ray_enter_sampler_ = VK_NULL_HANDLE;
+
+    VkImage ray_leave_image_ = VK_NULL_HANDLE;
+    VkDeviceMemory ray_leave_memory_ = VK_NULL_HANDLE;
+    VkImageView ray_leave_view_ = VK_NULL_HANDLE;
+    VkSampler ray_leave_sampler_ = VK_NULL_HANDLE;
   };
 } // namespace gfx

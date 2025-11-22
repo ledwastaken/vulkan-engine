@@ -19,6 +19,8 @@ namespace gfx
 
     create_graphics_pipeline();
     create_uniform_buffer();
+    create_depth_image(ray_enter_image_, ray_enter_view_, ray_enter_sampler_, ray_enter_memory_);
+    create_depth_image(ray_leave_image_, ray_leave_view_, ray_leave_sampler_, ray_leave_memory_);
   }
 
   void CSGPipeline::draw(VkImageView image_view, VkImageView depth_view,
@@ -331,6 +333,16 @@ namespace gfx
     vkDestroyPipelineLayout(engine.get_device(), pipeline_layout_, nullptr);
     vkDestroyDescriptorSetLayout(engine.get_device(), ubo_descriptor_set_layout_, nullptr);
     vkDestroyDescriptorSetLayout(engine.get_device(), textures_descriptor_set_layout_, nullptr);
+
+    vkDestroySampler(engine.get_device(), ray_enter_sampler_, nullptr);
+    vkDestroyImageView(engine.get_device(), ray_enter_view_, nullptr);
+    vkDestroyImage(engine.get_device(), ray_enter_image_, nullptr);
+    vkFreeMemory(engine.get_device(), ray_enter_memory_, nullptr);
+
+    vkDestroySampler(engine.get_device(), ray_leave_sampler_, nullptr);
+    vkDestroyImageView(engine.get_device(), ray_leave_view_, nullptr);
+    vkDestroyImage(engine.get_device(), ray_leave_image_, nullptr);
+    vkFreeMemory(engine.get_device(), ray_leave_memory_, nullptr);
   }
 
   void CSGPipeline::create_pipeline_layout()
@@ -802,5 +814,82 @@ namespace gfx
 
       vkUpdateDescriptorSets(engine.get_device(), 1, &write_descriptor_set, 0, nullptr);
     }
+  }
+
+  void CSGPipeline::create_depth_image(VkImage& image, VkImageView& image_view, VkSampler& sampler,
+                                       VkDeviceMemory& memory)
+  {
+    auto& engine = core::Engine::get_singleton();
+
+    const VkExtent3D image_extent = {
+      .width = 800,
+      .height = 600,
+      .depth = 1,
+    };
+
+    const VkImageCreateInfo depth_image_create_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .imageType = VK_IMAGE_TYPE_2D,
+      .format = VK_FORMAT_D32_SFLOAT,
+      .extent = image_extent,
+      .mipLevels = 1,
+      .arrayLayers = 1,
+      .samples = VK_SAMPLE_COUNT_1_BIT,
+      .tiling = VK_IMAGE_TILING_OPTIMAL,
+      .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+          | VK_IMAGE_USAGE_SAMPLED_BIT,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+      .queueFamilyIndexCount = 0,
+      .pQueueFamilyIndices = nullptr,
+      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    };
+
+    engine.create_image(depth_image_create_info, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image,
+                        memory);
+
+    const VkComponentMapping depth_components = {
+      .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+    };
+
+    const VkImageSubresourceRange depth_subresource_range = {
+      .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    };
+
+    const VkImageViewCreateInfo depth_view_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .image = image,
+      .viewType = VK_IMAGE_VIEW_TYPE_2D,
+      .format = VK_FORMAT_D32_SFLOAT,
+      .components = depth_components,
+      .subresourceRange = depth_subresource_range,
+    };
+
+    VkResult result =
+        vkCreateImageView(engine.get_device(), &depth_view_info, nullptr, &image_view);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create image view");
+
+    const core::TransitionLayout transition_layout = {
+      .src_access = 0,
+      .dst_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+      .src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+      .dst_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+      .aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT,
+      .old_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .new_layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+    };
+
+    engine.transition_image_layout(image, VK_FORMAT_D32_SFLOAT, 1, transition_layout);
   }
 } // namespace gfx
