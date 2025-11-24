@@ -70,9 +70,11 @@ set(SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 file(MAKE_DIRECTORY ${SHADER_BINARY_DIR})
 
 set(SHADERS
-  ${SHADER_SOURCE_DIR}/csg.vert
   ${SHADER_SOURCE_DIR}/csg.frag
+  ${SHADER_SOURCE_DIR}/csg.vert
+  ${SHADER_SOURCE_DIR}/depth-display.frag
   ${SHADER_SOURCE_DIR}/depth.frag
+  ${SHADER_SOURCE_DIR}/fullscreen-quad.vert
   ${SHADER_SOURCE_DIR}/skybox.vert
   ${SHADER_SOURCE_DIR}/skybox.frag
 )
