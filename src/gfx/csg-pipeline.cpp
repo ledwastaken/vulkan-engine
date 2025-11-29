@@ -58,9 +58,6 @@ namespace gfx
     vkCmdSetViewport(command_buffer, 0, 1, &viewport);
     vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
-    VkDeviceSize offset = 0;
-    VkBuffer vertex_buffer;
-
     const VkClearValue clear_value = {};
     const VkRenderingAttachmentInfo color_attachment = {
       .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
@@ -110,8 +107,6 @@ namespace gfx
     vkCmdSetStencilWriteMask(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 0xFF);
     vkCmdSetStencilCompareMask(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 0xFF);
 
-    vkCmdBeginRendering(command_buffer, &rendering_info);
-
     static bool active = false;
     ImGui::Checkbox("Active", &active);
 
@@ -120,167 +115,218 @@ namespace gfx
 
     if (stencil)
     {
-      if (!active)
-      {
-        vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
-        vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-                           mesh.cframe.to_matrix().data());
+      // vkCmdBeginRendering(command_buffer, &rendering_info);
 
-        int one = 1;
-        vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
-                           &one);
+      // if (!active)
+      // {
+      //   vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
+      //   vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+      //                      mesh.cframe.to_matrix().data());
 
-        vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
-        vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
-        vkCmdSetDepthWriteEnable(command_buffer, VK_TRUE);
-        vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
-        vkCmdSetStencilTestEnable(command_buffer, VK_FALSE);
+      //   int one = 1;
+      //   vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
+      //                      &one);
 
-        vertex_buffer = mesh.get_vertex_buffer();
-        vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-        vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
+      //   vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
+      //   vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
+      //   vkCmdSetDepthWriteEnable(command_buffer, VK_TRUE);
+      //   vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
+      //   vkCmdSetStencilTestEnable(command_buffer, VK_FALSE);
 
-        vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-                           substractive_mesh.cframe.to_matrix().data());
-        vertex_buffer = substractive_mesh.get_vertex_buffer();
-        vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-        vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
-                             VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+      //   VkDeviceSize offset = 0;
+      //   VkBuffer vertex_buffer = mesh.get_vertex_buffer();
+      //   vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      //   vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
+      //   vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
 
-        vkCmdEndRendering(command_buffer);
-        return;
-      }
+      //   vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+      //                      substractive_mesh.cframe.to_matrix().data());
+      //   vertex_buffer = substractive_mesh.get_vertex_buffer();
+      //   vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      //   vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
+      //                        VK_INDEX_TYPE_UINT32);
+      //   vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+      // }
 
-      vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
-      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-                         mesh.cframe.to_matrix().data());
+      // vkCmdEndRendering(command_buffer);
 
-      int one = 1;
-      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4, &one);
+      // vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
+      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+      //                    mesh.cframe.to_matrix().data());
 
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
-      vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
-      vkCmdSetDepthWriteEnable(command_buffer, VK_TRUE);
-      vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
-      vkCmdSetStencilTestEnable(command_buffer, VK_FALSE);
+      // int one = 1;
+      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
+      // &one);
 
-      vertex_buffer = mesh.get_vertex_buffer();
-      vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
-      vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
+      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
+      // vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
+      // vkCmdSetDepthWriteEnable(command_buffer, VK_TRUE);
+      // vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
+      // vkCmdSetStencilTestEnable(command_buffer, VK_FALSE);
 
-      vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
-      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-                         substractive_mesh.cframe.to_matrix().data());
+      // vertex_buffer = mesh.get_vertex_buffer();
+      // vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      // vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset,
+      // VK_INDEX_TYPE_UINT32); vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0,
+      // 0);
 
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
-      vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
-      vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
-      vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
-      vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
-      vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-                        VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_COMPARE_OP_ALWAYS);
-      vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 1);
+      // vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
+      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+      //                    substractive_mesh.cframe.to_matrix().data());
 
-      vertex_buffer = substractive_mesh.get_vertex_buffer();
-      vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
-                           VK_INDEX_TYPE_UINT32);
-      vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
+      // vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
+      // vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
+      // vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
+      // vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
+      // vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
+      //                   VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_COMPARE_OP_ALWAYS);
+      // vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 1);
 
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
-      vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
-      vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
-      vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
-      vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
-      vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-                        VK_STENCIL_OP_KEEP, VK_STENCIL_OP_ZERO, VK_COMPARE_OP_ALWAYS);
+      // vertex_buffer = substractive_mesh.get_vertex_buffer();
+      // vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      // vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
+      //                      VK_INDEX_TYPE_UINT32);
+      // vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
 
-      vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
+      // vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
+      // vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
+      // vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
+      // vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
+      // vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
+      //                   VK_STENCIL_OP_KEEP, VK_STENCIL_OP_ZERO, VK_COMPARE_OP_ALWAYS);
 
-      vkCmdEndRendering(command_buffer);
+      // vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
 
-      const VkRenderingAttachmentInfo stencil_attachment = {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .pNext = nullptr,
-        .imageView = depth_view,
-        .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        .resolveMode = VK_RESOLVE_MODE_NONE,
-        .resolveImageView = VK_NULL_HANDLE,
-        .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue = depth_clear_value,
+      // vkCmdEndRendering(command_buffer);
+
+      // const VkRenderingAttachmentInfo stencil_attachment = {
+      //   .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      //   .pNext = nullptr,
+      //   .imageView = depth_view,
+      //   .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+      //   .resolveMode = VK_RESOLVE_MODE_NONE,
+      //   .resolveImageView = VK_NULL_HANDLE,
+      //   .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      //   .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+      //   .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      //   .clearValue = depth_clear_value,
+      // };
+
+      // const VkRenderingInfo rendering_info = {
+      //   .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+      //   .pNext = nullptr,
+      //   .flags = 0,
+      //   .renderArea = render_area,
+      //   .layerCount = 1,
+      //   .viewMask = 0,
+      //   .colorAttachmentCount = 1,
+      //   .pColorAttachments = &color_attachment,
+      //   .pDepthAttachment = &depth_attachment,
+      //   .pStencilAttachment = &stencil_attachment,
+      // };
+
+      // vkCmdBeginRendering(command_buffer, &rendering_info);
+
+      // vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
+
+      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+      //                    mesh.cframe.to_matrix().data());
+
+      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
+      // vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
+      // vkCmdSetDepthWriteEnable(command_buffer, VK_TRUE);
+      // vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
+      // vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
+      //                   VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL);
+      // vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 1);
+
+      // vertex_buffer = mesh.get_vertex_buffer();
+      // vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      // vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset,
+      // VK_INDEX_TYPE_UINT32); vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0,
+      // 0);
+
+      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+      //                    substractive_mesh.cframe.to_matrix().data());
+
+      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
+      // vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
+      // vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
+      // vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
+      // vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
+      //                   VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_COMPARE_OP_ALWAYS);
+      // vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 42);
+
+      // vertex_buffer = substractive_mesh.get_vertex_buffer();
+      // vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      // vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
+      //                      VK_INDEX_TYPE_UINT32);
+      // vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+
+      // vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
+      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+      //                    mesh.cframe.to_matrix().data());
+
+      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
+      // vkCmdSetDepthTestEnable(command_buffer, VK_FALSE);
+      // vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
+      // vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
+      // vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
+      //                   VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL);
+      // vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 0);
+
+      // vertex_buffer = mesh.get_vertex_buffer();
+      // vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      // vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset,
+      // VK_INDEX_TYPE_UINT32); vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0,
+      // 0);
+
+      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+      //                    substractive_mesh.cframe.to_matrix().data());
+
+      // int minus_one = -1;
+      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
+      //                    &minus_one);
+
+      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
+      // vkCmdSetDepthTestEnable(command_buffer, VK_FALSE);
+      // vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
+      // vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
+      // vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
+      //                   VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL);
+      // vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 1);
+
+      // vertex_buffer = substractive_mesh.get_vertex_buffer();
+      // vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      // vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
+      //                      VK_INDEX_TYPE_UINT32);
+      // vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+    }
+    else
+    {
+      render_depth(command_buffer, mesh);
+
+      const core::TransitionLayout transition_layout = {
+        .src_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        .dst_access = VK_ACCESS_SHADER_READ_BIT,
+        .src_stage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+        .dst_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        .aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT,
+        .old_layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+        .new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
       };
 
-      const VkRenderingInfo rendering_info = {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .renderArea = render_area,
-        .layerCount = 1,
-        .viewMask = 0,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &color_attachment,
-        .pDepthAttachment = &depth_attachment,
-        .pStencilAttachment = &stencil_attachment,
-      };
-
-      vkCmdBeginRendering(command_buffer, &rendering_info);
-
-      vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
-
-      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-                         mesh.cframe.to_matrix().data());
-
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
-      vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
-      vkCmdSetDepthWriteEnable(command_buffer, VK_TRUE);
-      vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
-      vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-                        VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL);
-      vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 1);
-
-      vertex_buffer = mesh.get_vertex_buffer();
-      vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
-      vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
-
-      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-                         substractive_mesh.cframe.to_matrix().data());
-
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
-      vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
-      vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
-      vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
-      vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-                        VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_COMPARE_OP_ALWAYS);
-      vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 42);
-
-      vertex_buffer = substractive_mesh.get_vertex_buffer();
-      vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
-                           VK_INDEX_TYPE_UINT32);
-      vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+      engine.transition_image_layout(ray_enter_image_, VK_FORMAT_D32_SFLOAT, 1, transition_layout);
+      engine.transition_image_layout(ray_leave_image_, VK_FORMAT_D32_SFLOAT, 1, transition_layout);
 
       vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
-      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-                         mesh.cframe.to_matrix().data());
+      vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 1,
+                              1, &textures_descriptor_sets_[engine.get_current_frame()], 0,
+                              nullptr);
 
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
-      vkCmdSetDepthTestEnable(command_buffer, VK_FALSE);
-      vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
-      vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
-      vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-                        VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL);
-      vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 0);
-
-      vertex_buffer = mesh.get_vertex_buffer();
-      vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
-      vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
+      vkCmdBeginRendering(command_buffer, &rendering_info);
 
       vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
                          substractive_mesh.cframe.to_matrix().data());
@@ -289,22 +335,15 @@ namespace gfx
       vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
                          &minus_one);
 
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
-      vkCmdSetDepthTestEnable(command_buffer, VK_FALSE);
-      vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
-      vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
-      vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-                        VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL);
-      vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 1);
-
-      vertex_buffer = substractive_mesh.get_vertex_buffer();
+      VkDeviceSize offset = 0;
+      VkBuffer vertex_buffer = substractive_mesh.get_vertex_buffer();
       vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
       vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
                            VK_INDEX_TYPE_UINT32);
       vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
-    }
 
-    vkCmdEndRendering(command_buffer);
+      vkCmdEndRendering(command_buffer);
+    }
   }
 
   void CSGPipeline::free()
@@ -409,12 +448,17 @@ namespace gfx
       },
     };
 
+    std::vector<VkDescriptorSetLayout> descriptor_layouts = {
+      ubo_descriptor_set_layout_,
+      textures_descriptor_set_layout_,
+    };
+
     const VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
       .setLayoutCount = 2,
-      .pSetLayouts = &ubo_descriptor_set_layout_,
+      .pSetLayouts = descriptor_layouts.data(),
       .pushConstantRangeCount = 1,
       .pPushConstantRanges = push_constant_ranges,
     };
@@ -735,9 +779,19 @@ namespace gfx
       },
     };
 
+    const VkPipelineRenderingCreateInfo depth_pipeline_rendering_info = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
+      .pNext = nullptr,
+      .viewMask = 0,
+      .colorAttachmentCount = 0,
+      .pColorAttachmentFormats = nullptr,
+      .depthAttachmentFormat = VK_FORMAT_D32_SFLOAT,
+      .stencilAttachmentFormat = VK_FORMAT_UNDEFINED,
+    };
+
     const VkGraphicsPipelineCreateInfo depth_pipeline_info = {
       .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      .pNext = &pipeline_rendering_create_info,
+      .pNext = &depth_pipeline_rendering_info,
       .flags = VK_PIPELINE_CREATE_DERIVATIVE_BIT,
       .stageCount = 2,
       .pStages = depth_shader_stage_infos,
@@ -968,8 +1022,99 @@ namespace gfx
     }
   }
 
-  void CSGPipeline::render_depth(scene::Mesh& mesh)
+  void CSGPipeline::render_depth(VkCommandBuffer& command_buffer, scene::Mesh& mesh)
   {
-    // FIXME
+    auto& engine = core::Engine::get_singleton();
+    auto extent = engine.get_swapchain_extent();
+
+    const VkRect2D render_area = {
+      .offset = { 0, 0 },
+      .extent = extent,
+    };
+
+    const VkClearValue depth_clear_value = { .depthStencil = { .depth = 1.0f, .stencil = 0 } };
+
+    vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
+    vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+                       mesh.cframe.to_matrix().data());
+
+    int one = 1;
+    vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4, &one);
+
+    vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
+    vkCmdSetDepthWriteEnable(command_buffer, VK_TRUE);
+    vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
+    vkCmdSetStencilTestEnable(command_buffer, VK_FALSE);
+
+    VkDeviceSize offset = 0;
+    VkBuffer vertex_buffer = mesh.get_vertex_buffer();
+    vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+    vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
+
+    const VkRenderingAttachmentInfo ray_enter_attachment = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .pNext = nullptr,
+      .imageView = ray_enter_view_,
+      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+      .resolveMode = VK_RESOLVE_MODE_NONE,
+      .resolveImageView = VK_NULL_HANDLE,
+      .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .clearValue = depth_clear_value,
+    };
+
+    const VkRenderingInfo ray_enter_rendering_info = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .renderArea = render_area,
+      .layerCount = 1,
+      .viewMask = 0,
+      .colorAttachmentCount = 0,
+      .pColorAttachments = nullptr,
+      .pDepthAttachment = &ray_enter_attachment,
+      .pStencilAttachment = nullptr,
+    };
+
+    vkCmdBeginRendering(command_buffer, &ray_enter_rendering_info);
+
+    vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
+    vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
+
+    vkCmdEndRendering(command_buffer);
+
+    const VkRenderingAttachmentInfo ray_leave_attachment = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .pNext = nullptr,
+      .imageView = ray_leave_view_,
+      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+      .resolveMode = VK_RESOLVE_MODE_NONE,
+      .resolveImageView = VK_NULL_HANDLE,
+      .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .clearValue = depth_clear_value,
+    };
+
+    const VkRenderingInfo ray_leave_rendering_info = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .renderArea = render_area,
+      .layerCount = 1,
+      .viewMask = 0,
+      .colorAttachmentCount = 0,
+      .pColorAttachments = nullptr,
+      .pDepthAttachment = &ray_leave_attachment,
+      .pStencilAttachment = nullptr,
+    };
+
+    vkCmdBeginRendering(command_buffer, &ray_leave_rendering_info);
+
+    vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
+    vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
+
+    vkCmdEndRendering(command_buffer);
   }
 } // namespace gfx

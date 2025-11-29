@@ -36,7 +36,7 @@ namespace gfx
                             VkDeviceMemory& memory);
     void bind_depth_images();
 
-    void render_depth(scene::Mesh& mesh);
+    void render_depth(VkCommandBuffer& command_buffer, scene::Mesh& mesh);
 
     VkDescriptorSetLayout ubo_descriptor_set_layout_ = VK_NULL_HANDLE;
     VkDescriptorSetLayout textures_descriptor_set_layout_ = VK_NULL_HANDLE;

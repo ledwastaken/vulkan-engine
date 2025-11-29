@@ -6,6 +6,7 @@ layout (location = 2) in vec2 vertexUV;
 layout (location = 0) out vec3 normal;
 layout (location = 1) out vec3 fragPos;
 layout (location = 2) out vec3 viewPos;
+layout (location = 3) out vec2 fragCoord;
 
 layout(push_constant) uniform PushConstants {
   mat4 model;
@@ -26,4 +27,5 @@ void main(void)
   viewPos = -transpose(mat3(view)) * view[3].xyz;
 
   gl_Position = projection * view * worldPos;
+  fragCoord = gl_Position.xy;
 }
