@@ -28,6 +28,7 @@
               ktx-tools
               gcc
               gdb
+              renderdoc
             ];
 
           shellHook = ''
