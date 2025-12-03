@@ -164,7 +164,7 @@ namespace render
     clear_depth();
 
     static float x = 0.0f;
-    static float y = 1.0f;
+    static float y = 0.0f;
     static float z = 0.0f;
 
     ImGui::Begin("##Test");

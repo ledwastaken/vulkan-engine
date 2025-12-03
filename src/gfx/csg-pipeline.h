@@ -36,7 +36,8 @@ namespace gfx
                             VkDeviceMemory& memory);
     void bind_depth_images();
 
-    void render_depth(scene::Mesh& mesh);
+    void render_depth(VkCommandBuffer& command_buffer, scene::Mesh& mesh,
+                      scene::Mesh& substractive_mesh);
 
     VkDescriptorSetLayout ubo_descriptor_set_layout_ = VK_NULL_HANDLE;
     VkDescriptorSetLayout textures_descriptor_set_layout_ = VK_NULL_HANDLE;
@@ -63,5 +64,10 @@ namespace gfx
     VkDeviceMemory ray_leave_memory_ = VK_NULL_HANDLE;
     VkImageView ray_leave_view_ = VK_NULL_HANDLE;
     VkSampler ray_leave_sampler_ = VK_NULL_HANDLE;
+
+    VkImage back_depth_image_ = VK_NULL_HANDLE;
+    VkDeviceMemory back_depth_memory_ = VK_NULL_HANDLE;
+    VkImageView back_depth_view_ = VK_NULL_HANDLE;
+    VkSampler back_depth_sampler_ = VK_NULL_HANDLE;
   };
 } // namespace gfx
