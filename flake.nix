@@ -28,11 +28,15 @@
               gcc
               gdb
               renderdoc
+
+              bashInteractive
             ];
 
           shellHook = ''
             export VK_LAYER_PATH=${pkgs.vulkan-validation-layers}/share/vulkan/explicit_layer.d
             export LSAN_OPTIONS=suppressions=$PWD/suppr.txt
+
+            export SHELL=${pkgs.bashInteractive}/bin/bash
           '';
         };
       }
