@@ -2,8 +2,6 @@
 
 #include <vector>
 
-#include <ktx.h>
-
 #include "gfx/pipeline.h"
 #include "misc/singleton.h"
 #include "types/matrix4.h"
