@@ -16,7 +16,6 @@ endif()
 add_executable(main
   src/core/asset-manager.cpp
   src/core/engine.cpp
-  src/core/stb_impl.cpp
 
   src/gfx/csg-pipeline.cpp
   src/gfx/pipeline.cpp
@@ -39,6 +38,9 @@ add_executable(main
 
   ${IMGUI_SOURCES}
 )
+
+target_compile_definitions(main PRIVATE STB_IMAGE_IMPLEMENTATION)
+target_compile_definitions(main PRIVATE STB_IMAGE_STATIC)
 
 target_include_directories(main PRIVATE
   src/
