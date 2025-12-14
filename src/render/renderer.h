@@ -1,7 +1,10 @@
 #pragma once
 
+#include <vector>
+
 #include <vulkan/vulkan.h>
 
+#include "core/engine.h"
 #include "misc/singleton.h"
 #include "scene/visitor.h"
 #include "types/matrix4.h"
@@ -39,5 +42,9 @@ namespace render
     VkCommandBuffer command_buffer_ = VK_NULL_HANDLE;
     types::Matrix4 view_;
     types::Matrix4 projection_;
+
+    std::vector<VkBuffer> uniform_buffers_;
+    std::vector<VkDeviceMemory> uniform_buffers_memory_;
+    std::vector<void*> uniform_buffers_data_;
   };
 } // namespace render
