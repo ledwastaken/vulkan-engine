@@ -69,5 +69,10 @@ namespace gfx
     VkDeviceMemory back_depth_memory_ = VK_NULL_HANDLE;
     VkImageView back_depth_view_ = VK_NULL_HANDLE;
     VkSampler back_depth_sampler_ = VK_NULL_HANDLE;
+
+    VkImage mask_image_ = VK_NULL_HANDLE;
+    VkDeviceMemory mask_memory_ = VK_NULL_HANDLE;
+    VkImageView mask_view_ = VK_NULL_HANDLE;
+    VkSampler mask_sampler_ = VK_NULL_HANDLE;
   };
 } // namespace gfx

@@ -1,13 +1,14 @@
 #version 450 core
-layout (location = 0) in vec3 normal;
-layout (location = 1) in vec3 fragPos;
-layout (location = 2) in vec3 viewPos;
+layout(location = 0) in vec3 normal;
+layout(location = 1) in vec3 fragPos;
+layout(location = 2) in vec3 viewPos;
 
 layout(set = 1, binding = 0) uniform sampler2D rayEnter;
 layout(set = 1, binding = 1) uniform sampler2D rayLeave;
 layout(set = 1, binding = 2) uniform sampler2D frontDepth;
 
-layout (location = 0) out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
+layout(location = 1) out float fragMask; 
 
 float linearDepth(float z, float near, float far) {
   return (2.0 * near) / (far + near - z * (far - near));
@@ -47,4 +48,5 @@ void main(void)
   vec3 color = ambient + diffuse;
 
   fragColor = vec4(color, 1.0);
+  fragMask = 1;
 }

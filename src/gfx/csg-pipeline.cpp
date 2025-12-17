@@ -24,6 +24,103 @@ namespace gfx
     create_depth_image(back_depth_image_, back_depth_view_, back_depth_sampler_,
                        back_depth_memory_);
     bind_depth_images();
+
+    auto& engine = core::Engine::get_singleton();
+
+    const VkExtent3D image_extent = {
+      .width = 800,
+      .height = 600,
+      .depth = 1,
+    };
+
+    const VkImageCreateInfo mask_image_create_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .imageType = VK_IMAGE_TYPE_2D,
+      .format = VK_FORMAT_R8_UNORM,
+      .extent = image_extent,
+      .mipLevels = 1,
+      .arrayLayers = 1,
+      .samples = VK_SAMPLE_COUNT_1_BIT,
+      .tiling = VK_IMAGE_TILING_OPTIMAL,
+      .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+          | VK_IMAGE_USAGE_SAMPLED_BIT,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+      .queueFamilyIndexCount = 0,
+      .pQueueFamilyIndices = nullptr,
+      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    };
+
+    engine.create_image(mask_image_create_info, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mask_image_,
+                        mask_memory_);
+
+    const VkComponentMapping components = {
+      .r = VK_COMPONENT_SWIZZLE_R,
+      .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+    };
+
+    const VkImageSubresourceRange subresource_range = {
+      .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    };
+
+    const VkImageViewCreateInfo view_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .image = mask_image_,
+      .viewType = VK_IMAGE_VIEW_TYPE_2D,
+      .format = VK_FORMAT_R8_UNORM,
+      .components = components,
+      .subresourceRange = subresource_range,
+    };
+
+    VkResult result = vkCreateImageView(engine.get_device(), &view_info, nullptr, &mask_view_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create image view");
+
+    const VkSamplerCreateInfo sampler_info = {
+      .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .magFilter = VK_FILTER_NEAREST,
+      .minFilter = VK_FILTER_NEAREST,
+      .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      .mipLodBias = 0.0f,
+      .anisotropyEnable = VK_FALSE,
+      .maxAnisotropy = 0.0f,
+      .compareEnable = VK_FALSE,
+      .compareOp = VK_COMPARE_OP_NEVER,
+      .minLod = 0.0f,
+      .maxLod = 0.0f,
+      .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+      .unnormalizedCoordinates = VK_FALSE,
+    };
+
+    result = vkCreateSampler(engine.get_device(), &sampler_info, nullptr, &mask_sampler_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create sampler");
+
+    const core::TransitionLayout transition_layout = {
+      .src_access = 0,
+      .dst_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+      .src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+      .dst_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+      .aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .old_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .new_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+
+    engine.transition_image_layout(mask_image_, VK_FORMAT_R8_UNORM, 1, transition_layout);
   }
 
   void CSGPipeline::draw(VkImageView image_view, VkImageView depth_view,
@@ -61,17 +158,31 @@ namespace gfx
     vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
     const VkClearValue clear_value = {};
-    const VkRenderingAttachmentInfo color_attachment = {
-      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-      .pNext = nullptr,
-      .imageView = image_view,
-      .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      .resolveMode = VK_RESOLVE_MODE_NONE,
-      .resolveImageView = VK_NULL_HANDLE,
-      .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-      .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-      .clearValue = clear_value,
+    const VkRenderingAttachmentInfo attachments[] = {
+      {
+          .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+          .pNext = nullptr,
+          .imageView = image_view,
+          .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+          .resolveMode = VK_RESOLVE_MODE_NONE,
+          .resolveImageView = VK_NULL_HANDLE,
+          .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+          .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+          .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+          .clearValue = clear_value,
+      },
+      {
+          .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+          .pNext = nullptr,
+          .imageView = mask_view_,
+          .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+          .resolveMode = VK_RESOLVE_MODE_NONE,
+          .resolveImageView = VK_NULL_HANDLE,
+          .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+          .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+          .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+          .clearValue = clear_value,
+      },
     };
 
     const VkClearValue depth_clear_value = { .depthStencil = { .depth = 1.0f, .stencil = 0 } };
@@ -100,8 +211,8 @@ namespace gfx
       .renderArea = render_area,
       .layerCount = 1,
       .viewMask = 0,
-      .colorAttachmentCount = 1,
-      .pColorAttachments = &color_attachment,
+      .colorAttachmentCount = 2,
+      .pColorAttachments = attachments,
       .pDepthAttachment = &depth_attachment,
       .pStencilAttachment = &depth_attachment,
     };
@@ -486,6 +597,11 @@ namespace gfx
     vkDestroyImageView(engine.get_device(), back_depth_view_, nullptr);
     vkDestroyImage(engine.get_device(), back_depth_image_, nullptr);
     vkFreeMemory(engine.get_device(), back_depth_memory_, nullptr);
+
+    vkDestroySampler(engine.get_device(), mask_sampler_, nullptr);
+    vkDestroyImageView(engine.get_device(), mask_view_, nullptr);
+    vkDestroyImage(engine.get_device(), mask_image_, nullptr);
+    vkFreeMemory(engine.get_device(), mask_memory_, nullptr);
   }
 
   void CSGPipeline::create_pipeline_layout()
@@ -829,13 +945,16 @@ namespace gfx
       .maxDepthBounds = 1.0f,
     };
 
-    const VkFormat color_attachments[] = { engine.get_surface_format().format };
+    const VkFormat color_attachments[] = {
+      engine.get_surface_format().format,
+      VK_FORMAT_R8_UNORM,
+    };
 
     const VkPipelineRenderingCreateInfo pipeline_rendering_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
       .pNext = nullptr,
       .viewMask = 0,
-      .colorAttachmentCount = 1,
+      .colorAttachmentCount = 2,
       .pColorAttachmentFormats = color_attachments,
       .depthAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
       .stencilAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
