@@ -16,6 +16,7 @@ namespace gfx
     create_shader_module("csg.vert.spv", &vertex_shader_);
     create_shader_module("csg.frag.spv", &fragment_shader_);
     create_shader_module("depth.frag.spv", &depth_shader_);
+    create_shader_module("csg-diff-frontface.frag.spv", &frontface_shader_);
 
     create_graphics_pipeline();
     create_uniform_buffer();
@@ -565,6 +566,7 @@ namespace gfx
     vkDestroyShaderModule(engine.get_device(), fragment_shader_, nullptr);
     vkDestroyShaderModule(engine.get_device(), vertex_shader_, nullptr);
     vkDestroyShaderModule(engine.get_device(), depth_shader_, nullptr);
+    vkDestroyShaderModule(engine.get_device(), frontface_shader_, nullptr);
 
     vkDestroyPipelineCache(engine.get_device(), pipeline_cache_, nullptr);
 
@@ -1044,6 +1046,27 @@ namespace gfx
                                        &depth_pipeline_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create graphics pipeline");
+
+    const VkPipelineShaderStageCreateInfo frontface_shader_stage_infos[] = {
+      {
+          .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+          .pNext = nullptr,
+          .flags = 0,
+          .stage = VK_SHADER_STAGE_VERTEX_BIT,
+          .module = vertex_shader_,
+          .pName = "main",
+          .pSpecializationInfo = nullptr,
+      },
+      {
+          .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+          .pNext = nullptr,
+          .flags = 0,
+          .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+          .module = frontface_shader_,
+          .pName = "main",
+          .pSpecializationInfo = nullptr,
+      },
+    };
   }
 
   void CSGPipeline::create_uniform_buffer()

@@ -72,6 +72,7 @@ set(SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 file(MAKE_DIRECTORY ${SHADER_BINARY_DIR})
 
 set(SHADERS
+  ${SHADER_SOURCE_DIR}/csg-diff-frontface.frag
   ${SHADER_SOURCE_DIR}/csg.frag
   ${SHADER_SOURCE_DIR}/csg.vert
   ${SHADER_SOURCE_DIR}/depth-display.frag
