@@ -1067,6 +1067,45 @@ namespace gfx
           .pSpecializationInfo = nullptr,
       },
     };
+
+    VkFormat frontface_format = engine.get_surface_format().format;
+
+    const VkPipelineRenderingCreateInfo frontface_pipeline_rendering_create_info = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
+      .pNext = nullptr,
+      .viewMask = 0,
+      .colorAttachmentCount = 1,
+      .pColorAttachmentFormats = &frontface_format,
+      .depthAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
+      .stencilAttachmentFormat = VK_FORMAT_UNDEFINED,
+    };
+
+    const VkGraphicsPipelineCreateInfo frontface_create_info = {
+      .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+      .pNext = &pipeline_rendering_create_info,
+      .flags = VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT,
+      .stageCount = 2,
+      .pStages = frontface_shader_stage_infos,
+      .pVertexInputState = &vertex_input_state,
+      .pInputAssemblyState = &input_assembly_state,
+      .pTessellationState = nullptr,
+      .pViewportState = &viewport_state,
+      .pRasterizationState = &rasterization_state,
+      .pMultisampleState = &multisample_state,
+      .pDepthStencilState = &depth_stencil_state,
+      .pColorBlendState = &color_blend_state,
+      .pDynamicState = &dynamic_state,
+      .layout = pipeline_layout_,
+      .renderPass = VK_NULL_HANDLE,
+      .subpass = 0,
+      .basePipelineHandle = VK_NULL_HANDLE,
+      .basePipelineIndex = 0,
+    };
+
+    VkResult result = vkCreateGraphicsPipelines(device, pipeline_cache_, 1, &frontface_create_info,
+                                                nullptr, &frontface_pipeline_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create graphics pipeline");
   }
 
   void CSGPipeline::create_uniform_buffer()
