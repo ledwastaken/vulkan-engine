@@ -562,6 +562,7 @@ namespace gfx
 
     vkDestroyPipeline(engine.get_device(), pipeline_, nullptr);
     vkDestroyPipeline(engine.get_device(), depth_pipeline_, nullptr);
+    vkDestroyPipeline(engine.get_device(), frontface_pipeline_, nullptr);
 
     vkDestroyShaderModule(engine.get_device(), fragment_shader_, nullptr);
     vkDestroyShaderModule(engine.get_device(), vertex_shader_, nullptr);
@@ -584,6 +585,7 @@ namespace gfx
     vkDestroyPipelineLayout(engine.get_device(), pipeline_layout_, nullptr);
     vkDestroyDescriptorSetLayout(engine.get_device(), ubo_descriptor_set_layout_, nullptr);
     vkDestroyDescriptorSetLayout(engine.get_device(), textures_descriptor_set_layout_, nullptr);
+    vkDestroyDescriptorSetLayout(engine.get_device(), frontface_descriptor_set_layout_, nullptr);
 
     vkDestroySampler(engine.get_device(), ray_enter_sampler_, nullptr);
     vkDestroyImageView(engine.get_device(), ray_enter_view_, nullptr);
@@ -658,6 +660,24 @@ namespace gfx
       .pBindings = texture_layout_bindings,
     };
 
+    const VkDescriptorSetLayoutBinding frontface_bindings[] = {
+      {
+          .binding = 0,
+          .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+          .descriptorCount = 1,
+          .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+          .pImmutableSamplers = nullptr,
+      },
+    };
+
+    const VkDescriptorSetLayoutCreateInfo frontface_layout_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .bindingCount = 1,
+      .pBindings = frontface_bindings,
+    };
+
     VkResult result = vkCreateDescriptorSetLayout(
         engine.get_device(), &ubo_descriptor_set_layout_info, nullptr, &ubo_descriptor_set_layout_);
     if (result != VK_SUCCESS)
@@ -665,6 +685,11 @@ namespace gfx
 
     result = vkCreateDescriptorSetLayout(engine.get_device(), &textures_descriptor_set_layout_info,
                                          nullptr, &textures_descriptor_set_layout_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create descriptor set layout");
+
+    result = vkCreateDescriptorSetLayout(engine.get_device(), &frontface_layout_info, nullptr,
+                                         &frontface_descriptor_set_layout_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create descriptor set layout");
 
@@ -1102,7 +1127,7 @@ namespace gfx
       .basePipelineIndex = 0,
     };
 
-    VkResult result = vkCreateGraphicsPipelines(device, pipeline_cache_, 1, &frontface_create_info,
+    result = vkCreateGraphicsPipelines(device, pipeline_cache_, 1, &frontface_create_info,
                                                 nullptr, &frontface_pipeline_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create graphics pipeline");

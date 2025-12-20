@@ -41,7 +41,10 @@ namespace gfx
 
     VkDescriptorSetLayout ubo_descriptor_set_layout_ = VK_NULL_HANDLE;
     VkDescriptorSetLayout textures_descriptor_set_layout_ = VK_NULL_HANDLE;
+    VkDescriptorSetLayout frontface_descriptor_set_layout_ = VK_NULL_HANDLE;
     VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
+    VkPipelineLayout frontface_pipeline_layout_ = VK_NULL_HANDLE;
+    VkDescriptorPool frontface_descriptor_pool_ = VK_NULL_HANDLE;
     VkDescriptorPool descriptor_pool_ = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> ubo_descriptor_sets_;
     std::vector<VkDescriptorSet> textures_descriptor_sets_;
