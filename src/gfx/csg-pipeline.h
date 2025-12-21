@@ -44,10 +44,10 @@ namespace gfx
     VkDescriptorSetLayout frontface_descriptor_set_layout_ = VK_NULL_HANDLE;
     VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
     VkPipelineLayout frontface_pipeline_layout_ = VK_NULL_HANDLE;
-    VkDescriptorPool frontface_descriptor_pool_ = VK_NULL_HANDLE;
     VkDescriptorPool descriptor_pool_ = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> ubo_descriptor_sets_;
     std::vector<VkDescriptorSet> textures_descriptor_sets_;
+    std::vector<VkDescriptorSet> frontface_descriptor_sets_;
     VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
     VkShaderModule vertex_shader_ = VK_NULL_HANDLE;
     VkShaderModule fragment_shader_ = VK_NULL_HANDLE;

@@ -581,6 +581,8 @@ namespace gfx
     vkFreeDescriptorSets(engine.get_device(), descriptor_pool_, 1, ubo_descriptor_sets_.data());
     vkFreeDescriptorSets(engine.get_device(), descriptor_pool_, 1,
                          textures_descriptor_sets_.data());
+    vkFreeDescriptorSets(engine.get_device(), descriptor_pool_, 1,
+                         frontface_descriptor_sets_.data());
     vkDestroyDescriptorPool(engine.get_device(), descriptor_pool_, nullptr);
     vkDestroyPipelineLayout(engine.get_device(), pipeline_layout_, nullptr);
     vkDestroyPipelineLayout(engine.get_device(), frontface_pipeline_layout_, nullptr);
@@ -757,7 +759,7 @@ namespace gfx
       },
       {
           .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-          .descriptorCount = MAX_FRAMES_IN_FLIGHT * 3,
+          .descriptorCount = MAX_FRAMES_IN_FLIGHT * 4,
       },
     };
 
@@ -765,7 +767,7 @@ namespace gfx
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
       .pNext = nullptr,
       .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-      .maxSets = MAX_FRAMES_IN_FLIGHT * 2,
+      .maxSets = MAX_FRAMES_IN_FLIGHT * 3,
       .poolSizeCount = 2,
       .pPoolSizes = pool_sizes,
     };
@@ -779,6 +781,8 @@ namespace gfx
                                                    ubo_descriptor_set_layout_);
     std::vector<VkDescriptorSetLayout> textures_layouts(MAX_FRAMES_IN_FLIGHT,
                                                         textures_descriptor_set_layout_);
+    std::vector<VkDescriptorSetLayout> frontface_layouts(MAX_FRAMES_IN_FLIGHT,
+                                                         frontface_descriptor_set_layout_);
 
     const VkDescriptorSetAllocateInfo ubo_descriptor_set_info = {
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -796,6 +800,14 @@ namespace gfx
       .pSetLayouts = textures_layouts.data(),
     };
 
+    const VkDescriptorSetAllocateInfo frontface_descriptor_set_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+      .pNext = nullptr,
+      .descriptorPool = descriptor_pool_,
+      .descriptorSetCount = MAX_FRAMES_IN_FLIGHT,
+      .pSetLayouts = frontface_layouts.data(),
+    };
+
     ubo_descriptor_sets_.resize(MAX_FRAMES_IN_FLIGHT);
     result = vkAllocateDescriptorSets(engine.get_device(), &ubo_descriptor_set_info,
                                       ubo_descriptor_sets_.data());
@@ -805,6 +817,12 @@ namespace gfx
     textures_descriptor_sets_.resize(MAX_FRAMES_IN_FLIGHT);
     result = vkAllocateDescriptorSets(engine.get_device(), &textures_descriptor_set_info,
                                       textures_descriptor_sets_.data());
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to allocate descriptor set");
+
+    frontface_descriptor_sets_.resize(MAX_FRAMES_IN_FLIGHT);
+    result = vkAllocateDescriptorSets(engine.get_device(), &frontface_descriptor_set_info,
+                                      frontface_descriptor_sets_.data());
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to allocate descriptor set");
   }
