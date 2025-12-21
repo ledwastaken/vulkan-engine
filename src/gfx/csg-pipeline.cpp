@@ -1353,6 +1353,12 @@ namespace gfx
       .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
     };
 
+    const VkDescriptorImageInfo mask_image_info = {
+      .sampler = mask_sampler_,
+      .imageView = mask_view_,
+      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+    };
+
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
       VkWriteDescriptorSet write_descriptor[] = {
@@ -1395,6 +1401,21 @@ namespace gfx
       };
 
       vkUpdateDescriptorSets(engine.get_device(), 3, write_descriptor, 0, nullptr);
+
+      VkWriteDescriptorSet mask_write_descriptor = {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = frontface_descriptor_sets_[i],
+        .dstBinding = 0,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = &mask_image_info,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr,
+      };
+
+      vkUpdateDescriptorSets(engine.get_device(), 1, &mask_write_descriptor, 0, nullptr);
     }
   }
 
