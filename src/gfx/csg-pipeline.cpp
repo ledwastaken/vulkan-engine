@@ -583,6 +583,7 @@ namespace gfx
                          textures_descriptor_sets_.data());
     vkDestroyDescriptorPool(engine.get_device(), descriptor_pool_, nullptr);
     vkDestroyPipelineLayout(engine.get_device(), pipeline_layout_, nullptr);
+    vkDestroyPipelineLayout(engine.get_device(), frontface_pipeline_layout_, nullptr);
     vkDestroyDescriptorSetLayout(engine.get_device(), ubo_descriptor_set_layout_, nullptr);
     vkDestroyDescriptorSetLayout(engine.get_device(), textures_descriptor_set_layout_, nullptr);
     vkDestroyDescriptorSetLayout(engine.get_device(), frontface_descriptor_set_layout_, nullptr);
@@ -718,6 +719,29 @@ namespace gfx
 
     result = vkCreatePipelineLayout(engine.get_device(), &pipeline_layout_create_info, nullptr,
                                     &pipeline_layout_);
+    if (result != VK_SUCCESS)
+      throw std::runtime_error("failed to create pipeline layout");
+
+    const VkPushConstantRange frontface_push_constant_ranges[] = {
+      {
+          .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+          .offset = 0,
+          .size = 64,
+      },
+    };
+
+    const VkPipelineLayoutCreateInfo frontface_pipeline_layout_create_info = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .setLayoutCount = 1,
+      .pSetLayouts = &frontface_descriptor_set_layout_,
+      .pushConstantRangeCount = 1,
+      .pPushConstantRanges = frontface_push_constant_ranges,
+    };
+
+    result = vkCreatePipelineLayout(engine.get_device(), &frontface_pipeline_layout_create_info,
+                                    nullptr, &frontface_pipeline_layout_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create pipeline layout");
   }
@@ -1120,15 +1144,15 @@ namespace gfx
       .pDepthStencilState = &depth_stencil_state,
       .pColorBlendState = &color_blend_state,
       .pDynamicState = &dynamic_state,
-      .layout = pipeline_layout_,
+      .layout = frontface_pipeline_layout_,
       .renderPass = VK_NULL_HANDLE,
       .subpass = 0,
       .basePipelineHandle = VK_NULL_HANDLE,
       .basePipelineIndex = 0,
     };
 
-    result = vkCreateGraphicsPipelines(device, pipeline_cache_, 1, &frontface_create_info,
-                                                nullptr, &frontface_pipeline_);
+    result = vkCreateGraphicsPipelines(device, pipeline_cache_, 1, &frontface_create_info, nullptr,
+                                       &frontface_pipeline_);
     if (result != VK_SUCCESS)
       throw std::runtime_error("failed to create graphics pipeline");
   }
