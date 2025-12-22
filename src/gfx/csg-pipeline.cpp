@@ -182,7 +182,7 @@ namespace gfx
           .resolveMode = VK_RESOLVE_MODE_NONE,
           .resolveImageView = VK_NULL_HANDLE,
           .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-          .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+          .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
           .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
           .clearValue = clear_value,
       },
