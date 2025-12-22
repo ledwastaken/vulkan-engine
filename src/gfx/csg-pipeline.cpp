@@ -17,6 +17,7 @@ namespace gfx
     create_shader_module("csg.frag.spv", &fragment_shader_);
     create_shader_module("depth.frag.spv", &depth_shader_);
     create_shader_module("csg-diff-frontface.frag.spv", &frontface_shader_);
+    create_shader_module("csg-diff.vert.spv", &vertex_frontface_shader_);
 
     create_graphics_pipeline();
     create_uniform_buffer();
@@ -552,6 +553,23 @@ namespace gfx
                            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1,
                            &back_depth_memory_barrier2);
 
+      // Render front
+      vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, frontface_pipeline_);
+
+      vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                              frontface_pipeline_layout_, 0, 1,
+                              &ubo_descriptor_sets_[engine.get_current_frame()], 0, nullptr);
+
+      vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                              frontface_pipeline_layout_, 1, 1,
+                              &frontface_descriptor_sets_[engine.get_current_frame()], 0, nullptr);
+      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
+
+      vertex_buffer = mesh.get_vertex_buffer();
+      vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+      vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
+      vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
+
       vkCmdEndRendering(command_buffer);
     }
   }
@@ -568,6 +586,7 @@ namespace gfx
     vkDestroyShaderModule(engine.get_device(), vertex_shader_, nullptr);
     vkDestroyShaderModule(engine.get_device(), depth_shader_, nullptr);
     vkDestroyShaderModule(engine.get_device(), frontface_shader_, nullptr);
+    vkDestroyShaderModule(engine.get_device(), vertex_frontface_shader_, nullptr);
 
     vkDestroyPipelineCache(engine.get_device(), pipeline_cache_, nullptr);
 
@@ -732,12 +751,17 @@ namespace gfx
       },
     };
 
+    std::vector<VkDescriptorSetLayout> frontface_descriptor_layouts = {
+      ubo_descriptor_set_layout_,
+      frontface_descriptor_set_layout_,
+    };
+
     const VkPipelineLayoutCreateInfo frontface_pipeline_layout_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
-      .setLayoutCount = 1,
-      .pSetLayouts = &frontface_descriptor_set_layout_,
+      .setLayoutCount = 2,
+      .pSetLayouts = frontface_descriptor_layouts.data(),
       .pushConstantRangeCount = 1,
       .pPushConstantRanges = frontface_push_constant_ranges,
     };
@@ -1120,7 +1144,7 @@ namespace gfx
           .pNext = nullptr,
           .flags = 0,
           .stage = VK_SHADER_STAGE_VERTEX_BIT,
-          .module = vertex_shader_,
+          .module = vertex_frontface_shader_,
           .pName = "main",
           .pSpecializationInfo = nullptr,
       },

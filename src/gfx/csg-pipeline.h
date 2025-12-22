@@ -53,6 +53,7 @@ namespace gfx
     VkShaderModule fragment_shader_ = VK_NULL_HANDLE;
     VkShaderModule depth_shader_ = VK_NULL_HANDLE;
     VkShaderModule frontface_shader_ = VK_NULL_HANDLE;
+    VkShaderModule vertex_frontface_shader_ = VK_NULL_HANDLE;
     VkPipeline pipeline_ = VK_NULL_HANDLE;
     VkPipeline depth_pipeline_ = VK_NULL_HANDLE;
     VkPipeline frontface_pipeline_ = VK_NULL_HANDLE;
