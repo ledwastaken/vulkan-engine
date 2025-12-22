@@ -25,7 +25,6 @@ namespace gfx
     create_depth_image(ray_leave_image_, ray_leave_view_, ray_leave_sampler_, ray_leave_memory_);
     create_depth_image(back_depth_image_, back_depth_view_, back_depth_sampler_,
                        back_depth_memory_);
-    bind_depth_images();
 
     auto& engine = core::Engine::get_singleton();
 
@@ -123,6 +122,8 @@ namespace gfx
     };
 
     engine.transition_image_layout(mask_image_, VK_FORMAT_R8_UNORM, 1, transition_layout);
+
+    bind_depth_images();
   }
 
   void CSGPipeline::draw(VkImageView image_view, VkImageView depth_view,
