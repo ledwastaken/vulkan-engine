@@ -1394,7 +1394,7 @@ namespace gfx
     const VkDescriptorImageInfo mask_image_info = {
       .sampler = mask_sampler_,
       .imageView = mask_view_,
-      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+      .imageLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
     };
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
