@@ -31,7 +31,11 @@ void main(void)
     discard;
 
   if (gl_FragCoord.z > rayLeaveDepth)
-    discard;
+  {
+    fragColor = vec4(1.0, 1.0, 1.0, 0.0);
+    fragMask = 1;
+    return;
+  }
 
   vec3 lightPos   = vec3(-10.0, 20.0, -4.0);
   vec3 lightColor = vec3(1.0, 1.0, 1.0);
