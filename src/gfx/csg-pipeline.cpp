@@ -582,6 +582,9 @@ namespace gfx
 
       vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, frontface_pipeline_);
 
+      vkCmdPushConstants(command_buffer, frontface_pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0,
+                         64, mesh.cframe.to_matrix().data());
+
       vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                               frontface_pipeline_layout_, 0, 1,
                               &ubo_descriptor_sets_[engine.get_current_frame()], 0, nullptr);
