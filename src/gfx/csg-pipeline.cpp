@@ -614,7 +614,7 @@ namespace gfx
 
       vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr,
-                           1, &mask_memory_barrier);
+                           1, &mask_memory_barrier2);
 
       vkCmdEndRendering(command_buffer);
     }
