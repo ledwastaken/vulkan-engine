@@ -1261,6 +1261,31 @@ namespace gfx
       .stencilAttachmentFormat = VK_FORMAT_UNDEFINED,
     };
 
+    const VkPipelineColorBlendAttachmentState frontface_color_blend_attachments[] = {
+      {
+          .blendEnable = VK_FALSE,
+          .srcColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+          .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+          .colorBlendOp = VK_BLEND_OP_ADD,
+          .srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+          .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+          .alphaBlendOp = VK_BLEND_OP_ADD,
+          .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
+              | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+      },
+    };
+
+    const VkPipelineColorBlendStateCreateInfo frontface_color_blend_state = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
+      .logicOpEnable = VK_FALSE,
+      .logicOp = VK_LOGIC_OP_COPY,
+      .attachmentCount = 1,
+      .pAttachments = frontface_color_blend_attachments,
+      .blendConstants = { 0.0f, 0.0f, 0.0f, 0.0f },
+    };
+
     const VkPipelineRenderingCreateInfo frontface_rendering_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
       .pNext = nullptr,
@@ -1284,7 +1309,7 @@ namespace gfx
       .pRasterizationState = &rasterization_state,
       .pMultisampleState = &multisample_state,
       .pDepthStencilState = &depth_stencil_state,
-      .pColorBlendState = &color_blend_state,
+      .pColorBlendState = &frontface_color_blend_state,
       .pDynamicState = &dynamic_state,
       .layout = frontface_pipeline_layout_,
       .renderPass = VK_NULL_HANDLE,
