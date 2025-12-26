@@ -508,6 +508,7 @@ namespace core
     vkGetPhysicalDeviceFeatures(physical_device_, &supported_features);
 
     enabled_features_ = {};
+    enabled_features_.independentBlend = VK_TRUE;
     enabled_features_.multiDrawIndirect = supported_features.multiDrawIndirect;
     enabled_features_.geometryShader = VK_TRUE;
     enabled_features_.tessellationShader = VK_TRUE;
