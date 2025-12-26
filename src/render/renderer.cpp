@@ -167,12 +167,23 @@ namespace render
     static float y = 0.0f;
     static float z = 0.0f;
 
+    static float rx = 0.0f;
+    static float ry = 0.0f;
+    static float rz = 0.0f;
+
     ImGui::Begin("##Test");
     ImGui::DragFloat("X", &x, 0.1f, -5.0f, 5.0f);
     ImGui::DragFloat("Y", &y, 0.1f, -5.0f, 5.0f);
     ImGui::DragFloat("Z", &z, 0.1f, -5.0f, 5.0f);
 
-    scene->substractive_mesh->cframe = types::CFrame(types::Vector3(x, y, z));
+    ImGui::DragFloat("RX", &rx, 1.0f, -180.0f, 180.0f);
+    ImGui::DragFloat("RY", &ry, 0.1f, -180.0f, 180.0f);
+    ImGui::DragFloat("RZ", &rz, 0.1f, -180.0f, 180.0f);
+
+    scene->substractive_mesh->cframe = types::CFrame(
+        types::Vector3(x, y, z),
+        types::Vector3(x, y, z)
+            + types::Vector3(std::cos(rx * M_PI / 180.0f), std::sin(rx * M_PI / 180.0f), 0));
 
     if (scene->mesh && scene->substractive_mesh)
       csg_pipeline.draw(image_view_, depth_image_view_, command_buffer_, view_, projection_,
