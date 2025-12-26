@@ -544,6 +544,8 @@ namespace gfx
         .subresourceRange = subresource_range,
       };
 
+      vkCmdEndRendering(command_buffer);
+
       vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1,
                            &ray_enter_memory_barrier2);
@@ -554,7 +556,31 @@ namespace gfx
                            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1,
                            &back_depth_memory_barrier2);
 
-      vkCmdEndRendering(command_buffer);
+      // Render front
+      const VkImageSubresourceRange mask_subresource_range = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .baseMipLevel = 0,
+        .levelCount = 1,
+        .baseArrayLayer = 0,
+        .layerCount = 1,
+      };
+
+      const VkImageMemoryBarrier mask_memory_barrier = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = mask_image_,
+        .subresourceRange = mask_subresource_range,
+      };
+
+      vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                           VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1,
+                           &mask_memory_barrier);
 
       const VkRenderingAttachmentInfo frontface_attachments[] = {
         {
@@ -586,32 +612,6 @@ namespace gfx
 
       vkCmdBeginRendering(command_buffer, &frontface_rendering_info);
 
-      // Render front
-      const VkImageSubresourceRange mask_subresource_range = {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .baseMipLevel = 0,
-        .levelCount = 1,
-        .baseArrayLayer = 0,
-        .layerCount = 1,
-      };
-
-      const VkImageMemoryBarrier mask_memory_barrier = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-        .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-        .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = mask_image_,
-        .subresourceRange = mask_subresource_range,
-      };
-
-      vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                           VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1,
-                           &mask_memory_barrier);
-
       vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, frontface_pipeline_);
 
       vkCmdPushConstants(command_buffer, frontface_pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0,
@@ -630,6 +630,7 @@ namespace gfx
       vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
       vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset, VK_INDEX_TYPE_UINT32);
       vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0, 0);
+      vkCmdEndRendering(command_buffer);
 
       const VkImageMemoryBarrier mask_memory_barrier2 = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -647,8 +648,6 @@ namespace gfx
       vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr,
                            1, &mask_memory_barrier2);
-
-      vkCmdEndRendering(command_buffer);
     }
   }
 
