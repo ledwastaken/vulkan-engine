@@ -226,202 +226,6 @@ namespace gfx
     static bool active = false;
     ImGui::Checkbox("Active", &active);
 
-    static bool stencil = false;
-    ImGui::Checkbox("Use stencil buffer", &stencil);
-
-    if (stencil)
-    {
-      // vkCmdBeginRendering(command_buffer, &rendering_info);
-
-      // if (!active)
-      // {
-      //   vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
-      //   vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-      //                      mesh.cframe.to_matrix().data());
-
-      //   int one = 1;
-      //   vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
-      //                      &one);
-
-      //   vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
-      //   vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
-      //   vkCmdSetDepthWriteEnable(command_buffer, VK_TRUE);
-      //   vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
-      //   vkCmdSetStencilTestEnable(command_buffer, VK_FALSE);
-
-      //   VkDeviceSize offset = 0;
-      //   VkBuffer vertex_buffer = mesh.get_vertex_buffer();
-      //   vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      //   vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset,
-      //   VK_INDEX_TYPE_UINT32); vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0,
-      //   0);
-
-      //   vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-      //                      substractive_mesh.cframe.to_matrix().data());
-      //   vertex_buffer = substractive_mesh.get_vertex_buffer();
-      //   vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      //   vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
-      //                        VK_INDEX_TYPE_UINT32);
-      //   vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
-      // }
-
-      // vkCmdEndRendering(command_buffer);
-
-      // vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
-      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-      //                    mesh.cframe.to_matrix().data());
-
-      // int one = 1;
-      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
-      // &one);
-
-      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
-      // vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
-      // vkCmdSetDepthWriteEnable(command_buffer, VK_TRUE);
-      // vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
-      // vkCmdSetStencilTestEnable(command_buffer, VK_FALSE);
-
-      // vertex_buffer = mesh.get_vertex_buffer();
-      // vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      // vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset,
-      // VK_INDEX_TYPE_UINT32); vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0,
-      // 0);
-
-      // vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
-      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-      //                    substractive_mesh.cframe.to_matrix().data());
-
-      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
-      // vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
-      // vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
-      // vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
-      // vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
-      // vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-      //                   VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_COMPARE_OP_ALWAYS);
-      // vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 1);
-
-      // vertex_buffer = substractive_mesh.get_vertex_buffer();
-      // vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      // vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
-      //                      VK_INDEX_TYPE_UINT32);
-      // vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
-
-      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
-      // vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
-      // vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
-      // vkCmdSetDepthCompareOp(command_buffer, VK_COMPARE_OP_LESS);
-      // vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
-      // vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-      //                   VK_STENCIL_OP_KEEP, VK_STENCIL_OP_ZERO, VK_COMPARE_OP_ALWAYS);
-
-      // vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
-
-      // vkCmdEndRendering(command_buffer);
-
-      // const VkRenderingAttachmentInfo stencil_attachment = {
-      //   .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-      //   .pNext = nullptr,
-      //   .imageView = depth_view,
-      //   .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-      //   .resolveMode = VK_RESOLVE_MODE_NONE,
-      //   .resolveImageView = VK_NULL_HANDLE,
-      //   .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-      //   .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-      //   .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-      //   .clearValue = depth_clear_value,
-      // };
-
-      // const VkRenderingInfo rendering_info = {
-      //   .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-      //   .pNext = nullptr,
-      //   .flags = 0,
-      //   .renderArea = render_area,
-      //   .layerCount = 1,
-      //   .viewMask = 0,
-      //   .colorAttachmentCount = 1,
-      //   .pColorAttachments = &color_attachment,
-      //   .pDepthAttachment = &depth_attachment,
-      //   .pStencilAttachment = &stencil_attachment,
-      // };
-
-      // vkCmdBeginRendering(command_buffer, &rendering_info);
-
-      // vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depth_pipeline_);
-
-      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-      //                    mesh.cframe.to_matrix().data());
-
-      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
-      // vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
-      // vkCmdSetDepthWriteEnable(command_buffer, VK_TRUE);
-      // vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
-      // vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-      //                   VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL);
-      // vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 1);
-
-      // vertex_buffer = mesh.get_vertex_buffer();
-      // vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      // vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset,
-      // VK_INDEX_TYPE_UINT32); vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0,
-      // 0);
-
-      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-      //                    substractive_mesh.cframe.to_matrix().data());
-
-      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
-      // vkCmdSetDepthTestEnable(command_buffer, VK_TRUE);
-      // vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
-      // vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
-      // vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-      //                   VK_STENCIL_OP_KEEP, VK_STENCIL_OP_REPLACE, VK_COMPARE_OP_ALWAYS);
-      // vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 42);
-
-      // vertex_buffer = substractive_mesh.get_vertex_buffer();
-      // vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      // vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
-      //                      VK_INDEX_TYPE_UINT32);
-      // vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
-
-      // vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
-      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-      //                    mesh.cframe.to_matrix().data());
-
-      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
-      // vkCmdSetDepthTestEnable(command_buffer, VK_FALSE);
-      // vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
-      // vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
-      // vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-      //                   VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL);
-      // vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 0);
-
-      // vertex_buffer = mesh.get_vertex_buffer();
-      // vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      // vkCmdBindIndexBuffer(command_buffer, mesh.get_index_buffer(), offset,
-      // VK_INDEX_TYPE_UINT32); vkCmdDrawIndexed(command_buffer, mesh.get_index_count(), 1, 0, 0,
-      // 0);
-
-      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-      //                    substractive_mesh.cframe.to_matrix().data());
-
-      // int minus_one = -1;
-      // vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
-      //                    &minus_one);
-
-      // vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
-      // vkCmdSetDepthTestEnable(command_buffer, VK_FALSE);
-      // vkCmdSetDepthWriteEnable(command_buffer, VK_FALSE);
-      // vkCmdSetStencilTestEnable(command_buffer, VK_TRUE);
-      // vkCmdSetStencilOp(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, VK_STENCIL_OP_KEEP,
-      //                   VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL);
-      // vkCmdSetStencilReference(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 1);
-
-      // vertex_buffer = substractive_mesh.get_vertex_buffer();
-      // vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      // vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
-      //                      VK_INDEX_TYPE_UINT32);
-      // vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
-    }
-    else
     {
       render_depth(command_buffer, mesh, substractive_mesh);
 
@@ -482,6 +286,9 @@ namespace gfx
                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1,
                            &back_depth_memory_barrier);
 
+      VkDeviceSize offset = 0;
+      VkBuffer vertex_buffer;
+
       vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
       vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 1,
                               1, &textures_descriptor_sets_[engine.get_current_frame()], 0,
@@ -489,21 +296,25 @@ namespace gfx
 
       vkCmdBeginRendering(command_buffer, &rendering_info);
 
-      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
-                         substractive_mesh.cframe.to_matrix().data());
+      if (active)
+      {
+        vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, 64,
+                           substractive_mesh.cframe.to_matrix().data());
 
-      int minus_one = -1;
-      vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
-                         &minus_one);
+        int minus_one = -1;
+        vkCmdPushConstants(command_buffer, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 64, 4,
+                           &minus_one);
 
-      vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
+        vkCmdSetCullMode(command_buffer, VK_CULL_MODE_FRONT_BIT);
 
-      VkDeviceSize offset = 0;
-      VkBuffer vertex_buffer = substractive_mesh.get_vertex_buffer();
-      vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-      vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
-                           VK_INDEX_TYPE_UINT32);
-      vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+        vertex_buffer = substractive_mesh.get_vertex_buffer();
+        vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+        vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
+                             VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+      }
+
+      vkCmdEndRendering(command_buffer);
 
       const VkImageMemoryBarrier ray_enter_memory_barrier2 = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -543,8 +354,6 @@ namespace gfx
         .image = back_depth_image_,
         .subresourceRange = subresource_range,
       };
-
-      vkCmdEndRendering(command_buffer);
 
       vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1,
@@ -614,9 +423,6 @@ namespace gfx
 
       vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, frontface_pipeline_);
 
-      vkCmdPushConstants(command_buffer, frontface_pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0,
-                         64, mesh.cframe.to_matrix().data());
-
       vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                               frontface_pipeline_layout_, 0, 1,
                               &ubo_descriptor_sets_[engine.get_current_frame()], 0, nullptr);
@@ -625,6 +431,22 @@ namespace gfx
                               frontface_pipeline_layout_, 1, 1,
                               &frontface_descriptor_sets_[engine.get_current_frame()], 0, nullptr);
       vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
+
+      if (!active)
+      {
+        vkCmdPushConstants(command_buffer, frontface_pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT,
+                           0, 64, substractive_mesh.cframe.to_matrix().data());
+
+        vertex_buffer = substractive_mesh.get_vertex_buffer();
+        vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
+        vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
+                             VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
+        vkCmdEndRendering(command_buffer);
+      }
+
+      vkCmdPushConstants(command_buffer, frontface_pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0,
+                         64, mesh.cframe.to_matrix().data());
 
       vertex_buffer = mesh.get_vertex_buffer();
       vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
