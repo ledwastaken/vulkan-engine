@@ -442,7 +442,6 @@ namespace gfx
         vkCmdBindIndexBuffer(command_buffer, substractive_mesh.get_index_buffer(), offset,
                              VK_INDEX_TYPE_UINT32);
         vkCmdDrawIndexed(command_buffer, substractive_mesh.get_index_count(), 1, 0, 0, 0);
-        vkCmdEndRendering(command_buffer);
       }
 
       vkCmdPushConstants(command_buffer, frontface_pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0,
