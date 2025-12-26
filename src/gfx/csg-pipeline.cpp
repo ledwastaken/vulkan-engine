@@ -554,6 +554,38 @@ namespace gfx
                            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1,
                            &back_depth_memory_barrier2);
 
+      vkCmdEndRendering(command_buffer);
+
+      const VkRenderingAttachmentInfo frontface_attachments[] = {
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .pNext = nullptr,
+            .imageView = image_view,
+            .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .resolveMode = VK_RESOLVE_MODE_NONE,
+            .resolveImageView = VK_NULL_HANDLE,
+            .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .clearValue = clear_value,
+        },
+      };
+
+      const VkRenderingInfo frontface_rendering_info = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .renderArea = render_area,
+        .layerCount = 1,
+        .viewMask = 0,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = frontface_attachments,
+        .pDepthAttachment = &depth_attachment,
+        .pStencilAttachment = &depth_attachment,
+      };
+
+      vkCmdBeginRendering(command_buffer, &frontface_rendering_info);
+
       // Render front
       const VkImageSubresourceRange mask_subresource_range = {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -1230,9 +1262,19 @@ namespace gfx
       .stencilAttachmentFormat = VK_FORMAT_UNDEFINED,
     };
 
+    const VkPipelineRenderingCreateInfo frontface_rendering_create_info = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
+      .pNext = nullptr,
+      .viewMask = 0,
+      .colorAttachmentCount = 1,
+      .pColorAttachmentFormats = color_attachments,
+      .depthAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
+      .stencilAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
+    };
+
     const VkGraphicsPipelineCreateInfo frontface_create_info = {
       .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-      .pNext = &pipeline_rendering_create_info,
+      .pNext = &frontface_rendering_create_info,
       .flags = VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT,
       .stageCount = 2,
       .pStages = frontface_shader_stage_infos,
