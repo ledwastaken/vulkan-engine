@@ -1072,7 +1072,7 @@ namespace gfx
 
     VkFormat frontface_format = engine.get_surface_format().format;
 
-    const VkPipelineRenderingCreateInfo frontface_pipeline_rendering_create_info = {
+    const VkPipelineRenderingCreateInfo frontface_rendering_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
       .pNext = nullptr,
       .viewMask = 0,
@@ -1105,16 +1105,6 @@ namespace gfx
       .attachmentCount = 1,
       .pAttachments = frontface_color_blend_attachments,
       .blendConstants = { 0.0f, 0.0f, 0.0f, 0.0f },
-    };
-
-    const VkPipelineRenderingCreateInfo frontface_rendering_create_info = {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
-      .pNext = nullptr,
-      .viewMask = 0,
-      .colorAttachmentCount = 1,
-      .pColorAttachmentFormats = color_attachments,
-      .depthAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
-      .stencilAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
     };
 
     const VkGraphicsPipelineCreateInfo frontface_create_info = {
