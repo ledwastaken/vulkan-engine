@@ -217,7 +217,7 @@ namespace gfx
       .colorAttachmentCount = 2,
       .pColorAttachments = attachments,
       .pDepthAttachment = &depth_attachment,
-      .pStencilAttachment = &depth_attachment,
+      .pStencilAttachment = nullptr,
     };
 
     vkCmdSetStencilWriteMask(command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK, 0xFF);
@@ -416,7 +416,7 @@ namespace gfx
         .colorAttachmentCount = 1,
         .pColorAttachments = frontface_attachments,
         .pDepthAttachment = &depth_attachment,
-        .pStencilAttachment = &depth_attachment,
+        .pStencilAttachment = nullptr,
       };
 
       vkCmdBeginRendering(command_buffer, &frontface_rendering_info);
@@ -961,7 +961,7 @@ namespace gfx
       .colorAttachmentCount = 2,
       .pColorAttachmentFormats = color_attachments,
       .depthAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
-      .stencilAttachmentFormat = VK_FORMAT_D32_SFLOAT_S8_UINT,
+      .stencilAttachmentFormat = VK_FORMAT_UNDEFINED,
     };
 
     const VkGraphicsPipelineCreateInfo create_info = {
